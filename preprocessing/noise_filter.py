@@ -34,7 +34,3 @@ def apply_correction(image_path):
     return enhanced
 
 # Load an image (use a relative path or make sure the path exists)
-image_path = "ts.png"  # Changed to relative path
-for i in range(1, 2):
-    enhanced_image = apply_correction(image_path)
-    image_path ="test_output.png"
