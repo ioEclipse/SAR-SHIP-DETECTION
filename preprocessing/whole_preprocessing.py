@@ -15,7 +15,7 @@ for i in range(1, 2):
     enhanced_image = apply_correction(image)
     image_path ="test_output.png"
 
-cv2.imwrite("test_output.png", image)
+cv2.imwrite("test_output.jpg", image)
 
 
 
