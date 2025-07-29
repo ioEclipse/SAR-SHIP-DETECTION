@@ -9,8 +9,8 @@ def gamma_correction(image, gamma=1.0):
     # Apply gamma correction using LUT
     return cv2.LUT(image, table)
 
-def apply_correction(image_path):
-    image = cv2.imread(image_path)
+def apply_correction(image,image_path="Path_unknown"):
+    
     
     if image is None:
         print(f"Error: Could not load image from {image_path}")
@@ -26,7 +26,7 @@ def apply_correction(image_path):
     
     
     # Save and show the result
-    cv2.imwrite("test_output.png", enhanced)
+    
     
     '''cv2.imshow('Enhanced Image', enhanced)
     cv2.waitKey(0)
