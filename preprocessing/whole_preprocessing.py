@@ -1,6 +1,6 @@
 from noise_filter import apply_correction
 from Yan_segmentation import yan_mask
-from segment import process_image
+from Land_masking import process_image
 import cv2
 import numpy as np
 
