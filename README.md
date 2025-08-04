@@ -1,7 +1,3 @@
-Okay, I've updated the README to include the focus on "dark vessel detection" using AIS and SAR data. Here's the revised version:
-
------
-
 # SAR Ship Detection Project
 
 ## Overview
