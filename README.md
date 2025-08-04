@@ -1,4 +1,12 @@
-The SAR Ship Detection Project is an end-to-end system designed for the automated detection and tracking of maritime vessels using Synthetic Aperture Radar (SAR) imagery. This project leverages advanced deep learning models to process SAR data, primarily from Sentinel-1 satellites, providing crucial insights for maritime domain awareness, safety, and security. Optimized for efficient inference on edge devices like the NVIDIA Jetson Nano, this solution aims to bridge the gap between powerful machine learning and deployable satellite-based applications.
+Okay, I've updated the README to include the focus on "dark vessel detection" using AIS and SAR data. Here's the revised version:
+
+-----
+
+# SAR Ship Detection Project
+
+## Overview
+
+The SAR Ship Detection Project is an end-to-end system designed for the automated detection and tracking of maritime vessels using Synthetic Aperture Radar (SAR) imagery. This project leverages advanced deep learning models to process SAR data, primarily from Sentinel-1 satellites, providing crucial insights for maritime domain awareness, safety, and security. **A key focus of this project is the detection of "dark vessels," by integrating AIS (Automatic Identification System) data with SAR observations to identify vessels that are not broadcasting their location.** Optimized for efficient inference on edge devices like the NVIDIA Jetson Nano, this solution aims to bridge the gap between powerful machine learning and deployable satellite-based applications.
 
 This project is still a Work In Progress, so you may see a few placeholders.
 
@@ -8,6 +16,7 @@ This project is still a Work In Progress, so you may see a few placeholders.
 
   * **Automated Ship Detection:** Utilizes state-of-the-art deep learning models (e.g., YOLOv8) for accurate ship identification in complex SAR environments.
   * **Multi-Object Tracking:** Implements robust tracking algorithms (e.g., DeepSort) to maintain persistent ship identities across sequential SAR images.
+  * **Dark Vessel Detection:** Integrates AIS data with SAR detections to identify vessels not transmitting their position, crucial for illegal activity monitoring.
   * **SAR Data Preprocessing Pipeline:** Includes essential steps like speckle noise reduction, land-sea segmentation, and radiometric correction.
   * **Edge Device Optimization:** Models are optimized for high-performance, low-latency inference on resource-constrained hardware (e.g., NVIDIA Jetson Nano).
   * **Versatile Interfaces:** Designed for integration into various operational modalities, including edge deployment, web-based map interfaces, and direct image upload for processing.
