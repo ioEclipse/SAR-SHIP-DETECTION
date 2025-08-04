@@ -1,22 +1,22 @@
 from noise_filter import apply_correction
-from Yan_segmentation import yan_mask
-from Land_masking import process_image
+from Land_masking import process_image, compare_images
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
-image_path = "hi.png"
+image_path = "wwww.jpg"
 
 print("Starting preprocessing...")
-#      \/ add land segmentation here \/
+#      noise reduction and enhancement
+image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+image_new = apply_correction(image, image_path=image_path)
 
-image = process_image(image_path, visualize=True)
+#compare_images(image, image_new)
 
-
-
-for i in range(1, 2):
-    enhanced_image = apply_correction(image)
-    image_path ="test_output.png"
-
-
+#land masking
+image_mask, mask = process_image(image_new, visualize=False)
+#compare_images(image_new, image_mask)
 
 
+#visualize mask
+#compare_images(image, mask)
