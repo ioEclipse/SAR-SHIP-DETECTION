@@ -2,7 +2,7 @@
 
 ## Overview
 
-The SAR Ship Detection Project is an end-to-end system designed for the automated detection and tracking of maritime vessels using Synthetic Aperture Radar (SAR) imagery. This project leverages advanced deep learning models to process SAR data, primarily from Sentinel-1 satellites, providing crucial insights for maritime domain awareness, safety, and security. **A key focus of this project is the detection of "dark vessels," by integrating AIS (Automatic Identification System) data with SAR observations to identify vessels that are not broadcasting their location.** Optimized for efficient inference on edge devices like the NVIDIA Jetson Nano, this solution aims to bridge the gap between powerful machine learning and deployable satellite-based applications.
+The SAR Ship Detection Project is an end-to-end system designed for the automated detection and tracking of maritime vessels using Synthetic Aperture Radar (SAR) imagery. This project leverages advanced deep learning models to process SAR data, primarily from Sentinel-1 satellites, providing crucial insights for maritime domain awareness, safety, and security. A key focus of this project is the detection of **"dark vessels," by integrating AIS (Automatic Identification System) data with SAR observations to identify vessels that are not broadcasting their location.** Optimized for efficient inference on edge devices like the NVIDIA Jetson Nano, this solution aims to bridge the gap between powerful machine learning and deployable satellite-based applications.
 
 This project is still a Work In Progress, so you may see a few placeholders.
 
@@ -81,6 +81,15 @@ The primary dataset used for training and evaluation can be downloaded from:
 ```bash
 python run_pipeline.py --input_dir ./data/raw_sar_images --output_dir ./results --model_path ./models/yolov8_sardetect.pt
 ```
+
+-----
+
+## 📖 Documentation & Project Roadmap
+
+  * **Project Documentation:**
+      * [**PDF Document**](https://drive.google.com/file/d/182cVIUZ71hkKXD2s3pYEsNLtcBHFN5_A/view?usp=sharing) - A detailed guide covering the project's architecture, methodology, and technical specifications.
+  * **Project Task List:**
+      * [**Google Sheet**](https://docs.google.com/spreadsheets/d/1uLw39G2AHuvqWG3Va8wvNI3f9989mslL4P4FfVq1el4/edit?usp=sharing) - Track the project's progress, upcoming tasks, and assigned responsibilities.
 
 -----
 
