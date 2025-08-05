@@ -62,6 +62,62 @@ These instructions will get you a copy of the project up and running on your loc
     *Detailed instructions for downloading and placing pre-trained model weights will be provided here.*
 
 -----
+📦 Application Setup and Run
+The FullApp directory encapsulates a comprehensive Synthetic Aperture Radar (SAR) ship detection application, integrating all functionalities developed in this project. This application provides a complete pipeline for processing, tracking, and analyzing ships using radar imagery. It enables users to upload raw SAR data, explore Google Earth Engine SAR collections, and leverage cloud-based AI for robust inference. The system features an intuitive web-based dashboard for visualizing detailed reports, including global annotated images, sub-images of detected ships, and ship metadata (e.g., pixel area and surface area in square meters). Additionally, it supports export of results and is optimized for edge deployment on platforms like NVIDIA Jetson Nano, facilitating real-time inference without requiring prior land-ocean segmentation. This dual-targeted architecture ensures both operational efficiency in edge environments and user-friendly interaction for maritime surveillance.
+🛠️ Environment Setup
+To ensure a clean, reproducible, and isolated environment for running the application, follow these steps:
+
+Create a Virtual EnvironmentCreate a Python virtual environment (e.g., named .venv) to isolate dependencies and avoid conflicts with system-wide packages:
+python -m venv .venv
+
+
+Activate the Virtual EnvironmentActivate the virtual environment to use its isolated Python interpreter and packages:
+
+On Windows:
+.venv\Scripts\activate
+
+
+On macOS/Linux:
+source .venv/bin/activate
+
+
+
+
+Install DependenciesInstall the required Python packages listed in requirements.txt to ensure compatibility and reproducibility:
+pip install -r requirements.txt
+
+This command installs dependencies such as streamlit, pandas, and other libraries essential for the application’s functionality.
+
+
+🚀 Launching the Application
+Navigate to the FullApp directory and launch the Streamlit application by running the main entry point:
+streamlit run home.py
+
+This command starts the SAR Ship Detection Dashboard, which opens in your default web browser (e.g., at http://localhost:8501). Ensure the virtual environment is activated before executing this command.
+📂 Directory Structure and File Descriptions
+The FullApp directory is structured as follows, with each file and directory serving a specific role:
+FullApp/
+├── assets/                    # Static images, stylesheets, icons, and visual assets
+├── pages/
+│   ├── main.py                # The main entry point of the Streamlit dashboard
+│   ├── earthengine.py         # Interface with Google Earth Engine SAR collections
+│   ├── infer2.py              # Local inference with slicing, bounding boxes, and subimages
+│   └── app.py                 # Core logic and UI for image prediction and download
+├── home.py                    # Optional: Landing page or welcome module
+├── Testimage.png              # A sample radar image for demonstration or testing
+├── requirements.txt           # Python dependency file for reproducibility
+
+✅ Features Included
+The application offers a comprehensive set of functionalities for SAR ship detection and analysis:
+
+Raw SAR Image Processing: Supports upload and processing of raw SAR images in .png or .jpg formats for ship detection.
+Interactive Dashboard: Provides a user-friendly Streamlit interface for visualizing global annotated images, individual ship sub-images, and metadata tables.
+Automatic Sub-Image Cropping: Extracts sub-images around detected ships with configurable margins, facilitating detailed inspection.
+Ship Characteristics Analysis: Computes and displays metadata, including ship ID, pixel area, and surface area in square meters, presented in an interactive table with a "See More" option for extended results.
+Google Earth Engine Integration: Enables access to SAR data collections for advanced data exploration and analysis.
+Export Capabilities: Allows downloading of annotated images, sub-images, and ship metadata for further analysis or reporting.
+Persistent Session State: Maintains user interactions across sessions, ensuring a seamless experience.
+Edge Deployment Support: Optimized for deployment on NVIDIA Jetson Nano, enabling real-time inference on raw SAR imagery without requiring land-ocean segmentation.
 
 ## 📊 Dataset
 

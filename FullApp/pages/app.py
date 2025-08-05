@@ -5,8 +5,9 @@ import pandas as pd
 from infer2 import run_inference_with_crops
 from streamlit_option_menu import option_menu
 
+
 # === Fonction pour charger le logo ===
-def load_logo_base64(path="logo.png"):
+def load_logo_base64(path="assets/ship.png"):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 
@@ -27,7 +28,7 @@ html, body, [class*="css"] {{
     color: #ffffff;
 }}
 [data-testid="stSidebar"] {{
-    background-color: #1D1D1D !important;
+    background-color: #000000 !important;
     padding: 5px;
 }}
 .sidebar-header {{
@@ -38,6 +39,7 @@ html, body, [class*="css"] {{
     margin-top: 0px;
 }}
 .sidebar-header img {{
+            align:center;
     margin-top: 10px;
     height: 40px;
 }}
@@ -51,6 +53,7 @@ html, body, [class*="css"] {{
     color: white;
     margin-top: 10px;
     margin-bottom: 10px;
+            
     display: flex;
     align-items: center;
     gap: 8px;
@@ -112,18 +115,10 @@ html, body, [class*="css"] {{
 
 # === Sidebar ===
 with st.sidebar:
-    st.markdown(
-        f"""
-        <div class="sidebar-header">
-            <img src="data:image/png;base64,{logo_data}">
-            <h1>BLUE GUARD</h1>
-        </div>
-        """, unsafe_allow_html=True
-    )
+    st.image("assets/ship.png", use_container_width =False,width=120)
     st.markdown('<div class="section-title">🔍 Raw SAR Data Processing</div>', unsafe_allow_html=True)
-    st.markdown('<div class="block-upload" style="background-color: #0000;">', unsafe_allow_html=True)
     st.markdown('<h3 style="color: #ffffff;">Add your Image</h3>', unsafe_allow_html=True)
-    uploaded_image = st.file_uploader('📤', type=["jpg", "png"], key="file_uploader")
+    uploaded_image = st.file_uploader('', type=["jpg", "png"], key="file_uploader",width=200)
     st.markdown('</div>', unsafe_allow_html=True)
 
     if st.button("Process & Predict", key="predict_button"):
@@ -142,7 +137,31 @@ with st.sidebar:
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
 if "annotated_image" not in st.session_state or st.session_state.annotated_image is None:
-    st.markdown("<h2 style='color: #004d99;'>Hello</h2>", unsafe_allow_html=True)
+    # === Bloc de présentation par défaut ===
+    # 1) Titre et image côte-à-côte
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.markdown(
+            "<h1 style='color: #004d99; font-size:31px; text-align:center;margin-right:0px; padding-top:20px;padding-right:10px'>"
+            "Start Your analysis"
+            "</h1>",
+            unsafe_allow_html=True
+        )
+        # Nouveau texte d'intro sous le titre
+        st.markdown(
+        "<p style='color: #333333; font-size:20px;  padding-top:10px;'>"
+        "Upload your SAR file and the system will automatically perform full processing and deliver a detailed, ready-to-export detection report."
+        "</p>",
+        unsafe_allow_html=True
+    )
+        
+    with col2:
+        # Affiche ton placeholder
+        st.image("assets/defaultcontent.png", use_container_width =False,width=500)
+
+    # 2) En-dessous, l'image des fonctionnalités
+    st.markdown("<div style='margin-top:0px;'></div>", unsafe_allow_html=True)
+    st.image("assets/functionalities.png", use_container_width =True)
 else:
     st.markdown('<div class="result-row">', unsafe_allow_html=True)
     st.markdown('<div class="image-container">', unsafe_allow_html=True)
