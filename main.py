@@ -90,6 +90,20 @@ class ShipDetector:
         pass
 
 
+class AISDetector:
+    """Handles AIS data integration for ship detection."""
+    
+    def __init__(self, ais_data_path: str):
+        pass
+    
+    def load_ais_data(self) -> List[Dict[str, Any]]:
+        pass
+    
+    def match_ais_with_detections(self, detections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        pass
+
+
+
 class OutputGenerator:
     """Generates various output formats and visualizations."""
     

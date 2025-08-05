@@ -31,6 +31,15 @@ The SAR Ship Detection Project aims to detect and track ships using Synthetic Ap
 * **Methodology**: DeepSort (or similar multi-object tracking).
 * **Integration**: Combine detection outputs with temporal association and appearance features. Potential fusion with AIS data for enhanced accuracy.
 
+### 4.1 AIS Integration Module
+* **Purpose**: Integrate Automatic Identification System (AIS) data with SAR detections to identify AIS-equipped vs non-AIS vessels (dark vessels).
+* **Data Source**: Real-time AIS data from aisstream.io API via WebSocket connection.
+* **Key Functions**:
+    * Spatial-temporal matching between SAR detections and AIS transmissions
+    * Classification of ships as AIS-equipped or potential dark vessels
+    * Vessel information enrichment (MMSI, vessel name, type, dimensions)
+* **Implementation**: `ais_detector.py` - AISDetector class with real-time streaming capabilities
+
 ### 5. Output Generation and Visualization
 * **Purpose**: Compile and present results to the user through various interfaces.
 * **Output Formats**:
@@ -64,3 +73,32 @@ Based on the above, the `main.py` should define:
 * **Error Handling and Logging**: Basic structure for error capturing and logging.
 
 The skeleton should use placeholders for internal logic (e.g., `pass` or `...`) and focus solely on the modular structure and function/method signatures.
+
+## AIS Integration Testing
+
+The AIS integration module can be tested independently using the aisstream.io API:
+
+### Prerequisites
+* Get free API key from https://aisstream.io/
+* Install dependencies: `websocket-client`, `requests`
+
+### Test Usage
+
+**Command Line Test:**
+```bash
+python ais_detector.py --test-api YOUR_API_KEY
+```
+
+**Python Function Test:**
+```python
+from ais_detector import test_aisstream_api
+
+# Test with default San Francisco Bay area
+test_aisstream_api('your_api_key_here')
+
+# Test with custom geographic area (min_lat, min_lon, max_lat, max_lon)
+bbox = (40.0, -74.5, 41.0, -73.5)  # New York Harbor
+test_aisstream_api('your_api_key_here', bbox)
+```
+
+The test function collects AIS data for 1 minute and displays sample vessel records including MMSI, position, speed, course, and vessel information.
