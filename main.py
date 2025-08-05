@@ -11,7 +11,10 @@ import logging
 from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 import json
-
+from preprocessing/noise_filter import apply_correction
+from preprocessing.Land_masking import process_image, compare_images
+import cv2
+import numpy as np
 
 class ConfigurationManager:
     """Handles system parameters and model configurations."""
@@ -49,20 +52,13 @@ class DataHandler:
         pass
 
 
-class SARPreprocessor:
+'''class SARPreprocessor:
     """Encapsulates the entire SAR image preprocessing pipeline."""
     
     def __init__(self, config: Dict[str, Any]):
         pass
     
-    def preprocess_sar_image(self, image_path: str) -> Any:
-        pass
-    
-    def select_polarimetric_band(self, image_data) -> Any:
-        pass
-    
-    def apply_amplitude_scaling(self, image_data) -> Any:
-        pass
+
     
     def apply_noise_reduction(self, image_data) -> Any:
         pass
@@ -71,7 +67,7 @@ class SARPreprocessor:
         pass
     
     def standardize_format(self, image_data) -> Any:
-        pass
+        pass'''
 
 
 class ShipDetector:
@@ -171,11 +167,48 @@ class SARShipDetectionSystem:
     
     def process_single_image(self, image_path: str, 
                            session_id: str) -> Dict[str, Any]:
-        pass
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        if image is None:
+            raise FileNotFoundError(f"Could not load image at {image_path}")
+
+        image_new = apply_correction(image, image_path=image_path)
+        # Preprocess image (land masking)
+        masked_image, land_mask = process_image(image, visualize=False)
+
+        return {
+            "masked_image": masked_image,
+            "land_mask": land_mask,
+           }
+
     
-    def process_image_sequence(self, image_paths: List[str], 
-                             session_id: str) -> Dict[str, Any]:
-        pass
+    def process_image_sequence(self, image_paths: List[str], session_id: str) -> Dict[str, Any]:
+        results = []
+        for image_path in image_paths:
+            image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+            if image is None:
+                results.append({
+                    "image_path": image_path,
+                    "error": f"Could not load image at {image_path}"
+                })
+                continue
+
+            # Optional: apply noise correction if needed
+            image_new = apply_correction(image, image_path=image_path)
+
+            # Preprocess image (land masking)
+            masked_image, land_mask = process_image(image, visualize=False)
+
+            results.append({
+                "image_path": image_path,
+                "masked_image": masked_image,
+                "land_mask": land_mask
+            })
+
+        return {
+            "session_id": session_id,
+            "results": results
+        }
+   
     
     def handle_error(self, error: Exception, context: str) -> None:
         pass
