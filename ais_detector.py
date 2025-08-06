@@ -180,16 +180,26 @@ class AISDetector:
         if not self.aisstream_api_key:
             raise ValueError("AISStream API key is required for aisstream data source")
         
+        if self.aisstream_api_key in ["your_aisstream_api_key_here", "your_api_key_here"]:
+            raise ValueError("Please replace the placeholder API key with your actual aisstream.io API key")
+        
         print(f"Connecting to AISStream.io API for {duration_minutes} minutes...")
+        print(f"Using API key: {self.aisstream_api_key[:8]}...")
         
         # WebSocket URL for aisstream.io
         ws_url = "wss://stream.aisstream.io/v0/stream"
         
         # Authentication and subscription message
+        # Convert bbox from (min_lat, min_lon, max_lat, max_lon) to [[lat1, lon1], [lat2, lon2]] format
+        bounding_boxes = None
+        if bbox:
+            min_lat, min_lon, max_lat, max_lon = bbox
+            bounding_boxes = [[[min_lat, min_lon], [max_lat, max_lon]]]
+        
         auth_message = {
             "APIKey": self.aisstream_api_key,
-            "BoundingBoxes": [bbox] if bbox else None,
-            "FilterMessageTypes": ["PositionReport", "ShipAndVoyageData"]
+            "BoundingBoxes": bounding_boxes,
+            "FilterMessageTypes": ["PositionReport"]
         }
         
         def on_message(ws, message):
@@ -203,15 +213,22 @@ class AISDetector:
         
         def on_error(ws, error):
             print(f"WebSocket error: {error}")
+            print(f"Error type: {type(error)}")
         
         def on_close(ws, close_status_code, close_msg):
-            print("AISStream connection closed")
+            print(f"AISStream connection closed - Status: {close_status_code}, Message: {close_msg}")
             self.is_streaming = False
         
         def on_open(ws):
             print("Connected to AISStream.io")
-            ws.send(json.dumps(auth_message))
-            self.is_streaming = True
+            print(f"Sending subscription message: {json.dumps(auth_message, indent=2)}")
+            try:
+                ws.send(json.dumps(auth_message))
+                self.is_streaming = True
+                print("Subscription message sent successfully")
+            except Exception as e:
+                print(f"Error sending subscription message: {e}")
+                self.is_streaming = False
         
         try:
             # Create WebSocket connection
@@ -226,13 +243,25 @@ class AISDetector:
             ws_thread.daemon = True
             ws_thread.start()
             
+            # Wait for connection to establish
+            time.sleep(2)
+            
+            if not self.is_streaming:
+                print("Failed to establish connection to AISStream")
+                return
+            
+            print(f"Connection established. Collecting data for {duration_minutes} minutes...")
+            
             # Collect data for specified duration
-            time.sleep(duration_minutes * 60)
+            start_time = time.time()
+            while time.time() - start_time < (duration_minutes * 60) and self.is_streaming:
+                time.sleep(1)  # Check every second instead of sleeping for the full duration
             
             # Close connection
-            if self.ws:
+            if self.ws and self.is_streaming:
                 self.ws.close()
                 self.is_streaming = False
+                time.sleep(1)  # Give time for graceful close
             
             print(f"AIS data collection completed. Loaded {len(self.ais_records)} records.")
             

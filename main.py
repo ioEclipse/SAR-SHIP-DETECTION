@@ -11,7 +11,7 @@ import logging
 from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 import json
-from preprocessing/noise_filter import apply_correction
+from preprocessing.noise_filter import apply_correction
 from preprocessing.Land_masking import process_image, compare_images
 import cv2
 import numpy as np

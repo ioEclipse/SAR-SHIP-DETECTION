@@ -28,6 +28,7 @@ share/python-wheels/
 MANIFEST
 
 # Virtual environments
+sar_env/
 .env
 .venv
 env/

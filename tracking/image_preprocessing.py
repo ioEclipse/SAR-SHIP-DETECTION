@@ -1,5 +1,5 @@
-from noise_filter import apply_correction
-from Land_masking import process_image, compare_images
+from .noise_filter import apply_correction
+from .Land_masking import process_image, compare_images
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
