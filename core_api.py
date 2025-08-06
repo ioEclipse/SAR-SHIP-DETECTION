@@ -40,6 +40,8 @@ class DataHandler:
     
     def download_from_copernicus(self, coordinates: Tuple[float, float], 
                                 time_range: Tuple[str, str]) -> List[str]:
+        # Download SAR images from Copernicus Open Access Hub
+        # This is a placeholder implementation.
         pass
     
     def handle_user_upload(self, uploaded_file) -> str:
@@ -52,22 +54,13 @@ class DataHandler:
         pass
 
 
-'''class SARPreprocessor:
+class SARPreprocessor:
     """Encapsulates the entire SAR image preprocessing pipeline."""
     
     def __init__(self, config: Dict[str, Any]):
         pass
     
-
     
-    def apply_noise_reduction(self, image_data) -> Any:
-        pass
-    
-    def apply_land_masking(self, image_data) -> Any:
-        pass
-    
-    def standardize_format(self, image_data) -> Any:
-        pass'''
 
 
 class ShipDetector:
@@ -231,31 +224,3 @@ class SARShipDetectionSystem:
 def setup_logging(log_level: str = "INFO") -> None:
     """Configure logging for the application."""
     pass
-
-
-def validate_environment() -> bool:
-    """Validate that all required dependencies and models are available."""
-    pass
-
-
-def main():
-    """Main entry point for the SAR Ship Detection application."""
-    try:
-        setup_logging()
-        
-        if not validate_environment():
-            logging.error("Environment validation failed")
-            return
-        
-        system = SARShipDetectionSystem()
-        system.initialize_system()
-        
-        system.ui_interface.run_streamlit_app()
-        
-    except Exception as e:
-        logging.error(f"Application failed to start: {e}")
-        raise
-
-
-if __name__ == "__main__":
-    main()
