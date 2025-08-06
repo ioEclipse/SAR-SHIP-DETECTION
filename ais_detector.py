@@ -18,7 +18,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
 import requests
-import websocket
+import asyncio
+import websockets
 import threading
 import time
 import os
@@ -139,10 +140,6 @@ class AISDetector:
         self.ais_records: List[AISRecord] = []
         self.sar_detections: List[SARDetection] = []
         self.matched_ships: List[MatchedShip] = []
-        
-        # WebSocket connection for real-time AIS data
-        self.ws = None
-        self.is_streaming = False
     
     def load_ais_data(self, ais_data_source: Union[str, Dict], 
                      bbox: Optional[Tuple[float, float, float, float]] = None,
@@ -166,189 +163,113 @@ class AISDetector:
     
     def _load_aisstream_data(self, bbox: Optional[Tuple[float, float, float, float]], 
                             duration_minutes: int) -> None:
-        """
-        Load AIS data from aisstream.io using WebSocket API.
+        """Simple AIS data collection from aisstream.io WebSocket API."""
         
-        Implementation Steps:
-        1. Validate API key is provided
-        2. Set up WebSocket connection with authentication
-        3. Subscribe to geographic area if bbox provided
-        4. Parse incoming AIS messages in real-time
-        5. Convert to AISRecord format and store
-        6. Handle connection errors and reconnection
-        """
-        if not self.aisstream_api_key:
-            raise ValueError("AISStream API key is required for aisstream data source")
+        # Basic validation
+        if not self.aisstream_api_key or self.aisstream_api_key in ["your_aisstream_api_key_here", "your_api_key_here"]:
+            raise ValueError("Valid AISStream API key is required")
         
-        if self.aisstream_api_key in ["your_aisstream_api_key_here", "your_api_key_here"]:
-            raise ValueError("Please replace the placeholder API key with your actual aisstream.io API key")
+        print(f"Collecting AIS data for {duration_minutes} minute(s)...")
+        print(f"API Key: {self.aisstream_api_key[:8]}...")
         
-        print(f"Connecting to AISStream.io API for {duration_minutes} minutes...")
-        print(f"Using API key: {self.aisstream_api_key[:8]}...")
-        
-        # WebSocket URL for aisstream.io
-        ws_url = "wss://stream.aisstream.io/v0/stream"
-        
-        # Authentication and subscription message
-        # Convert bbox from (min_lat, min_lon, max_lat, max_lon) to [[lat1, lon1], [lat2, lon2]] format
+        # Convert bbox format for API
         bounding_boxes = None
         if bbox:
             min_lat, min_lon, max_lat, max_lon = bbox
             bounding_boxes = [[[min_lat, min_lon], [max_lat, max_lon]]]
+            print(f"Area: SW({min_lat}, {min_lon}) to NE({max_lat}, {max_lon})")
         
-        auth_message = {
+        # Run the collection
+        asyncio.run(self._collect_ais_data(bounding_boxes, duration_minutes))
+    
+    async def _collect_ais_data(self, bounding_boxes: Optional[list], duration_minutes: int) -> None:
+        """Simple async AIS data collection."""
+        
+        # Subscription message
+        subscription = {
             "APIKey": self.aisstream_api_key,
             "BoundingBoxes": bounding_boxes,
             "FilterMessageTypes": ["PositionReport"]
         }
         
-        def on_message(ws, message):
-            try:
-                data = json.loads(message)
-                self._parse_aisstream_message(data)
-            except json.JSONDecodeError as e:
-                print(f"Error parsing AIS message: {e}")
-            except Exception as e:
-                print(f"Error processing AIS data: {e}")
-        
-        def on_error(ws, error):
-            print(f"WebSocket error: {error}")
-            print(f"Error type: {type(error)}")
-        
-        def on_close(ws, close_status_code, close_msg):
-            print(f"AISStream connection closed - Status: {close_status_code}, Message: {close_msg}")
-            self.is_streaming = False
-        
-        def on_open(ws):
-            print("Connected to AISStream.io")
-            print(f"Sending subscription message: {json.dumps(auth_message, indent=2)}")
-            try:
-                ws.send(json.dumps(auth_message))
-                self.is_streaming = True
-                print("Subscription message sent successfully")
-            except Exception as e:
-                print(f"Error sending subscription message: {e}")
-                self.is_streaming = False
-        
         try:
-            # Create WebSocket connection
-            self.ws = websocket.WebSocketApp(ws_url,
-                                           on_open=on_open,
-                                           on_message=on_message,
-                                           on_error=on_error,
-                                           on_close=on_close)
-            
-            # Run in separate thread with timeout
-            ws_thread = threading.Thread(target=self.ws.run_forever)
-            ws_thread.daemon = True
-            ws_thread.start()
-            
-            # Wait for connection to establish
-            time.sleep(2)
-            
-            if not self.is_streaming:
-                print("Failed to establish connection to AISStream")
-                return
-            
-            print(f"Connection established. Collecting data for {duration_minutes} minutes...")
-            
-            # Collect data for specified duration
-            start_time = time.time()
-            while time.time() - start_time < (duration_minutes * 60) and self.is_streaming:
-                time.sleep(1)  # Check every second instead of sleeping for the full duration
-            
-            # Close connection
-            if self.ws and self.is_streaming:
-                self.ws.close()
-                self.is_streaming = False
-                time.sleep(1)  # Give time for graceful close
-            
-            print(f"AIS data collection completed. Loaded {len(self.ais_records)} records.")
-            
+            print("Connecting to AISStream.io...")
+            async with websockets.connect("wss://stream.aisstream.io/v0/stream") as websocket:
+                
+                # Send subscription
+                await websocket.send(json.dumps(subscription))
+                print("Connected! Receiving AIS data...")
+                
+                # Collect data for the specified duration
+                end_time = time.time() + (duration_minutes * 60)
+                message_count = 0
+                
+                while time.time() < end_time:
+                    try:
+                        # Wait for message (5 second timeout)
+                        message = await asyncio.wait_for(websocket.recv(), timeout=5.0)
+                        
+                        # Parse and store the message
+                        data = json.loads(message)
+                        self._parse_aisstream_message(data)
+                        
+                        message_count += 1
+                        if message_count % 10 == 0:  # Progress indicator
+                            print(f"Received {message_count} messages, {len(self.ais_records)} ships detected")
+                    
+                    except asyncio.TimeoutError:
+                        continue  # Keep trying
+                    except json.JSONDecodeError:
+                        continue  # Skip invalid messages
+                
+                print(f"Collection completed: {len(self.ais_records)} ships found")
+                
         except Exception as e:
-            print(f"Error connecting to AISStream: {e}")
-            self.is_streaming = False
+            print(f"Connection error: {e}")
+            raise
     
     def _parse_aisstream_message(self, data: Dict) -> None:
-        """
-        Parse individual AIS message from aisstream.io format.
-        
-        Expected aisstream.io message format:
-        {
-            "Message": {
-                "MessageID": 1,
-                "UserID": 123456789,
-                "Latitude": 12.34567,
-                "Longitude": -23.45678,
-                "SpeedOverGround": 12.5,
-                "CourseOverGround": 234.5,
-                "TrueHeading": 240,
-                "Timestamp": "2024-01-01T12:00:00Z"
-            },
-            "MetaData": {
-                "MMSI": 123456789,
-                "ShipName": "VESSEL NAME",
-                "VesselType": 70,
-                "Dimension_A": 50,
-                "Dimension_B": 10,
-                "Dimension_C": 5,
-                "Dimension_D": 5
-            }
-        }
-        """
+        """Parse AIS message and store if valid."""
         try:
             message = data.get("Message", {})
             metadata = data.get("MetaData", {})
             
-            # Extract required fields
+            # Get essential data
             mmsi = str(metadata.get("MMSI", message.get("UserID", "")))
-            if not mmsi:
-                return
-            
             latitude = message.get("Latitude")
             longitude = message.get("Longitude")
-            if latitude is None or longitude is None:
+            
+            # Skip if missing essential data
+            if not mmsi or latitude is None or longitude is None:
                 return
             
-            # Convert timestamp
-            timestamp_str = message.get("Timestamp")
+            # Parse timestamp
+            timestamp_str = message.get("Timestamp", "")
+            timestamp = datetime.now(timezone.utc)
             if timestamp_str:
-                timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-            else:
-                timestamp = datetime.now(timezone.utc)
+                try:
+                    timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                except:
+                    pass  # Use current time if parsing fails
             
-            # Extract other fields
-            speed = message.get("SpeedOverGround", 0.0)
-            course = message.get("CourseOverGround", 0.0)
-            vessel_name = metadata.get("ShipName")
-            vessel_type = metadata.get("VesselType")
-            
-            # Calculate vessel dimensions
-            dim_a = metadata.get("Dimension_A", 0)
-            dim_b = metadata.get("Dimension_B", 0)
-            dim_c = metadata.get("Dimension_C", 0)
-            dim_d = metadata.get("Dimension_D", 0)
-            length = dim_a + dim_b if dim_a and dim_b else None
-            width = dim_c + dim_d if dim_c and dim_d else None
-            
-            # Create AIS record
+            # Create AIS record with available data
             ais_record = AISRecord(
                 mmsi=mmsi,
                 timestamp=timestamp,
                 latitude=latitude,
                 longitude=longitude,
-                speed=speed,
-                course=course,
-                vessel_type=str(vessel_type) if vessel_type else None,
-                vessel_name=vessel_name,
-                length=length,
-                width=width
+                speed=message.get("SpeedOverGround", 0.0),
+                course=message.get("CourseOverGround", 0.0),
+                vessel_name=metadata.get("ShipName"),
+                vessel_type=str(metadata.get("VesselType", "")) if metadata.get("VesselType") else None,
+                length=None,  # Calculate if needed later
+                width=None
             )
             
             self.ais_records.append(ais_record)
             
-        except Exception as e:
-            print(f"Error parsing AIS message: {e}")
+        except Exception:
+            pass  # Silently skip invalid messages
     
     def _load_ais_from_file(self, file_path: str) -> None:
         """
@@ -590,78 +511,47 @@ class AISDetector:
 
 
 def test_aisstream_api(api_key: Optional[str] = None, bbox: Optional[Tuple[float, float, float, float]] = None):
-    """
-    Test function to demonstrate AIS data collection from aisstream.io
-    
-    Args:
-        api_key: Your aisstream.io API key (optional if set in config/env)
-        bbox: Optional bounding box (min_lat, min_lon, max_lat, max_lon)
-              Example: (37.0, -122.5, 38.0, -121.5) for San Francisco Bay area
-    """
+    """Simple test function for AIS data collection."""
     print("=== AIS Stream Test ===")
     
-    # Initialize detector (will load API key from config/env if not provided)
+    # Create detector
     detector = AISDetector(aisstream_api_key=api_key)
     
+    # Validate API key
     if not detector.aisstream_api_key or detector.aisstream_api_key == "your_aisstream_api_key_here":
-        print("Error: No valid API key found!")
-        print("Please set your API key in one of these ways:")
-        print("1. Pass it as parameter: test_aisstream_api('your_key')")
-        print("2. Set in config.json: {'aisstream': {'api_key': 'your_key'}}")
-        print("3. Set environment variable: export AISSTREAM_API_KEY='your_key'")
-        print("4. Set in .env file: AISSTREAM_API_KEY=your_key")
-        print("\nGet your free API key at: https://aisstream.io/")
+        print("❌ No valid API key found!")
+        print("Get your free API key at: https://aisstream.io/")
+        print("Then run: python ais_detector.py --test-api YOUR_API_KEY")
         return
     
-    print(f"Using API key: {detector.aisstream_api_key[:8]}...")
+    # Get test area and duration
+    config = detector.config.get('aisstream', {})
+    test_bbox = bbox or tuple(config.get('default_bbox', [32.0, -125.0, 42.0, -115.0]))
+    duration = config.get('default_duration_minutes', 1)
     
-    # Get test parameters from config or use defaults
-    aisstream_config = detector.config.get('aisstream', {})
-    test_bbox = bbox or tuple(aisstream_config.get('default_bbox', [37.0, -122.5, 38.0, -121.5]))
-    test_duration = aisstream_config.get('default_duration_minutes', 1)
-    
-    print(f"Collecting AIS data for {test_duration} minute(s)...")
-    print(f"Geographic area: {test_bbox}")
+    print(f"🌍 Area: {test_bbox}")
+    print(f"⏱️  Duration: {duration} minute(s)")
     
     try:
-        # Load AIS data from stream
-        detector.load_ais_data("aisstream", bbox=test_bbox, duration_minutes=test_duration)
+        # Collect data
+        detector.load_ais_data("aisstream", bbox=test_bbox, duration_minutes=duration)
         
-        # Display results
-        print(f"\n=== AIS Data Collection Results ===")
-        print(f"Total AIS records collected: {len(detector.ais_records)}")
+        # Show results
+        print(f"\n✅ Found {len(detector.ais_records)} ships")
         
         if detector.ais_records:
-            print("\n=== Sample AIS Records ===")
-            for i, record in enumerate(detector.ais_records[:5]):  # Show first 5 records
-                print(f"\nRecord {i+1}:")
-                print(f"  MMSI: {record.mmsi}")
-                print(f"  Position: {record.latitude:.6f}, {record.longitude:.6f}")
-                print(f"  Speed: {record.speed} knots")
-                print(f"  Course: {record.course}°")
-                print(f"  Timestamp: {record.timestamp}")
-                if record.vessel_name:
-                    print(f"  Vessel Name: {record.vessel_name}")
-                if record.vessel_type:
-                    print(f"  Vessel Type: {record.vessel_type}")
-                if record.length and record.width:
-                    print(f"  Dimensions: {record.length}m x {record.width}m")
-            
-            if len(detector.ais_records) > 5:
-                print(f"\n... and {len(detector.ais_records) - 5} more records")
+            print("\n📡 Sample ships:")
+            for i, ship in enumerate(detector.ais_records[:3]):
+                print(f"  {i+1}. MMSI {ship.mmsi}: {ship.latitude:.4f}, {ship.longitude:.4f}")
+                if ship.vessel_name:
+                    print(f"     Name: {ship.vessel_name}")
+                print(f"     Speed: {ship.speed:.1f} knots, Course: {ship.course:.0f}°")
         else:
-            print("No AIS records collected. This might be due to:")
-            print("- Invalid API key")
-            print("- No ships in the specified area")
-            print("- Network connectivity issues")
-            print("- Geographic area too small or remote")
+            print("❌ No ships found - try a busier shipping area")
             
     except Exception as e:
-        print(f"Error during AIS data collection: {e}")
-        print("\nTroubleshooting:")
-        print("1. Verify your API key is valid")
-        print("2. Check your internet connection")
-        print("3. Try a different geographic area with more ship traffic")
+        print(f"❌ Collection failed: {e}")
+        print("💡 Check your API key and internet connection")
 
 
 def main():
@@ -701,7 +591,8 @@ if __name__ == "__main__":
         
         api_key = sys.argv[2]
         # Optional bounding box for testing (San Francisco Bay area by default)
-        bbox = (37.0, -122.5, 38.0, -121.5)
+        
+        bbox = (32.0, -125.0, 42.0, -115.0)
         test_aisstream_api(api_key, bbox)
     else:
         main()
