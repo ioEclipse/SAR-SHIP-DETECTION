@@ -130,7 +130,7 @@ The AIS integration module can be tested independently using the aisstream.io AP
 
 ### Prerequisites
 * Get free API key from https://aisstream.io/
-* Install dependencies: `websocket-client`, `requests`
+* Install dependencies: `websockets`, `requests`
 
 ### Test Usage
 
@@ -236,7 +236,7 @@ The test function collects AIS data for 1 minute and displays sample vessel reco
 * **numpy, scipy**: Numerical computing
 * **matplotlib**: Plotting and visualization
 * **folium, streamlit_folium**: Interactive maps
-* **websocket-client**: AIS real-time data streaming
+* **websockets**: AIS real-time data streaming
 * **inference-sdk**: YOLOv11m model inference
 * **pillow**: Image processing
 * **pandas**: Data manipulation and analysis
@@ -272,12 +272,14 @@ The test function collects AIS data for 1 minute and displays sample vessel reco
 
 #### AIS Connection Issues
 * **Issue**: "Connected to AISStream.io" followed immediately by "WebSocket error: Connection to remote host was lost"
+* **Root Cause**: Wrong WebSocket package - use `websockets` not `websocket-client`
 * **Common Causes & Solutions**:
-  1. **Invalid API Key**: Ensure you're using a valid API key from https://aisstream.io/
-  2. **Placeholder API Key**: Don't use "your_api_key_here" - replace with actual key
-  3. **Network/Firewall**: Corporate firewalls may block WebSocket connections
-  4. **API Key Format**: Ensure no extra spaces or characters in the API key
-* **Testing**: The updated code now provides detailed error messages and connection status
+  1. **Wrong Package**: Install `websockets==12.0` instead of `websocket-client`
+  2. **Invalid API Key**: Ensure you're using a valid API key from https://aisstream.io/
+  3. **Placeholder API Key**: Don't use "your_api_key_here" - replace with actual key
+  4. **Network/Firewall**: Corporate firewalls may block WebSocket connections
+  5. **API Key Format**: Ensure no extra spaces or characters in the API key
+* **Testing**: The updated code uses async/await with proper `websockets` package
 
 #### Other Issues
 * **Streamlit Issues**: Try `pip install --upgrade streamlit`
