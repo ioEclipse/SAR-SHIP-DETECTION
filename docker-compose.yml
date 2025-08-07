@@ -1,0 +1,13 @@
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        BASE_IMAGE: python:3.11-slim
+    ports:
+      - "8501:8501"
+    environment:
+      - ENV=dev
+    volumes:
+      - .:/app
