@@ -9,7 +9,7 @@ def gamma_correction(image, gamma=1.0):
     # Apply gamma correction using LUT
     return cv2.LUT(image, table)
 
-def apply_correction(image,image_path="Path_unknown"):
+def apply_correction(image,times,image_path="Path_unknown"):
     
     
     if image is None:
@@ -17,10 +17,10 @@ def apply_correction(image,image_path="Path_unknown"):
         return
     
     # Apply gamma correction (adjust gamma value as needed)
-    enhanced = gamma_correction(image, gamma=0.6)  # More moderate gamma
-    
-    # Apply contrast adjustment (more moderate parameters)
-    enhanced = cv2.convertScaleAbs(enhanced, alpha=10/7, beta=0)
+    for _ in range(times):
+        enhanced = gamma_correction(image, gamma=0.6)  # More moderate gamma
+        # Apply contrast adjustment (more moderate parameters)
+        enhanced = cv2.convertScaleAbs(enhanced, alpha=10/7, beta=0)
     
     # Apply Gaussian blur to reduce noise
     
@@ -34,3 +34,7 @@ def apply_correction(image,image_path="Path_unknown"):
     return enhanced
 
 # Load an image (use a relative path or make sure the path exists)
+
+#remove the comment below to test the function:
+# apply_correction(your_img=cv2.imread("path_to_your_image"), 2, "path_to_your_image.jpg (not required)")
+
