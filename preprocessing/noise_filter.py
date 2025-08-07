@@ -9,11 +9,10 @@ def gamma_correction(image, gamma=1.0):
     # Apply gamma correction using LUT
     return cv2.LUT(image, table)
 
-def apply_correction(image,times=1,image_path="Path_unknown"):
+def apply_correction(image,times=1):
     
     
     if image is None:
-        print(f"Error: Could not load image from {image_path}")
         return
     
     # Apply gamma correction (adjust gamma value as needed)
