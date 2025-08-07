@@ -50,8 +50,6 @@ venv.bak/
 # Data files
 *.tiff
 *.tif
-*.png
-*.jpg
 *.jpeg
 *.h5
 *.hdf5

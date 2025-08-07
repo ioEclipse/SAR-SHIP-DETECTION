@@ -2,12 +2,15 @@ import streamlit as st
 import io
 import base64
 import pandas as pd
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from infer2 import run_inference_with_crops
 from streamlit_option_menu import option_menu
 
 
 # === Fonction pour charger le logo ===
-def load_logo_base64(path="assets/ship.png"):
+def load_logo_base64(path="assets/logo.png"):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 
@@ -23,182 +26,382 @@ st.set_page_config(
 # === CSS Design Global ===
 st.markdown(f"""
 <style>
-html, body, [class*="css"] {{
-    background-color: #f5f5f5;
-    color: #ffffff;
+/* Global dark theme */
+.stApp {{
+    background-color: #0f0f0f !important;
+    color: #ffffff !important;
 }}
+
+/* Sidebar styling */
 [data-testid="stSidebar"] {{
-    background-color: #000000 !important;
-    padding: 5px;
+    background-color: #1a1a1a !important;
+    border-right: 1px solid #333333;
 }}
-.sidebar-header {{
+
+/* Main content area */
+.main {{
+    background-color: #0f0f0f !important;
+    color: #ffffff !important;
+}}
+
+/* Logo and header styling */
+.logo-container {{
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 20px;
-    margin-top: 0px;
+    margin-bottom: 30px;
+    padding: 10px 0;
 }}
-.sidebar-header img {{
-            align:center;
-    margin-top: 10px;
+
+.logo-container img {{
     height: 40px;
+    width: auto;
 }}
-.sidebar-header h1 {{
+
+.logo-container h1 {{
     color: #1e90ff;
     margin: 0;
     font-size: 24px;
+    font-weight: bold;
 }}
-.section-title {{
-    font-size: 16px;
-    color: white;
-    margin-top: 10px;
-    margin-bottom: 10px;
-            
+
+
+
+
+.upload-title {{
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: bold;
 }}
-.block-upload {{
-    background-color: #505050;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
+
+/* File uploader styling */
+.stFileUploader {{
+    background-color: #2a2a2a !important;
+    border: 2px dashed #444444 !important;
+    border-radius: 8px !important;
+    padding: 20px !important;
 }}
-.block-upload .stFileUploader, .block-upload label {{
-    color: black !important;
+
+.stFileUploader:hover {{
+    border-color: #1e90ff !important;
 }}
-.stButton > button, .stDownloadButton > button {{
-    background-color: #1e90ff;
-    color: white;
-    font-weight: bold;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 5px;
-    width: 100%;
+
+/* Button styling */
+.stButton > button {{
+    background-color: #1e90ff !important;
+    color: white !important;
+    font-weight: bold !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+    font-size: 16px !important;
+    transition: all 0.3s ease !important;
 }}
-.stButton > button:hover, .stDownloadButton > button:hover {{
-    background-color: #1c86ee;
+
+.stButton > button:hover {{
+    background-color: #0066cc !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3) !important;
 }}
-.ship-number {{
-    font-size: 24px;
-    font-weight: bold;
-    color: #ffffff;
-    background-color: #1e90ff;
-    padding: 10px;
-    border-radius: 8px;
-    margin-top: 10px;
+
+/* Main content styling */
+.main-content {{
+    background-color: #0f0f0f !important;
+    color: #ffffff !important;
+    padding: 30px !important;
 }}
-.result-row {{
+
+
+
+/* Process steps styling */
+.process-steps {{
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 20px;
+    margin-top: 30px;
     gap: 20px;
 }}
-.image-container {{
-    flex: 0 0 60%;
+
+.step-item {{
+    text-align: center;
+    flex: 1;
 }}
-.stSelectbox label, .stSelectbox div {{
+
+.step-icon {{
+    background-color: #1e90ff;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    color: white;
+    font-size: 24px;
+}}
+
+.step-title {{
     color: #ffffff;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 8px;
 }}
-.stSelectbox > div[data-baseweb="select"] {{
-    background-color: #ffffff;
-    border-radius: 5px;
+
+
+.ship-counter {{
+    background-color: #1e90ff;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
 }}
-.main-content {{
-    padding: 20px;
-    background-color: #ffffff;
+
+/* Dropdown styling */
+.stSelectbox > div {{
+    background-color: #2a2a2a !important;
+    border: 1px solid #444444 !important;
+    border-radius: 8px !important;
 }}
+
+.stSelectbox label {{
+    color: #ffffff !important;
+}}
+
+/* Download button styling */
+.stDownloadButton > button {{
+    background-color: #1e90ff !important;
+    color: white !important;
+    font-weight: bold !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+}}
+
+.stDownloadButton > button:hover {{
+    background-color: #0066cc !important;
+}}
+
+/* Status message styling */
+.status-message {{
+    background-color: #2a2a2a;
+    border: 1px solid #444444;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    color: #1e90ff;
+    font-weight: bold;
+}}
+
+/* Table styling */
+.dataframe {{
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}}
+
+.dataframe th {{
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+}}
+
+.dataframe td {{
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+}}
+
+/* Hide Streamlit default elements */
+#MainMenu {{visibility: hidden;}}
+footer {{visibility: hidden;}}
+header {{visibility: hidden;}}
 </style>
 """, unsafe_allow_html=True)
 
 # === Sidebar ===
 with st.sidebar:
-    st.image("assets/ship.png", use_container_width =False,width=120)
-    st.markdown('<div class="section-title">🔍 Raw SAR Data Processing</div>', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #ffffff;">Add your Image</h3>', unsafe_allow_html=True)
-    uploaded_image = st.file_uploader('', type=["jpg", "png"], key="file_uploader",width=200)
+    # Logo and title
+    st.markdown(
+        f"""
+        <div class="logo-container">
+            <img src="data:image/png;base64,{logo_data}" style="height: 40px; width: auto;">
+            <h1>BlueGuard</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # Upload section
+    st.markdown('<div class="upload-title">📤 Upload Image</div>', unsafe_allow_html=True)
+    
+    uploaded_image = st.file_uploader(
+        'Drag and drop your SAR image here',
+        type=["jpg", "png", "jpeg"],
+        key="file_uploader",
+        help="Supported formats: JPG, PNG, JPEG (Max 200MB)"
+    )
+    
+    if uploaded_image:
+        st.success(f"✅ File uploaded: {uploaded_image.name}")
+    
     st.markdown('</div>', unsafe_allow_html=True)
-
-    if st.button("Process & Predict", key="predict_button"):
+    
+    # Process button
+    if st.button("🚀 Process & Predict", key="predict_button"):
         if uploaded_image:
-            st.info("Running inference... Please wait ⏳")
+            st.markdown('<div class="status-message">⏳ Running inference... Please wait</div>', unsafe_allow_html=True)
             try:
                 annotated, crops, ship_counter, metadata = run_inference_with_crops(uploaded_image)
                 st.session_state.annotated_image = annotated
                 st.session_state.ship_crops = crops
                 st.session_state.ship_counter = ship_counter
                 st.session_state.metadata = metadata
+                st.success("✅ Processing complete!")
             except Exception as e:
-                st.warning(f"⚠️ Error during inference: {e}")
+                st.error(f"❌ Error during inference: {e}")
+        else:
+            st.warning("⚠️ Please upload an image first")
 
 # === Main content ===
-st.markdown('<div class="main-content">', unsafe_allow_html=True)
+st.markdown('<div class="main-content" style=height:0;width:0;>', unsafe_allow_html=True)
 
 if "annotated_image" not in st.session_state or st.session_state.annotated_image is None:
-    # === Bloc de présentation par défaut ===
-    # 1) Titre et image côte-à-côte
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.markdown(
-            "<h1 style='color: #004d99; font-size:31px; text-align:center;margin-right:0px; padding-top:20px;padding-right:10px'>"
-            "Start Your analysis"
-            "</h1>",
-            unsafe_allow_html=True
-        )
-        # Nouveau texte d'intro sous le titre
-        st.markdown(
-        "<p style='color: #333333; font-size:20px;  padding-top:10px;'>"
+    # === Default presentation block ===
+    st.markdown(
+        "<h1 style='color: #ffffff; font-size: 36px; font-weight: bold; margin-bottom: 20px;'>"
+        "🚀 Start Your Analysis"
+        "</h1>",
+        unsafe_allow_html=True
+    )
+    
+    st.markdown(
+        "<p style='color: #cccccc; font-size: 18px; line-height: 1.6; margin-bottom: 40px;'>"
         "Upload your SAR file and the system will automatically perform full processing and deliver a detailed, ready-to-export detection report."
         "</p>",
         unsafe_allow_html=True
     )
-        
+    
+    # Image display area
+    col1, col2 = st.columns([4, 1])
+    with col1:
+        st.image("assets/defaultcontent.png", use_container_width=True)
     with col2:
-        # Affiche ton placeholder
-        st.image("assets/defaultcontent.png", use_container_width =False,width=500)
+        st.markdown('<div class="process-steps">', unsafe_allow_html=True)
+    
+        def get_base64_image(image_path):
+            with open(image_path, "rb") as img_file:
+                return base64.b64encode(img_file.read()).decode()
 
-    # 2) En-dessous, l'image des fonctionnalités
-    st.markdown("<div style='margin-top:0px;'></div>", unsafe_allow_html=True)
-    st.image("assets/functionalities.png", use_container_width =True)
+        img_base64_1 = get_base64_image("assets/preprocessing.png")
+        img_base64_2 = get_base64_image("assets/boundingboxes.png")
+        img_base64_3 = get_base64_image("assets/subimages.png")
+        img_base64_4 = get_base64_image("assets/statisticalinsights.png")
+        
+        steps = [
+            {"icon": f'<img src="data:image/png;base64,{img_base64_1}" style="width:32px;height:32px;">', "title": "Preprocessing"},
+            {"icon": f'<img src="data:image/png;base64,{img_base64_2}" style="width:32px;height:32px;">', "title": "Bounding Boxes"},
+            {"icon": f'<img src="data:image/png;base64,{img_base64_3}" style="width:32px;height:32px;">', "title": "Sub-Images"},
+            {"icon": f'<img src="data:image/png;base64,{img_base64_4}" style="width:32px;height:32px;">', "title": "Statistical Insights"}
+        ]
+        
+        for step in steps:
+            st.markdown(
+                f"""
+                <div class="step-item">
+                    <div class="step-icon">{step['icon']}</div>
+                    <div class="step-title">{step['title']}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
 else:
-    st.markdown('<div class="result-row">', unsafe_allow_html=True)
-    st.markdown('<div class="image-container">', unsafe_allow_html=True)
-    st.image(st.session_state.annotated_image, caption="📦 Image globale prédit", use_column_width=False, width=500)
+    # Ship counter
+    st.markdown(f'<h1 style="color: #ffffff; font-size: 36px; font-weight: bold; margin-bottom: 20px;">🚢 Total Ships Detected: {st.session_state.ship_counter}</h1>', unsafe_allow_html=True)
+    
+    # Main image and download
+    st.image(st.session_state.annotated_image, use_container_width=True)
 
-    buf = io.BytesIO()
-    st.session_state.annotated_image.save(buf, format="PNG")
-    st.download_button("Download", data=buf.getvalue(), file_name="annotated_image.png", key="download_annotated")
-
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown(f'<div><span class="ship-number">Total Ships Detected: {st.session_state.ship_counter}</span></div>', unsafe_allow_html=True)
+    # Align the download button with the right edge of the image
+    col1, col2 = st.columns([8, 1])
+    with col2:
+        buf = io.BytesIO()
+        st.session_state.annotated_image.save(buf, format="PNG")
+        st.download_button("Download", data=buf.getvalue(), file_name="annotated_image.png", key="download_annotated")
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state.ship_counter > 0:
+        st.markdown("---")
+        st.markdown("### 🔍 Ship Details")
+        
         ship_names = [name for name, _ in st.session_state.ship_crops]
-        selected_ship = st.selectbox("🔎 Choose a ship to view", ship_names, key="ship_select")
+        selected_ship = st.selectbox("Choose a ship to view details", ship_names, key="ship_select")
+        
         if selected_ship:
-            crop_img = dict(st.session_state.ship_crops)[selected_ship]
-            st.image(crop_img, caption=selected_ship, use_column_width=False, width=500)
-            for entry in st.session_state.metadata:
-                if entry['ship_id'] == selected_ship:
-                    pixel_area = entry['pixel_area']
-                    surface_m2 = entry['surface_m2']
-                    break
-            st.markdown(f"**Pixel Area:** {pixel_area} px²  \
-**Surface:** {surface_m2} m²")
-            crop_buf = io.BytesIO()
-            crop_img.save(crop_buf, format="JPEG")
-            st.download_button("Download", data=crop_buf.getvalue(), file_name=f"{selected_ship}.jpg", key="download_crop")
+            
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                crop_img = dict(st.session_state.ship_crops)[selected_ship]
 
-        # Display metadata table after subimages
+                # Convert PIL image to Base64
+                buffer = io.BytesIO()
+                crop_img.save(buffer, format="PNG")
+                img_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+                # Display image with custom width using HTML & CSS
+                st.markdown(f"""
+                    <div style="text-align:center;">
+                        <img src="data:image/png;base64,{img_base64}" 
+                             style="width:350px; border-radius:10px; display:block; margin:auto;">
+                        <p style="text-align:center; color:#ffffff; font-size:16px;">📸 {selected_ship}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+
+            
+            with col2:
+                # Ship metadata
+                for entry in st.session_state.metadata:
+                    if entry['ship_id'] == selected_ship:
+                        pixel_area = entry['pixel_area']
+                        surface_m2 = entry['surface_m2']
+                        break
+                
+                st.markdown("### 📊 Ship Information")
+                st.markdown(f"""
+                - **Ship ID:** {selected_ship}
+                - **Pixel Area:** {pixel_area} px²
+                - **Surface:** {surface_m2} m²
+                """)
+                
+                # Download button for individual ship
+                crop_buf = io.BytesIO()
+                crop_img.save(crop_buf, format="JPEG")
+                st.download_button("📥 Download Ship", data=crop_buf.getvalue(), file_name=f"{selected_ship}.jpg", key="download_crop")
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # Metadata table
+        st.markdown("### 📋 Ship Characteristics Table")
         df = pd.DataFrame(st.session_state.metadata)
-        st.markdown("### 🧮 Ship Characteristics Table")
-        show_all = st.checkbox("See full table", value=False, key="show_table")
+        
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            show_all = st.checkbox("Show full table", value=False, key="show_table")
+        with col2:
+            st.markdown('<div style="margin-top: 20px;"></div>', unsafe_allow_html=True)
+        
         if show_all:
-            st.dataframe(df)
+            st.dataframe(df, use_container_width=True)
         else:
-            st.dataframe(df.head(5))
+            st.dataframe(df.head(5), use_container_width=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
