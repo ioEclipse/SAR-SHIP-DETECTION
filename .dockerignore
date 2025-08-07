@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.vscode/
+.env
+.dockerignore
+.git
+.gitignore
+sar_env/
+Homework/
+*.pdf
+*.docx
+*.ipynb
+YOLOv11m/

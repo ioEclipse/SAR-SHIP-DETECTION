@@ -1,16 +1,23 @@
 ## Project Overview
 
-The SAR Ship Detection Project (BlueGuard) is an AI-powered ship detection system using Synthetic Aperture Radar (SAR) data from Sentinel-1. The system integrates machine learning models for land-sea segmentation, ship detection (YOLOv11m), tracking algorithms, and AIS data integration. It offers multiple user interfaces through a Streamlit-based web application: raw SAR data processing, Google Earth Engine integration for map-based analysis, and comprehensive ship detection with metadata export capabilities.
+The SAR Ship Detection Project (BlueGuard) is an AI-powered ship detection system using Synthetic Aperture Radar (SAR) data from Sentinel-1. The system integrates machine learning models for land-sea segmentation, ship detection (YOLOv11m), tracking algorithms, and AIS data integration. It operates through a single Streamlit-based web application host that provides multiple interaction methods: Google Earth Engine area-of-interest selection, user SAR file upload, and future Jetson Nano integration for on-board processing.
+
+## New Architecture Overview:
+
+The system has been refactored to use a single-host architecture where Streamlit serves as both the frontend and backend. All core functionality is centralized in `FullApp/functions.py`, which is called directly by various Streamlit pages. This eliminates the need for separate hosted backend services.
 
 ## Core System Components and Workflow:
 
 ### 1. Data Acquisition and Management
-* **Purpose**: Handle the ingestion of SAR imagery from various sources.
-* **Sources**:
-    * Copernicus API (based on user-selected coordinates and time range from a map).
-    * User-uploaded SAR images (.tiff, .png, .jpeg).
-    * Preloaded raw SAR image files (for Jetson Nano).
-* **Key Operations**: Data download, file type handling, temporary storage management (local server, isolated sessions, cleanup).
+* **Purpose**: Handle the ingestion of SAR imagery and AIS data from various sources.
+* **SAR Sources**:
+    * Google Earth Engine integration (user-selected coordinates and time range from interactive map)
+    * User-uploaded SAR images (.tiff, .png, .jpeg) with timeframe specification
+    * Future: Jetson Nano on-board processing with minimal downlink transmission
+* **AIS Sources**:
+    * NOAA 2024 AIS data (daily zip folders, downloaded on-demand)
+    * Automatic cleanup of cached AIS data to manage storage
+* **Key Operations**: Data download, file type handling, temporary storage management, AIS data caching and cleanup
 
 ### 2. Preprocessing Subsystem
 * **Purpose**: Transform raw SAR images to enhance features, reduce noise, and prepare for machine learning inference.
@@ -33,12 +40,14 @@ The SAR Ship Detection Project (BlueGuard) is an AI-powered ship detection syste
 
 ### 4.1 AIS Integration Module
 * **Purpose**: Integrate Automatic Identification System (AIS) data with SAR detections to identify AIS-equipped vs non-AIS vessels (dark vessels).
-* **Data Source**: Real-time AIS data from aisstream.io API via WebSocket connection.
+* **Data Source**: NOAA 2024 AIS historical data (daily zip archives, downloaded on-demand based on user-specified timeframe).
 * **Key Functions**:
-    * Spatial-temporal matching between SAR detections and AIS transmissions
+    * On-demand download of relevant AIS data based on spatial and temporal requirements
+    * Spatial-temporal matching between SAR detections and AIS records
     * Classification of ships as AIS-equipped or potential dark vessels
     * Vessel information enrichment (MMSI, vessel name, type, dimensions)
-* **Implementation**: `ais_detector.py` - AISDetector class with real-time streaming capabilities
+    * Automatic cleanup of cached AIS files to manage storage
+* **Implementation**: Functions in `FullApp/functions.py` for AIS data management, download, and matching
 
 ### 5. Output Generation and Visualization
 * **Purpose**: Compile and present results to the user through various interfaces.
@@ -50,9 +59,10 @@ The SAR Ship Detection Project (BlueGuard) is an AI-powered ship detection syste
     * Comprehensive ship characteristics table with metadata.
 * **User Interfaces (Streamlit-based BlueGuard Dashboard)**:
     * **Home Interface** (`FullApp/home.py`): Landing page with branding and navigation.
-    * **Raw SAR Processing** (`FullApp/pages/app.py`): Upload interface for processing user-provided SAR images.
-    * **Google Earth Engine Integration** (`FullApp/pages/earthEngine.py`): Interactive map for area-of-interest selection.
-    * **Main Selection** (`FullApp/pages/main.py`): Choice between raw data processing and GEE integration.
+    * **Google Earth Engine Integration** (`FullApp/pages/earthEngine.py`): Interactive map for area-of-interest selection with automatic SAR and AIS data download.
+    * **SAR File Upload** (`FullApp/pages/app.py`): Upload interface for user-provided SAR images with timeframe specification for AIS matching.
+    * **Main Selection** (`FullApp/pages/main.py`): Choice between Google Earth Engine integration and SAR file upload.
+    * **Future: Jetson Nano Integration**: On-board processing with minimal data transmission for remote deployment.
 
 ### 6. System Management and User Experience
 * **Queue Management**: Implement a FIFO queue for incoming processing requests to manage server load. Provide user feedback on queue position and estimated wait time.
@@ -67,30 +77,28 @@ The SAR Ship Detection Project (BlueGuard) is an AI-powered ship detection syste
 
 ### Completed Components
 
-1. **Core System Structure** (`main.py`):
-   * `SARShipDetectionSystem` class with modular architecture
-   * `ConfigurationManager`, `DataHandler`, `ShipDetector`, `AISDetector` classes
-   * `OutputGenerator`, `ProcessingQueue`, `StreamlitInterface` classes
-   * Functional image processing pipeline with noise reduction and land masking
-
-2. **Preprocessing Pipeline** (`preprocessing/` directory):
+1. **Preprocessing Pipeline** (`preprocessing/` directory):
    * `noise_filter.py`: Gamma correction and alpha-based enhancement
    * `Land_masking.py`: Advanced land-sea segmentation with multiple algorithms
    * `whole_preprocessing.py`: Complete preprocessing workflow
    * `Yan_segmentation.py`: Additional segmentation capabilities
 
-3. **AIS Integration** (`ais_detector.py`):
-   * Complete AISDetector class with real-time streaming
-   * WebSocket connection to aisstream.io API
-   * Spatial-temporal matching algorithms
+2. **Legacy AIS Integration** (`ais_detector.py`):
+   * Previous real-time streaming implementation (deprecated)
+   * Reference implementation for spatial-temporal matching algorithms
    * Data structures for AIS records and SAR detections
-   * Command-line testing interface
+
+3. **New Core Backend** (`FullApp/functions.py`):
+   * **Status**: In Development
+   * **Purpose**: Centralized backend functionality called directly by Streamlit pages
+   * **AIS Functions**: NOAA 2024 data download, caching, and matching (to be implemented)
+   * **Integration**: Direct function calls from Streamlit pages without separate API layer
 
 4. **Web Application** (`FullApp/` directory):
    * `home.py`: BlueGuard landing page with branding
    * `pages/main.py`: Selection interface for processing modes
-   * `pages/app.py`: Complete raw SAR processing interface
-   * `pages/earthEngine.py`: Google Earth Engine integration
+   * `pages/app.py`: SAR file upload interface (updated for timeframe specification)
+   * `pages/earthEngine.py`: Google Earth Engine integration with area-of-interest selection
    * `pages/infer2.py`: Inference module with YOLOv11m integration
 
 5. **Inference System**:
@@ -98,60 +106,125 @@ The SAR Ship Detection Project (BlueGuard) is an AI-powered ship detection syste
    * `infer2.py`: Complete inference pipeline with crop extraction
    * Integration with Roboflow's inference SDK
 
-### File Structure
+### Complete File Structure
 ```
-├── main.py                     # Main system orchestrator
-├── ais_detector.py            # AIS integration module
-├── config.json                # System configuration
-├── requirements.txt           # Python dependencies
-├── InfSlicer.py              # Inference coordination
-├── preprocessing/             # Image preprocessing modules
-│   ├── noise_filter.py
-│   ├── Land_masking.py
-│   ├── whole_preprocessing.py
-│   └── Yan_segmentation.py
-├── tracking/                  # Tracking algorithms (development)
-├── FullApp/                   # Streamlit web application
-│   ├── home.py               # Landing page
-│   ├── requirements.txt      # Web app dependencies
-│   ├── assets/               # Images, logos, backgrounds
-│   └── pages/
-│       ├── main.py          # Mode selection
-│       ├── app.py           # Raw data processing
-│       ├── earthEngine.py   # GEE integration
-│       └── infer2.py        # Inference module
-└── YOLOv11m/                 # Model artifacts and metrics
-    └── Graphs/               # Training metrics
+SAR-SHIP-DETECTION/
+├── .dockerignore                                    # Docker ignore file
+├── .env                                            # Environment variables file
+├── .gitignore                                      # Git ignore file
+├── .vscode/                                        # VSCode configuration
+│   └── settings.json                               # VSCode settings
+├── BlueGuard_Documentation_FirstDraft.pdf         # Project documentation
+├── CLAUDE.md                                       # Claude project instructions
+├── Dockerfile                                      # Docker container configuration
+├── docker-compose.yml                             # Docker compose configuration
+├── LICENSE                                         # Project license
+├── README.md                                       # Project README
+├── ais_detector.py                                 # Legacy AIS detection module
+├── config.json                                     # System configuration
+├── core_api.py                                     # Core API module (depreciated)
+├── InfSlicer.py                                    # Inference coordination
+├── requirements.txt                                # Python dependencies
+├── test_ais.py                                     # AIS testing module
+├── __pycache__/                                    # Python cache directory
+│   └── ais_detector.cpython-312.pyc              # Compiled Python file
+│
+├── FullApp/                                        # Streamlit web application (primary system)
+│   ├── Test_image.png                             # Test image file
+│   ├── functions.py                               # Core backend functions (NEW - centralized functionality)
+│   ├── home.py                                    # Landing page
+│   ├── requirements.txt                           # Web app dependencies
+│   ├── ship_metadata.json                        # Ship metadata file
+│   ├── assets/                                    # Web app assets
+│   │   ├── boundingboxes.png                     # UI asset - bounding box illustration
+│   │   ├── defaultcontent.png                    # Default content placeholder
+│   │   ├── engine1.png                           # Google Earth Engine illustration
+│   │   ├── home_background.png                   # Landing page background
+│   │   ├── logo.png                              # BlueGuard logo
+│   │   ├── preprocessing.png                     # Preprocessing workflow illustration
+│   │   ├── raw_img.png                           # Raw image example
+│   │   ├── statisticalinsights.png               # Statistics illustration
+│   │   └── subimages.png                         # Subimages/crop illustration
+│   └── pages/                                     # Streamlit pages
+│       ├── app.py                                 # SAR file upload interface
+│       ├── earthEngine.py                        # Google Earth Engine integration
+│       └── main.py                                # Mode selection page
+│
+├── Homework/                                       # Development/test directory
+│   └── Homework.py                                # Development script
+│
+├── preprocessing/                                  # Image preprocessing modules
+│   ├── __init__.py                                # Package initialization
+│   ├── Land_masking.py                           # Advanced land-sea segmentation
+│   ├── noise_filter.py                           # Gamma correction and alpha enhancement
+│   ├── whole_preprocessing.py                     # Complete preprocessing workflow
+│   ├── Yan_segmentation.py                       # Additional segmentation capabilities
+│   └── __pycache__/                              # Python cache directory
+│       ├── __init__.cpython-312.pyc             # Compiled Python file
+│       ├── Land_masking.cpython-312.pyc          # Compiled Python file
+│       └── noise_filter.cpython-312.pyc          # Compiled Python file
+│
+├── tracking/                                       # Tracking algorithms (development)
+│   ├── __init__.py                                # Package initialization
+│   ├── image_preprocessing.py                     # Image preprocessing for tracking
+│   ├── Land_masking.py                           # Land masking for tracking
+│   ├── noise_filter.py                           # Noise filtering for tracking
+│   ├── processed_image.jpg                       # Processed image example
+│   ├── wake_test.jpg                             # Wake detection test image
+│   ├── wakedet_ver1.ipynb                        # Wake detection notebook
+│   └── __pycache__/                              # Python cache directory
+│       ├── Land_masking.cpython-313.pyc          # Compiled Python file
+│       └── noise_filter.cpython-313.pyc          # Compiled Python file
+│
+├── YOLOv11m/                                      # Model artifacts and metrics
+│   ├── Metrics-YOLOv11m.docx                     # Model performance metrics document
+│   └── Graphs/                                   # Training metrics visualizations
+│       ├── BoxF1_curve.png                       # F1 score curve
+│       ├── BoxPR_curve.png                       # Precision-Recall curve
+│       ├── BoxP_curve.png                        # Precision curve
+│       ├── BoxR_curve.png                        # Recall curve
+│       ├── confusion_matrix.png                  # Confusion matrix
+│       └── confusion_matrix_normalized.png       # Normalized confusion matrix
+│
+└── sar_env/                                       # Python virtual environment
+    └── [virtual environment contents]             # Complete Python environment
 ```
 
-## AIS Integration Testing
+### File Structure Notes
+* **Missing Referenced Files**: The documentation previously referenced `FullApp/pages/infer2.py` as an inference module, but this file does not exist in the current structure
+* **Docker Support**: Full containerization setup with Dockerfile, docker-compose.yml, and .dockerignore
+* **Development Environment**: Includes VSCode configuration, virtual environment, and Python cache files
+* **Asset Completeness**: All required assets are present in `FullApp/assets/` including additional UI illustrations
+* **Duplicate Modules**: Some preprocessing modules appear in both `preprocessing/` and `tracking/` directories for specialized use cases
+* **Git Integration**: Complete git repository with .git/ directory (not shown) containing full version history
 
-The AIS integration module can be tested independently using the aisstream.io API:
+## AIS Data Management (NOAA 2024)
 
-### Prerequisites
-* Get free API key from https://aisstream.io/
-* Install dependencies: `websockets`, `requests`
+The new AIS integration uses NOAA's historical AIS data from 2024, stored in daily zip archives. The system downloads data on-demand based on user requirements.
 
-### Test Usage
+### AIS Data Characteristics
+* **Source**: NOAA Marine Cadastre AIS 2024 data
+* **Format**: Daily zip files containing CSV data
+* **Coverage**: US coastal waters and inland waterways
+* **Size**: Large files requiring on-demand download and cleanup
 
-**Command Line Test:**
-```bash
-python ais_detector.py --test-api YOUR_API_KEY
-```
+### AIS Function Requirements (FullApp/functions.py)
+The following AIS-related functions need to be implemented:
 
-**Python Function Test:**
-```python
-from ais_detector import test_aisstream_api
+1. **AIS Data Download**
+   * Download specific date ranges of AIS data
+   * Handle NOAA API endpoints and zip file extraction
+   * Spatial filtering based on area-of-interest
 
-# Test with default San Francisco Bay area
-test_aisstream_api('your_api_key_here')
+2. **AIS Data Caching and Cleanup**
+   * Temporary storage management
+   * Automatic cleanup when storage limits reached
+   * Cache efficiency optimization
 
-# Test with custom geographic area (min_lat, min_lon, max_lat, max_lon)
-bbox = (40.0, -74.5, 41.0, -73.5)  # New York Harbor
-test_aisstream_api('your_api_key_here', bbox)
-```
-
-The test function collects AIS data for 1 minute and displays sample vessel records including MMSI, position, speed, course, and vessel information.
+3. **AIS-SAR Matching**
+   * Spatial-temporal correlation between SAR detections and AIS records
+   * Dark vessel identification (ships not transmitting AIS)
+   * Confidence scoring for matches
 
 ## First Time Setup
 
@@ -295,12 +368,15 @@ pip install black flake8 pytest  # Code formatting and testing
 ```
 
 ### Asset Requirements
-Ensure the following assets exist in `FullApp/assets/`:
+The following assets exist in `FullApp/assets/`:
 * `logo.png`: BlueGuard logo
 * `home_background.png`: Landing page background
-* `ship.png`: Ship icon
 * `engine1.png`: Google Earth Engine illustration
 * `defaultcontent.png`: Default content placeholder
-* `functionalities.png`: Features overview
+* `boundingboxes.png`: UI asset - bounding box illustration
+* `preprocessing.png`: Preprocessing workflow illustration
+* `raw_img.png`: Raw image example
+* `statisticalinsights.png`: Statistics illustration
+* `subimages.png`: Subimages/crop illustration
 
-If assets are missing, the application will show error messages for missing files.
+All required assets are present and the application should display correctly without missing file errors.
