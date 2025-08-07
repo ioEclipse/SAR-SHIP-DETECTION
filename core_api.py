@@ -16,6 +16,7 @@ from preprocessing.Land_masking import process_image, compare_images
 import cv2
 import numpy as np
 
+
 class ConfigurationManager:
     """Handles system parameters and model configurations."""
     
@@ -26,7 +27,13 @@ class ConfigurationManager:
         pass
     
     def get_model_config(self) -> Dict[str, Any]:
-        pass
+        
+
+        rf = rf(api_key="ROBOFLOW_API_KEY")
+
+        
+
+
     
     def get_preprocessing_config(self) -> Dict[str, Any]:
         pass
