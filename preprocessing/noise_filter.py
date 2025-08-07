@@ -9,7 +9,7 @@ def gamma_correction(image, gamma=1.0):
     # Apply gamma correction using LUT
     return cv2.LUT(image, table)
 
-def apply_correction(image,times,image_path="Path_unknown"):
+def apply_correction(image,times=1,image_path="Path_unknown"):
     
     
     if image is None:
