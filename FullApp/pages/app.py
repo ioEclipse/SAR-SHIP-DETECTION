@@ -5,7 +5,7 @@ import pandas as pd
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from FullApp.functions import *
+from functions import *
 from streamlit_option_menu import option_menu
 
 
