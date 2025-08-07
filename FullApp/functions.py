@@ -1,4 +1,5 @@
 import json
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from inference_sdk import InferenceHTTPClient
 from tempfile import NamedTemporaryFile
@@ -79,4 +80,36 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
         json.dump(metadata, f, indent=4)
 
     return annotated, crops, ship_counter, metadata
+
+def get_Cords_of_ship(bounding_box, resolution_m_per_px,img_longitude,img_latitude):
+    x,y,wx,wy,= bounding_box
+    center_x = (x + wx) / 2
+    center_y = (y + wy) / 2
+    mx= center_x * resolution_m_per_px
+    my = center_y * resolution_m_per_px
+    latitude = img_latitude + (my / 111133)  # Approximation for latitude
+    longtitude = img_longitude + (mx / (111188 * np.cos(np.radians(latitude))))  # Approximation for longitude
+    
+    return latitude, longtitude
+
+def get_nearest_ship_from_ais(ships, ais_data,min_distance=1000):
+    nearest_ship = np.zeros(len(ships), dtype=int)
+    
+    print(len(ships), len(ais_data))
+    for s in range(0,len(ships)):
+        nearest_ais = 10000
+        ship_coords = (ships[s][0], ships[s][1])
+        for i in range(0,len(ais_data)):
+            ais_coords = (ais_data[i][0], ais_data[i][1])
+            distance = np.linalg.norm(np.array(ship_coords) - np.array(ais_coords))
+            print(distance)
+            if distance < nearest_ais:
+                if distance < min_distance:
+                    nearest_ais = distance
+                    nearest_ship[s] = i
+                else: 
+                    nearest_ship[s] = None
+    
+    return nearest_ship
+    
 
