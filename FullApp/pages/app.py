@@ -5,7 +5,7 @@ import pandas as pd
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from infer2 import run_inference_with_crops
+from FullApp.functions import *
 from streamlit_option_menu import option_menu
 
 
