@@ -21,6 +21,7 @@ background_data = get_base64_image("assets/home_background.png")
 st.markdown(
     f"""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
     .stApp {{
         background-image: url("data:image/png;base64,{background_data}");
         background-size: cover;
@@ -50,6 +51,9 @@ st.markdown(
         max-width: 400px;
         margin-bottom: 1.5em;
     }}
+    #info_text{{
+    font-family: "Kanit", sans-serif;
+    }}
     div.stButton > button {{
     background-color: #1e90ff;
     border: 1px solid #1e90ff;
@@ -62,8 +66,9 @@ st.markdown(
     }}
 
     div.stButton > button:hover {{
-        background-color: white !important;
-        color: black !important;
+        background-color: #3D90D7 !important;
+        color: white !important;
+        border: 1px solid #3D90D7;
     }}
     </style>
     """,
@@ -77,10 +82,10 @@ st.markdown('<div class="overlay">', unsafe_allow_html=True)
 st.markdown(
     f"""
     <div class="header" style="display:flex;">
-        <img src="data:image/png;base64,{logo_data}" style="height: 100px; width:100px;margin-top:18px">
-        <h1 style="color:#1e90ff;">BlueGuard</h1>
+        <img src="data:image/png;base64,{logo_data}" style="height: 6%; width:6%;">
+        <h1 style="color:#1e90ff;font-size:7vh;">BlueGuard</h1>
     </div>
-    <p style="color:white;margin-top:50px;margin-bottom:50px;font-size: 30px;">
+    <p style="color:white;margin-top:50px;margin-bottom:50px;font-size: 30px;" id = "info_text">
         AI-powered ship detection<br>using Sentinel-1 SAR data
     </p>
     """,
