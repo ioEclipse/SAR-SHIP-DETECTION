@@ -22,17 +22,68 @@ This project is still a Work In Progress, so you may see a few placeholders.
 
 ## 💻 Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+The project supports two setup methods: **Docker (Recommended)** for production-ready deployment and **Local Installation** for development.
 
-### Prerequisites
+### 🐳 Quick Start with Docker (Recommended)
 
-  * Python 3.8+
-  * Git
-  * NVIDIA GPU (for training and optimized inference)
-  * NVIDIA Jetson Nano (for edge deployment testing)
-  * Conda or `venv` for virtual environment management
+Docker provides a consistent, isolated environment that eliminates dependency conflicts.
 
-### Installation
+#### Prerequisites
+* Docker Engine (20.10.0+) and Docker Compose (2.0.0+)
+* Git
+
+#### Installation & Launch
+```bash
+# Clone the repository
+git clone https://github.com/ioEclipse/SAR-SHIP-DETECTION.git
+cd SAR-SHIP-DETECTION
+
+# Build and start the application
+docker-compose up -d --build
+
+# Access the application at http://localhost:8501
+```
+
+#### Docker Development Commands
+```bash
+# View logs
+docker-compose logs -f
+
+# Access container shell for debugging
+docker-compose exec web bash
+
+# Stop gracefully
+docker-compose down
+
+# Rebuild after code changes to requirements
+docker-compose up -d --build
+```
+
+#### Docker Troubleshooting
+```bash
+# Check container status
+docker-compose ps
+
+# View detailed logs
+docker-compose logs web
+
+# Complete rebuild
+docker-compose down --rmi local
+docker-compose up -d --build
+```
+
+### 🔧 Local Installation (Development)
+
+For developers who need direct Python environment access.
+
+#### Prerequisites
+* Python 3.8+
+* Git
+* NVIDIA GPU (for training and optimized inference)
+* NVIDIA Jetson Nano (for edge deployment testing)
+* Conda or `venv` for virtual environment management
+
+#### Installation Steps
 
 1.  **Clone the repository:**
 
@@ -50,7 +101,7 @@ These instructions will get you a copy of the project up and running on your loc
 
     *(Alternatively, using Conda: `conda create -n sardetection python=3.8` then `conda activate sardetection`)*
 
-3.  **Install dependencies: (Currently missing)**
+3.  **Install dependencies:**
 
     ```bash
     pip install -r requirements.txt
@@ -58,7 +109,14 @@ These instructions will get you a copy of the project up and running on your loc
 
     *Ensure you have the correct NVIDIA drivers and CUDA toolkit installed for GPU acceleration, as specified in the documentation.*
 
-4.  **Download pre-trained models:**
+4.  **Run the application:**
+    ```bash
+    cd FullApp
+    streamlit run home.py
+    ```
+    Access at `http://localhost:8501`
+
+5.  **Download pre-trained models:**
     *Detailed instructions for downloading and placing pre-trained model weights will be provided here.*
 
 ## 📦 Application
@@ -69,7 +127,19 @@ The `FullApp` directory encapsulates a comprehensive Synthetic Aperture Radar (S
 
 ### 🛠️ Environment Setup
 
-To ensure a clean, reproducible, and isolated environment for running the application, follow these steps:
+Choose your preferred setup method:
+
+#### Docker Setup (Recommended)
+```bash
+# One-time setup - builds and starts the application
+docker-compose up -d --build
+
+# Application available at http://localhost:8501
+# No additional environment configuration needed
+```
+
+#### Local Environment Setup
+To ensure a clean, reproducible, and isolated environment for running the application locally:
 
 1. **Create a Virtual Environment**  
    Create a Python virtual environment (e.g., named `.venv`) to isolate dependencies and avoid conflicts with system-wide packages:
@@ -96,17 +166,31 @@ To ensure a clean, reproducible, and isolated environment for running the applic
    pip install -r requirements.txt
    ```
 
-   This command installs dependencies such as `streamlit`, `pandas`, and other libraries essential for the application’s functionality.
+   This command installs dependencies such as `streamlit`, `pandas`, and other libraries essential for the application's functionality.
 
 ### 🚀 Launching the Application
 
+#### Docker Launch (Recommended)
+```bash
+# Start the application (builds automatically if needed)
+docker-compose up -d
+
+# View logs (optional)
+docker-compose logs -f
+
+# Access at http://localhost:8501
+```
+
+#### Local Launch
 Navigate to the `FullApp` directory and launch the Streamlit application by running the main entry point:
 
 ```bash
+# Ensure virtual environment is activated first
+cd FullApp
 streamlit run home.py
 ```
 
-This command starts the SAR Ship Detection Dashboard, which opens in your default web browser (e.g., at `http://localhost:8501`). Ensure the virtual environment is activated before executing this command.
+This command starts the SAR Ship Detection Dashboard, which opens in your default web browser (e.g., at `http://localhost:8501`).
 
 ### 📂 Directory Structure and File Descriptions
 

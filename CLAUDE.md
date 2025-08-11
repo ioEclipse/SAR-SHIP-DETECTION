@@ -226,13 +226,132 @@ The following AIS-related functions need to be implemented:
    * Dark vessel identification (ships not transmitting AIS)
    * Confidence scoring for matches
 
-## First Time Setup
+## Setup Options
 
-### Prerequisites
+The project supports two setup methods: **Docker (Recommended)** for consistent, isolated deployment, and **Local Installation** for development purposes.
+
+### Option 1: Docker Setup (Recommended)
+
+Docker provides a consistent, isolated environment that eliminates dependency conflicts and ensures reproducible deployments across different systems.
+
+#### Prerequisites
+* Docker Engine (20.10.0 or higher)
+* Docker Compose (2.0.0 or higher)
+* Git (for cloning the repository)
+
+#### Quick Start with Docker
+
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd SAR-SHIP-DETECTION
+   ```
+
+2. **Build and Start the Application**:
+   ```bash
+   # Build and start the container in detached mode
+   docker-compose up -d --build
+   ```
+   
+   This command will:
+   - Build the Docker image with all dependencies
+   - Start the Streamlit web application
+   - Make it available at `http://localhost:8501`
+
+3. **Access the Application**:
+   Open your web browser and navigate to `http://localhost:8501`
+
+#### Docker Development Workflow
+
+**Starting the Application**:
+```bash
+# Start in detached mode (runs in background)
+docker-compose up -d
+
+# OR start with logs visible (useful for debugging)
+docker-compose up
+```
+
+**Viewing Logs**:
+```bash
+# View real-time logs
+docker-compose logs -f
+
+# View logs for specific service
+docker-compose logs -f web
+```
+
+**Making Code Changes**:
+The Docker setup includes volume mounting, so code changes are automatically reflected:
+```bash
+# No rebuild needed - changes are automatically picked up
+# Just refresh your browser at http://localhost:8501
+```
+
+**Rebuilding After Dependency Changes**:
+```bash
+# Rebuild if you modify requirements.txt or Dockerfile
+docker-compose up -d --build
+```
+
+**Accessing the Container Shell**:
+```bash
+# Access container for debugging or manual operations
+docker-compose exec web bash
+
+# OR for a quick command
+docker-compose exec web python --version
+```
+
+**Stopping the Application**:
+```bash
+# Stop containers (preserves data)
+docker-compose stop
+
+# Stop and remove containers (clean shutdown)
+docker-compose down
+
+# Stop, remove containers, and clean up images
+docker-compose down --rmi local
+```
+
+#### Docker Troubleshooting
+
+**Port Already in Use**:
+```bash
+# If port 8501 is busy, modify docker-compose.yml:
+ports:
+  - "8502:8501"  # Use port 8502 instead
+```
+
+**Container Won't Start**:
+```bash
+# Check container status
+docker-compose ps
+
+# View detailed logs
+docker-compose logs web
+
+# Rebuild completely
+docker-compose down --rmi local
+docker-compose up -d --build
+```
+
+**Permission Issues (Linux/macOS)**:
+```bash
+# Fix ownership issues
+sudo chown -R $USER:$USER .
+```
+
+### Option 2: Local Installation (Development)
+
+For developers who need direct access to the Python environment or want to modify dependencies.
+
+#### Prerequisites
 * Python 3.8 or higher
 * Git (for cloning the repository)
 
-### Installation Steps
+#### Installation Steps
 
 1. **Clone or Pull the Repository**:
    ```bash
@@ -316,7 +435,18 @@ The following AIS-related functions need to be implemented:
 
 ### Running the Application
 
-1. **Web Application (Recommended)**:
+#### Docker (Recommended)
+```bash
+# Start the application
+docker-compose up -d
+
+# Access at http://localhost:8501
+# Logs: docker-compose logs -f
+# Stop: docker-compose down
+```
+
+#### Local Installation
+1. **Web Application**:
    ```bash
    cd FullApp
    streamlit run home.py
