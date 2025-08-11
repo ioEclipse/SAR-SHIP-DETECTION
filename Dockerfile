@@ -19,5 +19,8 @@ COPY config.json ./config.json
 # Expose port for Streamlit
 EXPOSE 8501
 
+# Set working directory to FullApp for correct relative paths
+WORKDIR /app/FullApp
+
 # Default command
-CMD ["streamlit", "run", "FullApp/pages/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]

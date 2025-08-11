@@ -497,6 +497,67 @@ For development, install additional tools:
 pip install black flake8 pytest  # Code formatting and testing
 ```
 
+## Streamlit Development Conventions
+
+**IMPORTANT**: Contributors must follow these Streamlit conventions to ensure proper navigation and Docker compatibility.
+
+### File Structure Convention
+The Streamlit application follows this **required** structure:
+
+```
+FullApp/
+├── main.py                    # Main entry point (required at root level)
+├── home.py                    # Optional: Landing page entry point
+├── assets/                    # Static assets (images, CSS, etc.)
+├── pages/                     # Additional pages directory
+│   ├── app.py                # SAR upload interface
+│   ├── earthEngine.py        # Google Earth Engine integration
+│   └── [other_pages].py      # Additional application pages
+└── functions.py               # Core backend functions
+```
+
+### Navigation Rules
+
+1. **Main Entry Point**: Must be at `FullApp/main.py` (NOT in pages/ directory)
+2. **Page Navigation**: Use `st.switch_page()` with these path patterns:
+   - From main.py → pages: `st.switch_page("pages/app.py")`
+   - From home.py → main: `st.switch_page("main.py")`
+   - Between pages: `st.switch_page("pages/other_page.py")`
+
+3. **Asset References**: Use relative paths from FullApp/ root:
+   - ✅ Correct: `"assets/logo.png"`
+   - ❌ Wrong: `"../assets/logo.png"` or `"FullApp/assets/logo.png"`
+
+### Docker Working Directory
+The Docker container sets `WORKDIR /app/FullApp`, meaning:
+- All relative paths are resolved from `/app/FullApp/`
+- Asset references work correctly with `"assets/filename.png"`
+- Page navigation follows Streamlit's standard conventions
+
+### Why This Structure?
+- **Streamlit Standard**: Follows official Streamlit multipage app conventions
+- **Docker Compatibility**: Ensures proper file path resolution in containers
+- **Navigation Reliability**: Prevents `StreamlitAPIException` page not found errors
+- **Asset Loading**: Consistent relative path resolution for images and resources
+
+### Common Mistakes to Avoid
+1. ❌ Putting main entry point inside `pages/` directory
+2. ❌ Using absolute paths for assets: `"/app/FullApp/assets/logo.png"`
+3. ❌ Incorrect navigation paths: `st.switch_page("../main.py")`
+4. ❌ Running Streamlit from wrong working directory in Docker
+
+### Testing Navigation
+Before committing changes that affect navigation:
+```bash
+# Test locally
+cd FullApp
+streamlit run main.py
+
+# Test in Docker
+docker compose up -d --build
+# Verify navigation works at http://localhost:8501
+```
+
 ### Asset Requirements
 The following assets exist in `FullApp/assets/`:
 * `logo.png`: BlueGuard logo
