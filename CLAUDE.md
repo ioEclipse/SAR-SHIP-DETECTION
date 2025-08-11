@@ -571,3 +571,39 @@ The following assets exist in `FullApp/assets/`:
 * `subimages.png`: Subimages/crop illustration
 
 All required assets are present and the application should display correctly without missing file errors.
+
+## System Architecture
+
+The BlueGuard system architecture follows a containerized single-host design:
+
+```
+                     +------------------------+
+                     |  User's Web Browser    |
+                     |  (Accesses via URL)    |
+                     +-----------+------------+
+                                |
+                                v
+     +------------------------------------------------------+
+     |   Docker Container                                   |
+     |                                                      |
+     |  +----------------------+                            |
+     |  | Streamlit Frontend   |  <-- Handles user requests |
+     |  +----------+-----------+                            |
+     |             |                                        |
+     |  +----------v-----------+                            |
+     |  | Backend Logic        |  <-- Downloads AIS/SAR,    |
+     |  | (Python)             |      imports to InfluxDB,  |
+     |  |                      |      queries data          |
+     |  +----------+-----------+                            |
+     |             |                                        |
+     |  +----------v-----------+                            |
+     |  |      (local DB)      |  <-- Stores AIS temp data  |
+     |  +----------------------+                            |
+     |                                                      |
+     +------------------------------------------------------+
+```
+
+### Architecture Benefits
+* **Single Container**: Streamlined deployment with all components in one Docker container
+* **Local Processing**: Eliminates external API dependencies for core functionality
+* **Scalable Storage**: Efficient handling of large-scale AIS datasets with automatic cleanup 
