@@ -10,7 +10,10 @@ from streamlit_option_menu import option_menu
 
 
 # === Fonction pour charger le logo ===
-def load_logo_base64(path="assets/logo.png"):
+def load_logo_base64(path=None):
+    if path is None:
+        assets_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
+        path = os.path.join(assets_path, "logo.png")
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 

@@ -502,14 +502,14 @@ pip install black flake8 pytest  # Code formatting and testing
 **IMPORTANT**: Contributors must follow these Streamlit conventions to ensure proper navigation and Docker compatibility.
 
 ### File Structure Convention
-The Streamlit application follows this **required** structure:
+The Streamlit application follows this **current** structure:
 
 ```
 FullApp/
-├── main.py                    # Main entry point (required at root level)
-├── home.py                    # Optional: Landing page entry point
+├── home.py                    # Landing page entry point (application start point)
 ├── assets/                    # Static assets (images, CSS, etc.)
 ├── pages/                     # Additional pages directory
+│   ├── main.py               # Mode selection page (moved from root)
 │   ├── app.py                # SAR upload interface
 │   ├── earthEngine.py        # Google Earth Engine integration
 │   └── [other_pages].py      # Additional application pages
@@ -518,10 +518,11 @@ FullApp/
 
 ### Navigation Rules
 
-1. **Main Entry Point**: Must be at `FullApp/main.py` (NOT in pages/ directory)
-2. **Page Navigation**: Use `st.switch_page()` with these path patterns:
-   - From main.py → pages: `st.switch_page("pages/app.py")`
-   - From home.py → main: `st.switch_page("main.py")`
+1. **Application Entry Point**: `FullApp/home.py` serves as the landing page
+2. **Main Selection Page**: Located at `FullApp/pages/main.py` (moved from root level)
+3. **Page Navigation**: Use `st.switch_page()` with these path patterns:
+   - From home.py → main: `st.switch_page("pages/main.py")`
+   - From pages/main.py → other pages: `st.switch_page("pages/app.py")`
    - Between pages: `st.switch_page("pages/other_page.py")`
 
 3. **Asset References**: Use relative paths from FullApp/ root:
@@ -541,17 +542,17 @@ The Docker container sets `WORKDIR /app/FullApp`, meaning:
 - **Asset Loading**: Consistent relative path resolution for images and resources
 
 ### Common Mistakes to Avoid
-1. ❌ Putting main entry point inside `pages/` directory
-2. ❌ Using absolute paths for assets: `"/app/FullApp/assets/logo.png"`
-3. ❌ Incorrect navigation paths: `st.switch_page("../main.py")`
-4. ❌ Running Streamlit from wrong working directory in Docker
+1. ❌ Using absolute paths for assets: `"/app/FullApp/assets/logo.png"`
+2. ❌ Incorrect navigation paths: `st.switch_page("../main.py")` or `st.switch_page("main.py")`
+3. ❌ Running Streamlit from wrong working directory in Docker
+4. ❌ Confusing entry points: `home.py` is the landing page, `pages/main.py` is the mode selection
 
 ### Testing Navigation
 Before committing changes that affect navigation:
 ```bash
 # Test locally
 cd FullApp
-streamlit run main.py
+streamlit run home.py
 
 # Test in Docker
 docker compose up -d --build
