@@ -230,7 +230,7 @@ The following AIS-related functions need to be implemented:
 
 The project supports two setup methods: **Docker (Recommended)** for consistent, isolated deployment, and **Local Installation** for development purposes.
 
-### Option 1: Docker Setup (Recommended)
+### Docker Setup
 
 Docker provides a consistent, isolated environment that eliminates dependency conflicts and ensures reproducible deployments across different systems.
 
@@ -250,7 +250,7 @@ Docker provides a consistent, isolated environment that eliminates dependency co
 2. **Build and Start the Application**:
    ```bash
    # Build and start the container in detached mode
-   docker-compose up -d --build
+   docker compose up -d --build
    ```
    
    This command will:
@@ -342,46 +342,6 @@ docker compose up -d --build
 # Fix ownership issues
 sudo chown -R $USER:$USER .
 ```
-
-### Option 2: Local Installation (Development)
-
-For developers who need direct access to the Python environment or want to modify dependencies.
-
-#### Prerequisites
-* Python 3.8 or higher
-* Git (for cloning the repository)
-
-#### Installation Steps
-
-1. **Clone or Pull the Repository**:
-   ```bash
-   git clone <repository-url>
-   cd SAR-SHIP-DETECTION
-   ```
-   Or if you already have the repo:
-   ```bash
-   git pull origin main
-   ```
-
-2. **Create a Virtual Environment (Recommended)**:
-   ```bash
-   python -m venv sar_env
-   
-   # Activate the virtual environment:
-   # On Windows:
-   sar_env\Scripts\activate
-   # On macOS/Linux:
-   source sar_env/bin/activate
-   ```
-
-3. **Install Dependencies**:
-   ```bash
-   # Install main project dependencies
-   pip install -r requirements.txt
-   
-   # OR install web application dependencies specifically
-   pip install -r FullApp/requirements.txt
-   ```
 
 4. **Configuration Setup**:
    * Copy the example config below
