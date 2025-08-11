@@ -191,7 +191,7 @@ SAR-SHIP-DETECTION/
 ```
 
 ### File Structure Notes
-* **Missing Referenced Files**: The documentation previously referenced `FullApp/pages/infer2.py` as an inference module, but this file does not exist in the current structure
+* **Missing Referenced Files**: The documentation previously referenced `FullApp/pages/infer2.py` as an inference module, but this file does not exist in the current structure, renamed to `functions.py`
 * **Docker Support**: Full containerization setup with Dockerfile, docker-compose.yml, and .dockerignore
 * **Development Environment**: Includes VSCode configuration, virtual environment, and Python cache files
 * **Asset Completeness**: All required assets are present in `FullApp/assets/` including additional UI illustrations
@@ -266,19 +266,19 @@ Docker provides a consistent, isolated environment that eliminates dependency co
 **Starting the Application**:
 ```bash
 # Start in detached mode (runs in background)
-docker-compose up -d
+docker compose up -d
 
 # OR start with logs visible (useful for debugging)
-docker-compose up
+docker compose up
 ```
 
 **Viewing Logs**:
 ```bash
 # View real-time logs
-docker-compose logs -f
+docker compose logs -f
 
 # View logs for specific service
-docker-compose logs -f web
+docker compose logs -f web
 ```
 
 **Making Code Changes**:
@@ -291,28 +291,28 @@ The Docker setup includes volume mounting, so code changes are automatically ref
 **Rebuilding After Dependency Changes**:
 ```bash
 # Rebuild if you modify requirements.txt or Dockerfile
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 **Accessing the Container Shell**:
 ```bash
 # Access container for debugging or manual operations
-docker-compose exec web bash
+docker compose exec web bash
 
 # OR for a quick command
-docker-compose exec web python --version
+docker compose exec web python --version
 ```
 
 **Stopping the Application**:
 ```bash
 # Stop containers (preserves data)
-docker-compose stop
+docker compose stop
 
 # Stop and remove containers (clean shutdown)
-docker-compose down
+docker compose down
 
 # Stop, remove containers, and clean up images
-docker-compose down --rmi local
+docker compose down --rmi local
 ```
 
 #### Docker Troubleshooting
@@ -327,14 +327,14 @@ ports:
 **Container Won't Start**:
 ```bash
 # Check container status
-docker-compose ps
+docker compose ps
 
 # View detailed logs
-docker-compose logs web
+docker compose logs web
 
 # Rebuild completely
-docker-compose down --rmi local
-docker-compose up -d --build
+docker compose down --rmi local
+docker compose up -d --build
 ```
 
 **Permission Issues (Linux/macOS)**:
