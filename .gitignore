@@ -59,7 +59,6 @@ venv.bak/
 # Model files
 *.onnx
 *.pth
-*.pt
 *.weights
 models/
 checkpoints/
