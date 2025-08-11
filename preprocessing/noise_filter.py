@@ -27,13 +27,20 @@ def apply_correction(image,times=1):
     # Save and show the result
     
     
-    '''cv2.imshow('Enhanced Image', enhanced)
+    cv2.imshow('Enhanced Image', enhanced)
     cv2.waitKey(0)
-    cv2.destroyAllWindows()'''
+    cv2.destroyAllWindows()
     return enhanced
 
 # Load an image (use a relative path or make sure the path exists)
 
 #remove the comment below to test the function:
-# apply_correction(your_img=cv2.imread("path_to_your_image"), 2, "path_to_your_image.jpg (not required)")
+import os
+
+path = "ts.png"
+print("Exists?", os.path.exists(path))
+img = cv2.imread(path)
+print("Loaded?", img is not None)
+image=cv2.imread("ts.png")
+apply_correction(image, times=2)
 
