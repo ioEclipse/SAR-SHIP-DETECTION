@@ -16,8 +16,9 @@ def apply_correction(image,times=1):
         return
     
     # Apply gamma correction (adjust gamma value as needed)
+    enhanced = image
     for _ in range(times):
-        enhanced = gamma_correction(image, gamma=0.6)  # More moderate gamma
+        enhanced = gamma_correction(enhanced, gamma=0.5)  # More moderate gamma
         # Apply contrast adjustment (more moderate parameters)
         enhanced = cv2.convertScaleAbs(enhanced, alpha=10/7, beta=0)
     
@@ -27,9 +28,9 @@ def apply_correction(image,times=1):
     # Save and show the result
     
     
-    cv2.imshow('Enhanced Image', enhanced)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow('Enhanced Image', enhanced)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     return enhanced
 
 # Load an image (use a relative path or make sure the path exists)
@@ -37,10 +38,12 @@ def apply_correction(image,times=1):
 #remove the comment below to test the function:
 import os
 
-path = "ts.png"
+
+
+path = "preprocessing/test.jpg"
 print("Exists?", os.path.exists(path))
 img = cv2.imread(path)
 print("Loaded?", img is not None)
-image=cv2.imread("ts.png")
-apply_correction(image, times=2)
+image=cv2.imread(path)
+apply_correction(image, times=4)
 
