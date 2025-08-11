@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-image_path = "preprocessing/vv2.jpg"
+image_path = "preprocessing/test.jpg"
 
 print("Starting preprocessing...")
 #      noise reduction and enhancement

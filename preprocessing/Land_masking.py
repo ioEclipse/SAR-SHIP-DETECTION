@@ -67,6 +67,9 @@ def compute_mask(image, invert_mask=False):
 
     # 4. Fusion of thresholding methods
     combined = cv2.bitwise_or(otsu_thresh, adaptive_thresh)
+    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75) 
+    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75) 
+    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75) 
 
     # 5. Advanced morphological processing
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
