@@ -39,7 +39,7 @@ git clone https://github.com/ioEclipse/SAR-SHIP-DETECTION.git
 cd SAR-SHIP-DETECTION
 
 # Build and start the application
-docker-compose up -d --build
+docker compose up -d --build
 
 # Access the application at http://localhost:8501
 ```
@@ -47,29 +47,29 @@ docker-compose up -d --build
 #### Docker Development Commands
 ```bash
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Access container shell for debugging
-docker-compose exec web bash
+docker compose exec web bash
 
 # Stop gracefully
-docker-compose down
+docker compose down
 
 # Rebuild after code changes to requirements
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 #### Docker Troubleshooting
 ```bash
 # Check container status
-docker-compose ps
+docker compose ps
 
 # View detailed logs
-docker-compose logs web
+docker compose logs web
 
 # Complete rebuild
-docker-compose down --rmi local
-docker-compose up -d --build
+docker compose down --rmi local
+docker compose up -d --build
 ```
 
 ### 🔧 Local Installation (Development)
@@ -270,4 +270,5 @@ We welcome contributions to the SAR Ship Detection Project\! Please see our [CON
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+
 
