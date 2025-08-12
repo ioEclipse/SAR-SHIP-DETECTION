@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-image_path = "preprocessing/test.jpg"
+image_path = "preprocessing/vv2.jpg"
 
 print("Starting preprocessing...")
 #      noise reduction and enhancement
@@ -22,6 +22,7 @@ compare_images(image, image_new)
 #land masking
 image_mask, mask = process_image(image_new, visualize=False)
 compare_images(image_new, image_mask)
+cv2.imwrite("no_land.jpg", image_mask)
 
 image_final = apply_correction(image_mask, times=3)
 
