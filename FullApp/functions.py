@@ -11,8 +11,35 @@ CLIENT = InferenceHTTPClient(
 )
 MODEL_ID = "sar-ship-hbhns/1"
 
+
+import rasterio
+import numpy as np
+import os
+
+
+def convert_radar_tif_to_jpg(tif_path, jpg_path):
+    """Convertit une image radar TIFF en JPEG avec normalisation adaptée"""
+    with rasterio.open(tif_path) as src:
+        img_array = src.read(1)
+    
+    # Normalisation des valeurs radar
+    p2, p98 = np.percentile(img_array, (2, 98))
+    img_normalized = np.clip((img_array - p2) / (p98 - p2) * 255, 0, 255).astype(np.uint8)
+    
+    # Conversion en JPEG avec qualité maximale
+    Image.fromarray(img_normalized, mode='L').convert("RGB").save(jpg_path, 'JPEG', quality=100)
+    return jpg_path
+
 def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
-    image = Image.open(uploaded_image).convert("RGB")
+        
+    # Conversion et sauvegarde si l'image est un TIFF
+    if isinstance(uploaded_image, str) and uploaded_image.lower().endswith('.tif'):
+        converted_path = "converted_from_tif.jpg"
+        convert_radar_tif_to_jpg(uploaded_image, converted_path)
+        image = Image.open(converted_path).convert("RGB")
+    else:
+        image = Image.open(uploaded_image).convert("RGB")
+    
     w, h = image.size
     annotated = image.copy()
     draw = ImageDraw.Draw(annotated)
@@ -26,11 +53,12 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     metadata = []
     ship_counter = 0
 
+    # Découpage en tuiles et traitement
     for y in range(0, h, tile_size):
         for x in range(0, w, tile_size):
             tile = image.crop((x, y, min(x+tile_size, w), min(y+tile_size, h)))
             with NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
-                tile.save(temp_file.name)
+                tile.save(temp_file.name, quality=95)  # Qualité légèrement réduite pour les tuiles
                 temp_path = temp_file.name
 
             try:
@@ -40,46 +68,57 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     x_center, y_center = pred["x"], pred["y"]
                     w_box, h_box = pred["width"], pred["height"]
 
-                    # Global image coordinates
+                    # Conversion des coordonnées relatives en absolues
                     x1 = int(x + x_center - w_box / 2)
                     y1 = int(y + y_center - h_box / 2)
                     x2 = int(x + x_center + w_box / 2)
                     y2 = int(y + y_center + h_box / 2)
 
+                    # Annotation
                     draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
-                    draw.text((x1 + 5, y1 + 5), f"Ship #{ship_counter}", fill="yellow", font=font)
+                    draw.text((x1 + 5, y1 + 5), f"Navire #{ship_counter}", fill="yellow", font=font)
 
-                    # Subimage crop
-                    margin = 20
+                    # Extraction de la zone détectée
+                    margin = int(max(w_box, h_box) * 0.3)  # Marge proportionnelle
                     crop_x1 = max(x1 - margin, 0)
                     crop_y1 = max(y1 - margin, 0)
                     crop_x2 = min(x2 + margin, w)
                     crop_y2 = min(y2 + margin, h)
                     crop_img = image.crop((crop_x1, crop_y1, crop_x2, crop_y2))
-                    crops.append((f"Ship #{ship_counter}", crop_img))
+                    crops.append((f"Navire #{ship_counter}", crop_img))
 
-                    # Surface calculation
+                    # Calcul de la surface
                     pixel_area = (x2 - x1) * (y2 - y1)
                     area_m2 = pixel_area * (resolution_m ** 2)
 
-                    # Metadata
                     metadata.append({
-                        "ship_id": f"Ship #{ship_counter}",
-                        "pixel_area": pixel_area,
+                        "id_navire": ship_counter,
+                        "surface_pixels": pixel_area,
                         "surface_m2": round(area_m2, 2),
-                        "bounding_box": {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+                        "position": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
+                        "resolution": f"{resolution_m}m/pixel"
                     })
 
             except Exception as e:
+                print(f"Erreur sur la tuile {x},{y}: {str(e)}")
                 continue
+            finally:
+                os.unlink(temp_path)  # Nettoyage obligatoire
 
-    draw.text((10, 10), f"Total Ships Detected: {ship_counter}", fill="cyan", font=font)
+    # Annotation finale
+    draw.text((10, 10), f"Navires détectés: {ship_counter}", fill="cyan", font=font)
+    draw.text((10, 40), f"Résolution: {resolution_m}m/pixel", fill="cyan", font=font)
 
-    # Write metadata JSON
-    with open("ship_metadata.json", "w") as f:
-        json.dump(metadata, f, indent=4)
+    # Sauvegarde des métadonnées
+    metadata_path = "metadata_detection.json"
+    with open(metadata_path, "w", encoding='utf-8') as f:
+        json.dump({
+            "nombre_navires": ship_counter,
+            "resolution": resolution_m,
+            "detections": metadata
+        }, f, ensure_ascii=False, indent=4)
 
-    return annotated, crops, ship_counter, metadata
+    return annotated, crops, ship_counter, metadata_path
 
 def get_Cords_of_ship(bounding_box, resolution_m_per_px,img_longitude,img_latitude):
     x,y,wx,wy,= bounding_box

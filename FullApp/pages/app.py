@@ -4,6 +4,7 @@ import base64
 import pandas as pd
 import sys
 import os
+from tempfile import NamedTemporaryFile
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from functions import *
 from streamlit_option_menu import option_menu
@@ -65,9 +66,6 @@ st.markdown(f"""
     font-weight: bold;
 }}
 
-
-
-
 .upload-title {{
     color: #ffffff;
     font-size: 18px;
@@ -116,8 +114,6 @@ st.markdown(f"""
     padding: 30px !important;
 }}
 
-
-
 /* Process steps styling */
 .process-steps {{
     display: flex;
@@ -150,7 +146,6 @@ st.markdown(f"""
     font-weight: bold;
     margin-top: 8px;
 }}
-
 
 .ship-counter {{
     background-color: #1e90ff;
@@ -241,13 +236,15 @@ with st.sidebar:
     
     uploaded_image = st.file_uploader(
         'Drag and drop your SAR image here',
-        type=["jpg", "png", "jpeg"],
+        type=["jpg", "png", "jpeg", "tif", "tiff"],
         key="file_uploader",
-        help="Supported formats: JPG, PNG, JPEG (Max 200MB)"
+        help="Supported formats: JPG, PNG, JPEG, TIFF (Max 200MB)"
     )
     
     if uploaded_image:
         st.success(f"✅ File uploaded: {uploaded_image.name}")
+        if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
+            st.info("ℹ️ TIFF file detected - Automatic conversion will be applied")
     
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -256,14 +253,26 @@ with st.sidebar:
         if uploaded_image:
             st.markdown('<div class="status-message">⏳ Running inference... Please wait</div>', unsafe_allow_html=True)
             try:
-                annotated, crops, ship_counter, metadata = run_inference_with_crops(uploaded_image)
+                # Gestion spécifique pour les fichiers TIFF
+                if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
+                    with NamedTemporaryFile(suffix=".tif", delete=False) as tmp_tif:
+                        tmp_tif.write(uploaded_image.getvalue())
+                        tmp_path = tmp_tif.name
+                    
+                    annotated, crops, ship_counter, metadata = run_inference_with_crops(tmp_path)
+                    os.unlink(tmp_path)  # Nettoyage du fichier temporaire
+                else:
+                    annotated, crops, ship_counter, metadata = run_inference_with_crops(uploaded_image)
+                
                 st.session_state.annotated_image = annotated
                 st.session_state.ship_crops = crops
                 st.session_state.ship_counter = ship_counter
                 st.session_state.metadata = metadata
                 st.success("✅ Processing complete!")
             except Exception as e:
-                st.error(f"❌ Error during inference: {e}")
+                st.error(f"❌ Error during inference: {str(e)}")
+                if 'tmp_path' in locals() and os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
         else:
             st.warning("⚠️ Please upload an image first")
 
@@ -365,8 +374,6 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
 
-
-            
             with col2:
                 # Ship metadata
                 for entry in st.session_state.metadata:
