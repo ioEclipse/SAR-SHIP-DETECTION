@@ -2,6 +2,7 @@ import json
 from PIL import Image, ImageDraw, ImageFont
 from inference_sdk import InferenceHTTPClient
 from tempfile import NamedTemporaryFile
+import numpy as np
 
 # === Roboflow setup ===
 CLIENT = InferenceHTTPClient(
