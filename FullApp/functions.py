@@ -115,14 +115,16 @@ def get_nearest_ship_from_ais(ships, ais_data,min_distance=1000):
 
 import requests
 from tqdm import tqdm  # pip install tqdm
+import sys
+import os
 def get_ais_data(month,day,bar_func=None):
     if(day < 10):
         day = "0"+str(day)
     if(month < 10):
         month = "0"+str(month)
-
+    
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_2024_" +str(month)+ "_" +str(day)+ ".zip"
-    local_filename = "largefile.zip"
+    local_filename = "Ais_data/"+str(month)+ "_" +str(day)+".zip"
 
     # Send request with streaming enabled
     with requests.get(url, stream=True) as r:
@@ -144,4 +146,20 @@ def get_ais_data(month,day,bar_func=None):
     
     print("Download complete!")
 
-get_ais_data(11,2)
+def check_for_Ais_and_create(month,day):
+    monthstr = str(month)
+    daystr = str(day)
+    if(day < 10):
+        daystr = "0"+str(day)
+    if(month < 10):
+        monthstr = "0"+str(month)
+    
+    if os.path.exists("Ais_data/"+str(monthstr)+ "_" +str(daystr)+".zip"):
+        print("File already exists, skipping download.")
+    else:
+        get_ais_data(month,day)
+
+# check_for_Ais_and_create(11,2)
+
+
+
