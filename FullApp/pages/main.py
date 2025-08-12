@@ -10,11 +10,9 @@ def resize_height(img, height):
     return img.resize((new_w, height))
 
 # Charger les images avec redimensionnement cohérent
-import os
-assets_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")
-raw_img = resize_height(Image.open(os.path.join(assets_path, "raw_img_2.png")), fixed_height)
-gee_img = Image.open(os.path.join(assets_path, "ee_earth_satellite.png")).resize((500, 364))
-stats_img = resize_height(Image.open(os.path.join(assets_path, "stats4.png")), fixed_height)
+raw_img = resize_height(Image.open("assets/raw_img_2.png"), fixed_height)
+gee_img = Image.open("assets/ee_earth_satellite.png").resize((500, 364))
+stats_img = resize_height(Image.open("assets/stats4.png"), fixed_height)
 
 # Masquer la sidebar
 st.set_page_config(page_title="Main", layout="wide", initial_sidebar_state="collapsed")
@@ -89,7 +87,7 @@ st.markdown(custom_css, unsafe_allow_html=True)
 # Load logo for header
 logo_data = None
 try:
-    with open(os.path.join(assets_path, "logo.png"), "rb") as img_file:
+    with open("assets/logo.png", "rb") as img_file:
         logo_data = base64.b64encode(img_file.read()).decode()
 except Exception:
     pass
@@ -146,5 +144,7 @@ with col3:
     """, unsafe_allow_html=True)
     st.image(stats_img, caption="Insights", use_container_width=True)
     if st.button("Get started", key="gee"):
-        st.switch_page("pages/earthEngine.py")
+        st.switch_page("pages/insights.py")
     st.markdown('</div>', unsafe_allow_html=True)
+
+

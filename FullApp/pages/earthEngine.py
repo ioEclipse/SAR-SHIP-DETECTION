@@ -86,7 +86,29 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
 
 else:
     # No result yet -> show the map and drawing tools
-    st.header("🗺️ Select Area (draw polygon)")
+    # Styled header banner for the drawing section
+    st.markdown(
+        """
+        <div style="
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: transparent;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        ">
+            <span style="font-size: 28px;"></span>
+            <div style="line-height: 1.2; text-align: center;">
+                <div style="font-size: 50px; font-weight: 800;">Select Area</div>
+                <div style="font-size: 13px; opacity: 0.95;">Draw a polygon on the map to define your area of interest</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # Create Folium map
     center = [31.2, 32.3]  # adjust as needed
@@ -101,7 +123,7 @@ else:
     )
     draw.add_to(m)
 
-    map_data = st_folium(m, width=900, height=600)
+    map_data = st_folium(m, width=1100, height=600)
 
     # Extract polygon GeoJSON from map_data (support different keys)
     geo = None
@@ -117,10 +139,8 @@ else:
             geo = None
 
     if geo:
-        st.subheader("🔶 Selected Polygon (preview)")
         st.json(geo)
-    else:
-        st.info("Draw a polygon on the map to select your area of interest.")
+    
 
     # If Predict button clicked in the sidebar, process now
     if predict_clicked:

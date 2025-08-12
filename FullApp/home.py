@@ -96,7 +96,7 @@ st.markdown(
 col1, col2 = st.columns([1, 1])
 with col1:
     if st.button("Try Here", key="try_here"):
-        st.switch_page("main.py")
+        st.switch_page("pages/main.py")
 
 
 
