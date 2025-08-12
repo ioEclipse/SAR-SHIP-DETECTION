@@ -110,4 +110,38 @@ def get_nearest_ship_from_ais(ships, ais_data,min_distance=1000):
                 else: 
                     nearest_ship[s] = None
     
-    return nearest_ship
+    return nearest_ship   
+
+
+import requests
+from tqdm import tqdm  # pip install tqdm
+def get_ais_data(month,day,bar_func=None):
+    if(day < 10):
+        day = "0"+str(day)
+    if(month < 10):
+        month = "0"+str(month)
+
+    url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_2024_" +str(month)+ "_" +str(day)+ ".zip"
+    local_filename = "largefile.zip"
+
+    # Send request with streaming enabled
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        total_size = int(r.headers.get('content-length', 0))  # total size in bytes
+        block_size = 1024  # 1 KB chunks
+        
+        # Create a progress bar
+        with open(local_filename, 'wb') as f, tqdm(
+            total=total_size, unit='iB', unit_scale=True, desc=local_filename
+        ) as bar:
+            for data in r.iter_content(block_size):
+                f.write(data)
+                
+                if bar_func is None: 
+                    bar.update(len(data))
+                else:
+                    bar_func(len(data))
+    
+    print("Download complete!")
+
+get_ais_data(11,2)
