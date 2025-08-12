@@ -94,17 +94,22 @@ The system has been refactored to use a single-host architecture where Streamlit
    * **AIS Functions**: NOAA 2024 data download, caching, and matching (to be implemented)
    * **Integration**: Direct function calls from Streamlit pages without separate API layer
 
+   **Local Model Inference** (`FullApp/local_inference.py`):
+   * **Status**: Completed - Replaces Roboflow model
+   * **Purpose**: Local YOLO inference using trained YOLOv11m model (best.pt)
+   * **Features**: Roboflow-compatible interface, fallback mode, automatic model loading
+   * **Dependencies**: ultralytics>=8.0.0
+
 4. **Web Application** (`FullApp/` directory):
    * `home.py`: BlueGuard landing page with branding
    * `pages/main.py`: Selection interface for processing modes
    * `pages/app.py`: SAR file upload interface (updated for timeframe specification)
    * `pages/earthEngine.py`: Google Earth Engine integration with area-of-interest selection
-   * `pages/infer2.py`: Inference module with YOLOv11m integration
-
 5. **Inference System**:
-   * `InfSlicer.py`: Image slicing and inference coordination
-   * `infer2.py`: Complete inference pipeline with crop extraction
-   * Integration with Roboflow's inference SDK
+   * `InfSlicer.py`: Image slicing and inference coordination (updated for local model)
+   * `FullApp/local_inference.py`: Local YOLO model inference replacing Roboflow SDK
+   * `test_local_model.py`: Integration testing for local model setup
+   * `onnxtrasnform.py`: Model conversion utility (PyTorch to ONNX)
 
 ### Complete File Structure
 ```
@@ -124,8 +129,9 @@ SAR-SHIP-DETECTION/
 ├── config.json                                     # System configuration
 ├── core_api.py                                     # Core API module (depreciated)
 ├── InfSlicer.py                                    # Inference coordination
-├── requirements.txt                                # Python dependencies
+├── requirements.txt                                # Python dependencies (includes ultralytics>=8.0.0)
 ├── test_ais.py                                     # AIS testing module
+├── test_local_model.py                            # Local YOLO model integration test
 ├── __pycache__/                                    # Python cache directory
 │   └── ais_detector.cpython-312.pyc              # Compiled Python file
 │
@@ -133,7 +139,7 @@ SAR-SHIP-DETECTION/
 │   ├── Test_image.png                             # Test image file
 │   ├── functions.py                               # Core backend functions (NEW - centralized functionality)
 │   ├── home.py                                    # Landing page
-│   ├── requirements.txt                           # Web app dependencies
+│   ├── local_inference.py                        # Local YOLO model inference (NEW - replaces Roboflow)
 │   ├── ship_metadata.json                        # Ship metadata file
 │   ├── assets/                                    # Web app assets
 │   │   ├── boundingboxes.png                     # UI asset - bounding box illustration
@@ -319,7 +325,7 @@ docker compose down --rmi local
 
 **Port Already in Use**:
 ```bash
-# If port 8501 is busy, modify docker-compose.yml:
+# If port 8501 is busy, modify docker compose.yml:
 ports:
   - "8502:8501"  # Use port 8502 instead
 ```
@@ -398,30 +404,42 @@ sudo chown -R $USER:$USER .
 #### Docker (Recommended)
 ```bash
 # Start the application
-docker-compose up -d
+docker compose up -d
 
 # Access at http://localhost:8501
-# Logs: docker-compose logs -f
-# Stop: docker-compose down
+# Logs: docker compose logs -f
+# Stop: docker compose down
 ```
 
-#### Local Installation
-1. **Web Application**:
-   ```bash
-   cd FullApp
-   streamlit run home.py
-   ```
-   Access at `http://localhost:8501`
+#### Local Environment Setup
+To ensure a clean, reproducible, and isolated environment for running the application locally:
 
-2. **Command Line Processing**:
+1. **Create a Virtual Environment**  
+   Create a Python virtual environment (e.g., named `.venv`) to isolate dependencies and avoid conflicts with system-wide packages:
+
    ```bash
-   python main.py  # Runs main processing pipeline
+   python -m venv .venv
    ```
 
-3. **AIS Testing**:
+2. **Activate the Virtual Environment**  
+   Activate the virtual environment to use its isolated Python interpreter and packages:  
+   - On Windows:
+     ```bash
+     .venv\Scripts\activate
+     ```
+   - On macOS/Linux:
+     ```bash
+     source .venv/bin/activate
+     ```
+
+3. **Install Dependencies**  
+   Install the required Python packages listed in `requirements.txt` to ensure compatibility and reproducibility:
+
    ```bash
-   python ais_detector.py --test-api YOUR_API_KEY
+   pip install -r requirements.txt
    ```
+
+   This command installs dependencies such as `streamlit`, `pandas`, and other libraries essential for the application's functionality.
 
 ### Troubleshooting
 
@@ -553,8 +571,8 @@ The BlueGuard system architecture follows a containerized single-host design:
      |             |                                        |
      |  +----------v-----------+                            |
      |  | Backend Logic        |  <-- Downloads AIS/SAR,    |
-     |  | (Python)             |      imports to InfluxDB,  |
-     |  |                      |      queries data          |
+     |  | (Python)             |      Outside APIs arrive   |
+     |  |                      |      here, queries data    |
      |  +----------+-----------+                            |
      |             |                                        |
      |  +----------v-----------+                            |

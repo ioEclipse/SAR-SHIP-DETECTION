@@ -1,15 +1,17 @@
 import json
 from PIL import Image, ImageDraw, ImageFont
-from inference_sdk import InferenceHTTPClient
 from tempfile import NamedTemporaryFile
 import numpy as np
+from local_inference import get_local_client
+from preprocessing.noise_filter import apply_correction
+from preprocessing.Land_masking import process_image, compare_images
+import cv2
+from typing import Dict, List, Optional, Tuple, Any
+from pathlib import Path
+import numpy as np
 
-# === Roboflow setup ===
-CLIENT = InferenceHTTPClient(
-    api_url="https://serverless.roboflow.com",
-    api_key="e33E5OuqhaAIPQiyMqLt"
-)
-MODEL_ID = "sar-ship-hbhns/1"
+# === Local YOLO model setup ===
+CLIENT = get_local_client()
 
 
 import rasterio
@@ -62,7 +64,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                 temp_path = temp_file.name
 
             try:
-                result = CLIENT.infer(temp_path, model_id=MODEL_ID)
+                result = CLIENT.infer(temp_path)
                 for pred in result["predictions"]:
                     ship_counter += 1
                     x_center, y_center = pred["x"], pred["y"]
@@ -149,8 +151,57 @@ def get_nearest_ship_from_ais(ships, ais_data,min_distance=1000):
                 else: 
                     nearest_ship[s] = None
     
-    return nearest_ship   
+    return nearest_ship
 
+# =======================
+# Preprocessing functions
+# =======================
+def process_single_image(self, image_path: str, 
+                           session_id: str) -> Dict[str, Any]:
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        if image is None:
+            raise FileNotFoundError(f"Could not load image at {image_path}")
+
+        image_new = apply_correction(image, image_path=image_path)
+        # Preprocess image (land masking)
+        masked_image, land_mask = process_image(image, visualize=False)
+
+        return {
+            "masked_image": masked_image,
+            "land_mask": land_mask,
+           }
+
+def process_image_sequence(self, image_paths: List[str], session_id: str) -> Dict[str, Any]:
+        results = []
+        for image_path in image_paths:
+            image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+            if image is None:
+                results.append({
+                    "image_path": image_path,
+                    "error": f"Could not load image at {image_path}"
+                })
+                continue
+
+            # Optional: apply noise correction if needed
+            image_new = apply_correction(image, image_path=image_path)
+
+            # Preprocess image (land masking)
+            masked_image, land_mask = process_image(image, visualize=False)
+
+            results.append({
+                "image_path": image_path,
+                "masked_image": masked_image,
+                "land_mask": land_mask
+            })
+
+        return {
+            "session_id": session_id,
+            "results": results
+        }
+
+# =========================
+# Downloading AIS data from NOAA
+# =========================
 
 import requests
 from tqdm import tqdm  # pip install tqdm

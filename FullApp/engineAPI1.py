@@ -7,16 +7,12 @@ import rasterio
 from PIL import Image, ImageDraw, ImageFont
 from geemap import ee_export_image
 from noise_filter import apply_correction
-from inference_sdk import InferenceHTTPClient
 import json
 from tempfile import NamedTemporaryFile
+from local_inference import get_local_client
 
-# === Roboflow setup ===
-CLIENT = InferenceHTTPClient(
-    api_url="https://serverless.roboflow.com",
-    api_key="e33E5OuqhaAIPQiyMqLt"
-)
-MODEL_ID = "sar-ship-hbhns/1"
+# === Local YOLO model setup ===
+CLIENT = get_local_client()
 
 def run_inference(uploaded_image, resolution_m=20):
     # Ouvrir l'image
@@ -35,7 +31,7 @@ def run_inference(uploaded_image, resolution_m=20):
     ship_counter = 0
 
     # Envoyer l'image directement au modèle
-    result = CLIENT.infer(uploaded_image, model_id=MODEL_ID)
+    result = CLIENT.infer(uploaded_image)
 
     for pred in result.get("predictions", []):
         ship_counter += 1

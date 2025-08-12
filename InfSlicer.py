@@ -1,15 +1,15 @@
 from PIL import Image, ImageDraw
 import numpy as np
 import os
-from inference_sdk import InferenceHTTPClient
+import sys
 from tqdm import tqdm
 
-# === Roboflow setup ===
-CLIENT = InferenceHTTPClient(
-    api_url="https://serverless.roboflow.com",
-    api_key="API_KEY_HERE"  # Replace with your API key
-)
-model_id = "sar-ship-hbhns/1"  # Roboflow public SAR ship model
+# Add FullApp directory to path for local_inference import
+sys.path.append(os.path.join(os.path.dirname(__file__), 'FullApp'))
+from local_inference import get_local_client
+
+# === Local YOLO model setup ===
+CLIENT = get_local_client()
 
 # === Image and slicing setup ===
 input_path = "fullPNG.png"  # Your input image
@@ -31,9 +31,9 @@ for y in tqdm(range(0, h, tile_size), desc="🧩 Rows"):
         tile_path = "tile_temp.jpg"
         tile.save(tile_path)
 
-        # === 2. Inference via Roboflow
+        # === 2. Inference via Local YOLO
         try:
-            result = CLIENT.infer(tile_path, model_id=model_id)
+            result = CLIENT.infer(tile_path)
             for pred in result["predictions"]:
                 # Box in local (tile) coordinates
                 x_center, y_center = pred["x"], pred["y"]
