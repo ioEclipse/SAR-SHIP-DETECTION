@@ -4,9 +4,11 @@ import base64
 # Page config
 st.set_page_config(page_title="Model Insights", layout="wide", initial_sidebar_state="collapsed")
 
+
 def get_base64_image(image_path: str) -> str:
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
+
 
 # Assets
 try:
@@ -200,7 +202,7 @@ metrics = [
     ("Recall", "Proportion of actual ships detected", 0.99),
     ("F1-score", "Harmonic mean of precision and recall", 0.91),
     ("mAP", "Mean average precision across all classes", 0.96),
-    ("IoU", "Overlap between truth and prediction", 0.79),
+    ("IoU", "Overlap between truth and prediction", 0.96),
 ]
 
 icon_lookup = {
@@ -227,7 +229,7 @@ for i, (title, desc, value) in enumerate(metrics):
     with cols[i]:
         icon = icon_lookup.get(title, "📊")
         css_class = css_class_lookup.get(title, "")
-        
+
         card_html = f"""
             <div class="metric-card {css_class}">
                 <div class="metric-header">

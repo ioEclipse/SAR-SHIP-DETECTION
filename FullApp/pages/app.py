@@ -277,7 +277,6 @@ with st.sidebar:
             st.warning("⚠️ Please upload an image first")
 
 # === Main content ===
-st.markdown('<div class="main-content" style=height:0;width:0;>', unsafe_allow_html=True)
 
 if "annotated_image" not in st.session_state or st.session_state.annotated_image is None:
     # === Default presentation block ===

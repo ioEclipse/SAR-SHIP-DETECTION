@@ -4,10 +4,13 @@ import base64
 
 # Helper function to resize image by height
 fixed_height = 400
+
+
 def resize_height(img, height):
     w, h = img.size
     new_w = int(w * (height / h))
     return img.resize((new_w, height))
+
 
 # Charger les images avec redimensionnement cohérent
 raw_img = resize_height(Image.open("assets/raw_img_2.png"), fixed_height)
@@ -44,7 +47,7 @@ custom_css = """
             object-fit: contain;
             margin-bottom: 10px;
             }
-        
+
         .description {
             margin-top: 10px;
             margin-bottom: 20px;
@@ -66,11 +69,15 @@ custom_css = """
             background-color: #009ACD;
             color: white;
         }
+        .stButton > button:active {
+            background-color: #009ACD;
+            color: white;
+        }
         .icon{
             color:#ffffff;!important;
         }
-        
-        
+
+
         .stImage {
             display: flex;
             justify-content: center;

@@ -11,6 +11,10 @@ import json
 from tempfile import NamedTemporaryFile
 from local_inference import get_local_client
 
+# === CONFIGURATION SERVICE ACCOUNT GEE ===
+SERVICE_ACCOUNT_EMAIL = "blueguard@blueguard-468713.iam.gserviceaccount.com"
+SERVICE_ACCOUNT_KEY_PATH = "blueguard-468713-5ba58d909d3d.json"
+
 # === Local YOLO model setup ===
 CLIENT = get_local_client()
 
@@ -105,13 +109,16 @@ def extract_coordinates_from_geojson(geojson_path: str) -> List[Tuple[float, flo
         [min(lons), max(lats)]
     ]
 
+
 def get_sentinel1_jpg(polygon_coords, year, month, output_dir='images/sar_sentinel1_jpg', resolution_m=10):
     # Authentification et initialisation
     try:
-        ee.Initialize()
-    except:
-        ee.Authenticate(auth_mode='localhost')
-        ee.Initialize(project='eendve-bouazizchahine7')
+        credentials = ee.ServiceAccountCredentials(SERVICE_ACCOUNT_EMAIL, SERVICE_ACCOUNT_KEY_PATH)
+        ee.Initialize(credentials)
+        print("✅ Google Earth Engine initialized with service account.")
+    except Exception as e:
+        print(f"❌ Failed to initialize Earth Engine: {e}")
+        raise
     
     # Créer les dossiers de sortie
     os.makedirs(output_dir, exist_ok=True)

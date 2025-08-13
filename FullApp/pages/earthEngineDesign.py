@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import random
 
+
 # Alternative to engineAPI1 import - comment out the real one and use mock
 # from engineAPI1 import get_sentinel1_jpg_from_geojson
 
@@ -22,44 +23,44 @@ def get_sentinel1_jpg_from_geojson(geojson_path, year, month):
     """
     # Simulate processing time
     time.sleep(2)
-    
+
     # Create a mock SAR detection image with bounding boxes
     img_width, img_height = 800, 600
     img = Image.new('RGB', (img_width, img_height), color=(30, 30, 60))  # Dark blue background
     draw = ImageDraw.Draw(img)
-    
+
     # Add some noise to simulate SAR imagery
     for _ in range(5000):
         x, y = random.randint(0, img_width), random.randint(0, img_height)
         color = (random.randint(40, 80), random.randint(40, 80), random.randint(60, 100))
         draw.point((x, y), fill=color)
-    
+
     # Add mock ship detections with bounding boxes
     ship_count = random.randint(3, 12)
     ship_data = []
-    
+
     try:
         # Try to load a default font, fallback to default if not available
         font = ImageFont.truetype("arial.ttf", 20)
     except:
         font = ImageFont.load_default()
-    
+
     for i in range(ship_count):
         # Random ship position
         x = random.randint(50, img_width - 100)
         y = random.randint(50, img_height - 80)
         width = random.randint(30, 80)
         height = random.randint(15, 40)
-        
+
         # Draw bounding box
         draw.rectangle([x, y, x + width, y + height], outline=(255, 0, 0), width=3)
-        
+
         # Add ship ID label
-        draw.text((x, y - 25), f"Ship {i+1}", fill=(255, 255, 255), font=font)
-        
+        draw.text((x, y - 25), f"Ship {i + 1}", fill=(255, 255, 255), font=font)
+
         # Create mock metadata for this ship
         ship_data.append({
-            "ship_id": f"SHIP_{i+1:03d}",
+            "ship_id": f"SHIP_{i + 1:03d}",
             "detection_confidence": round(random.uniform(0.7, 0.99), 3),
             "bbox_x": x,
             "bbox_y": y,
@@ -73,25 +74,26 @@ def get_sentinel1_jpg_from_geojson(geojson_path, year, month):
             "latitude": round(random.uniform(30.0, 33.0), 6),
             "longitude": round(random.uniform(31.0, 34.0), 6)
         })
-    
+
     # Add title to image
     draw.text((20, 20), f"SAR Ship Detection - {year}/{month:02d}", fill=(255, 255, 255), font=font)
     draw.text((20, 60), f"{ship_count} Ships detected", fill=(0, 255, 0), font=font)
-    
+
     # Save detection image to temp file
     detection_img_path = tempfile.NamedTemporaryFile(delete=False, suffix=".png").name
     img.save(detection_img_path)
-    
+
     # Save metadata to temp JSON file
     metadata_path = tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode="w")
     json.dump(ship_data, metadata_path, indent=2)
     metadata_path.close()
-    
+
     return {
         "detections": detection_img_path,
         "metadata": metadata_path.name,
         "ship_count": ship_count,
     }
+
 
 # --- Page config ---
 st.set_page_config(page_title="SAR Map Viewer", layout="wide")
@@ -111,6 +113,43 @@ st.markdown("""
         font-size: 2.5rem !important;
         font-weight: bold !important;
     }
+
+    /* Custom styling for the predict button */
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border: none !important;
+        padding: 15px 25px !important;
+        border-radius: 12px !important;
+        width: 100% !important;
+        font-size: 10px !important;
+        transition: all 0.3s ease !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+    }
+
+    .stButton > button[kind="primary"]:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+    }
+
+    /* Custom styling for the reset button */
+    .stButton > button:not([kind="primary"]) {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border: none !important;
+        padding: 12px 20px !important;
+        border-radius: 10px !important;
+        width: 100% !important;
+        font-size: 14px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    .stButton > button:not([kind="primary"]):hover {
+        background: linear-gradient(135deg, #5a6268 0%, #3d4449 100%) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -122,16 +161,16 @@ month = st.sidebar.selectbox(
     "Select Month",
     list(range(1, 13)),
     format_func=lambda m: [
-        "January","February","March","April","May","June",
-        "July","August","September","October","November","December"
-    ][m-1]
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ][m - 1]
 )
 
 # Predict button in sidebar (under the selectors)
-predict_clicked = st.sidebar.button("▶️ Predict SAR & Detect Ships", type="primary")
+predict_clicked = st.sidebar.button("Predict SAR & Detect Ships", type="primary")
 
 # Reset button (to return to map)
-if st.sidebar.button("🔄 Reset"):
+if st.sidebar.button("🔄 Reset Analysis", type="secondary"):
     # Clear stored result if exists
     for k in ("result_out", "tmp_geojson_path"):
         if k in st.session_state:
@@ -152,23 +191,20 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
 
     ship_count = out.get("ship_count") if isinstance(out, dict) else None
     st.header(f"🚢 Total Ships Detected {ship_count}")
-    
-    
+
     # Create columns for better layout
     col1, col2 = st.columns([10, 1])
-    
+
     with col1:
         # Show detection image if present
         if isinstance(out, dict) and out.get("detections") and os.path.exists(out["detections"]):
             st.image(out["detections"], caption="SAR Ship Detections", use_container_width=True)
         else:
             st.error("No detection image found in the result.")
-    
+
     with col2:
         # Show summary statistics
-        
-            
-        
+
         # Show processing info if available
         processing_info = out.get("processing_info", {})
         if processing_info:
@@ -178,7 +214,7 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
                 st.write(f"**{formatted_key}:** {value}")
 
     st.markdown("---")
-    
+
     # Load and show metadata table
     metadata_path = out.get("metadata") if isinstance(out, dict) else None
     if metadata_path and os.path.exists(metadata_path):
@@ -186,7 +222,7 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
             with open(metadata_path, "r") as mf:
                 metadata_list = json.load(mf)
             df = pd.DataFrame(metadata_list)
-            
+
             meta_title_col, meta_ctrl_col = st.columns([7, 1])
             with meta_title_col:
                 st.markdown("### 🧾 Ship Detection Metadata")
@@ -201,7 +237,7 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
             st.error(f"Error loading metadata: {str(e)}")
     else:
         st.info("No metadata file available to display.")
-    
+
     # Moved show_full checkbox next to the title above
     st.markdown("---")
 
@@ -235,7 +271,7 @@ else:
     # Create Folium map with basic tile layer
     center = [31.2, 32.3]  # Mediterranean Sea area
     m = folium.Map(location=center, zoom_start=6)
-    
+
     # Add satellite imagery option if available
     try:
         folium.TileLayer(
@@ -247,25 +283,25 @@ else:
         ).add_to(m)
     except:
         pass  # Skip if there are issues with custom tiles
-    
+
     # Add drawing tools
     draw = Draw(
         export=False,
         draw_options={
-            'polyline': False, 
-            'rectangle': True, 
+            'polyline': False,
+            'rectangle': True,
             'circle': False,
-            'circlemarker': False, 
+            'circlemarker': False,
             'marker': False,
             'polygon': {
-                'allowIntersection': False, 
-                'showArea': True, 
+                'allowIntersection': False,
+                'showArea': True,
                 'shapeOptions': {'color': '#ff0000', 'fillColor': '#ffff00', 'fillOpacity': 0.2}
             }
         }
     )
     draw.add_to(m)
-    
+
     # Add layer control
     folium.LayerControl().add_to(m)
 
@@ -275,7 +311,7 @@ else:
     geo = None
     if map_data["all_drawings"]:
         geo = map_data["all_drawings"][-1]  # Get the last drawn shape
-    
+
     if geo:
         st.success("✅ Area selected! Use the sidebar to configure detection parameters and start processing.")
         with st.expander("View Selected Area GeoJSON"):
@@ -292,7 +328,8 @@ else:
             elif isinstance(geo, dict) and geo.get("type") == "Feature":
                 wrapped = {"type": "FeatureCollection", "features": [geo]}
             else:
-                wrapped = {"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {}, "geometry": geo}]}
+                wrapped = {"type": "FeatureCollection",
+                           "features": [{"type": "Feature", "properties": {}, "geometry": geo}]}
 
             # Save temp geojson file
             tmp_geo = tempfile.NamedTemporaryFile(delete=False, suffix=".geojson", mode="w")
@@ -304,19 +341,19 @@ else:
             # Show processing steps with progress
             progress_bar = st.progress(0)
             status_text = st.empty()
-            
+
             status_text.text("🛰️ Fetching Sentinel-1 SAR imagery...")
             progress_bar.progress(25)
             time.sleep(0.5)
-            
+
             status_text.text("🔄 Preprocessing SAR data...")
             progress_bar.progress(50)
             time.sleep(0.5)
-            
+
             status_text.text("🤖 Running ship detection model...")
             progress_bar.progress(75)
             time.sleep(0.5)
-            
+
             status_text.text("📊 Generating results...")
             progress_bar.progress(100)
 
