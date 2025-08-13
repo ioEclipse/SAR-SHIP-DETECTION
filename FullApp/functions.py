@@ -9,10 +9,18 @@ import cv2
 from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 import numpy as np
+from inference_sdk import InferenceHTTPClient
 
 # === Local YOLO model setup ===
 CLIENT = get_local_client()
 
+
+# === Roboflow setup ===
+CLIENT = InferenceHTTPClient(
+    api_url="https://serverless.roboflow.com",
+    api_key="e33E5OuqhaAIPQiyMqLt"
+)
+MODEL_ID = "sar-ship-hbhns/1"
 
 import rasterio
 import numpy as np
@@ -64,7 +72,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                 temp_path = temp_file.name
 
             try:
-                result = CLIENT.infer(temp_path)
+                result = CLIENT.infer(temp_path, model_id=MODEL_ID)
                 for pred in result["predictions"]:
                     ship_counter += 1
                     x_center, y_center = pred["x"], pred["y"]
@@ -78,7 +86,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
 
                     # Annotation
                     draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
-                    draw.text((x1 + 5, y1 + 5), f"Navire #{ship_counter}", fill="yellow", font=font)
+                    draw.text((x1 + 5, y1 + 5), f"Ship #{ship_counter}", fill="yellow", font=font)
 
                     # Extraction de la zone détectée
                     margin = int(max(w_box, h_box) * 0.3)  # Marge proportionnelle
@@ -87,19 +95,20 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     crop_x2 = min(x2 + margin, w)
                     crop_y2 = min(y2 + margin, h)
                     crop_img = image.crop((crop_x1, crop_y1, crop_x2, crop_y2))
-                    crops.append((f"Navire #{ship_counter}", crop_img))
+                    crops.append((f"Ship #{ship_counter}", crop_img))
 
                     # Calcul de la surface
                     pixel_area = (x2 - x1) * (y2 - y1)
                     area_m2 = pixel_area * (resolution_m ** 2)
 
+                    # Metadata
                     metadata.append({
-                        "id_navire": ship_counter,
-                        "surface_pixels": pixel_area,
+                        "ship_id": f"Ship #{ship_counter}",
+                        "pixel_area": pixel_area,
                         "surface_m2": round(area_m2, 2),
-                        "position": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
-                        "resolution": f"{resolution_m}m/pixel"
+                        "bounding_box": {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
                     })
+
 
             except Exception as e:
                 print(f"Erreur sur la tuile {x},{y}: {str(e)}")
@@ -108,19 +117,14 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                 os.unlink(temp_path)  # Nettoyage obligatoire
 
     # Annotation finale
-    draw.text((10, 10), f"Navires détectés: {ship_counter}", fill="cyan", font=font)
+    draw.text((10, 10), f"Total Ships Detected: {ship_counter}", fill="cyan", font=font)
     draw.text((10, 40), f"Résolution: {resolution_m}m/pixel", fill="cyan", font=font)
 
-    # Sauvegarde des métadonnées
-    metadata_path = "metadata_detection.json"
-    with open(metadata_path, "w", encoding='utf-8') as f:
-        json.dump({
-            "nombre_navires": ship_counter,
-            "resolution": resolution_m,
-            "detections": metadata
-        }, f, ensure_ascii=False, indent=4)
+   # Write metadata JSON
+    with open("ship_metadata.json", "w") as f:
+        json.dump(metadata, f, indent=4)
 
-    return annotated, crops, ship_counter, metadata_path
+    return annotated, crops, ship_counter, metadata
 
 def get_Cords_of_ship(bounding_box, resolution_m_per_px,img_longitude,img_latitude):
     x,y,wx,wy,= bounding_box

@@ -262,10 +262,7 @@ with st.sidebar:
                     annotated, crops, ship_counter, metadata = run_inference_with_crops(tmp_path)
                     os.unlink(tmp_path)  # Nettoyage du fichier temporaire
                 else:
-                    # First pre-process the uploaded image
-                # Display pre-processed images (2.5s)   
-                # Pass preprocessed image to the inference function
-                annotated, crops, ship_counter, metadata = run_inference_with_crops(uploaded_image)
+                    annotated, crops, ship_counter, metadata = run_inference_with_crops(uploaded_image)
                 
                 st.session_state.annotated_image = annotated
                 st.session_state.ship_crops = crops
