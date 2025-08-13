@@ -109,15 +109,42 @@ For developers who need direct Python environment access.
 
     *Ensure you have the correct NVIDIA drivers and CUDA toolkit installed for GPU acceleration, as specified in the documentation.*
 
-4.  **Run the application:**
+4. **Create config.json**
+   * IMPORTANT WILL NOT WORK WITHOUT CONFIG
+   * Copy the example config below
+   * Add your AIS stream API key to `config.json`:
+     ```json
+     {
+      "google-earth": {
+        "api_key": "PUT_API_KEY_HERE"
+      },
+       "aisstream": {
+         "api_key": "your_aisstream_api_key_here"
+       },
+         "ais_detector": {
+            "spatial_threshold_meters": 500.0,
+            "temporal_threshold_seconds": 3600.0,
+            "min_match_confidence": 0.7
+         },
+         "demo_locations": {
+            "san_francisco_bay": [37.0, -122.5, 38.0, -121.5],
+            "new_york_harbor": [40.0, -74.5, 41.0, -73.5],
+            "english_channel": [50.0, -1.0, 51.0, 2.0],
+            "singapore_strait": [1.0, 103.5, 1.5, 104.5]
+         }
+     }
+     ```
+
+5.  **Run the application:**
     ```bash
     cd FullApp
     streamlit run home.py
     ```
     Access at `http://localhost:8501`
 
-5.  **Download pre-trained models:**
+6.  **Download pre-trained models:**
     *Detailed instructions for downloading and placing pre-trained model weights will be provided here.*
+    YOLOv11m folder contains the weights.
 
 ## 📦 Application
 

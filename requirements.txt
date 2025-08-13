@@ -11,6 +11,8 @@ scipy>=1.7.0
 # Computer vision and machine learning
 opencv-python-headless>=4.5.0
 ultralytics>=8.0.0
+inference_sdk
+
 supervision>=0.20.0
 
 # Image processing

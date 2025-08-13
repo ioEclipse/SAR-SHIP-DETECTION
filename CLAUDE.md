@@ -349,11 +349,15 @@ docker compose up -d --build
 sudo chown -R $USER:$USER .
 ```
 
-4. **Configuration Setup**:
+4. **Configuration Setup**: 
+   * IMPORTANT WILL NOT WORK WITHOUT CONFIG
    * Copy the example config below
    * Add your AIS stream API key to `config.json`:
      ```json
      {
+      "google-earth": {
+        "api_key": "PUT_API_KEY_HERE"
+      },
        "aisstream": {
          "api_key": "your_aisstream_api_key_here"
        },
@@ -370,34 +374,8 @@ sudo chown -R $USER:$USER .
          }
      }
      ```
-   * Alternatively, set environment variable:
-     ```bash
-     export AISSTREAM_API_KEY="your_api_key_here"
-     ```
 
 5. **Test the Installation**:
-   ```bash
-   # Test the main system
-   python main.py
-   
-   # Test AIS integration (requires API key)
-   python ais_detector.py --test-api YOUR_API_KEY
-   
-   # Run the web application
-   cd FullApp
-   streamlit run home.py
-   ```
-
-### Key Dependencies Explained
-* **streamlit**: Web application framework
-* **opencv-python**: Computer vision and image processing
-* **numpy, scipy**: Numerical computing
-* **matplotlib**: Plotting and visualization
-* **folium, streamlit_folium**: Interactive maps
-* **websockets**: AIS real-time data streaming
-* **inference-sdk**: YOLOv11m model inference
-* **pillow**: Image processing
-* **pandas**: Data manipulation and analysis
 
 ### Running the Application
 
@@ -442,6 +420,17 @@ To ensure a clean, reproducible, and isolated environment for running the applic
    This command installs dependencies such as `streamlit`, `pandas`, and other libraries essential for the application's functionality.
 
 ### Troubleshooting
+
+### Key Dependencies Explained
+* **streamlit**: Web application framework
+* **opencv-python**: Computer vision and image processing
+* **numpy, scipy**: Numerical computing
+* **matplotlib**: Plotting and visualization
+* **folium, streamlit_folium**: Interactive maps
+* **websockets**: AIS real-time data streaming
+* **inference-sdk**: YOLOv11m model inference
+* **pillow**: Image processing
+* **pandas**: Data manipulation and analysis
 
 #### Import Errors in VSCode
 * **Issue**: VSCode shows "Import cannot be resolved (Pylance)" even after pip install
