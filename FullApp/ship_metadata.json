@@ -1,1 +1,178 @@
-[]
+[
+    {
+        "ship_id": "Ship #1",
+        "pixel_area": 182,
+        "surface_m2": 18200,
+        "bounding_box": {
+            "x1": 593,
+            "y1": 78,
+            "x2": 606,
+            "y2": 92
+        }
+    },
+    {
+        "ship_id": "Ship #2",
+        "pixel_area": 160,
+        "surface_m2": 16000,
+        "bounding_box": {
+            "x1": 1030,
+            "y1": 420,
+            "x2": 1040,
+            "y2": 436
+        }
+    },
+    {
+        "ship_id": "Ship #3",
+        "pixel_area": 162,
+        "surface_m2": 16200,
+        "bounding_box": {
+            "x1": 891,
+            "y1": 400,
+            "x2": 900,
+            "y2": 418
+        }
+    },
+    {
+        "ship_id": "Ship #4",
+        "pixel_area": 153,
+        "surface_m2": 15300,
+        "bounding_box": {
+            "x1": 951,
+            "y1": 249,
+            "x2": 960,
+            "y2": 266
+        }
+    },
+    {
+        "ship_id": "Ship #5",
+        "pixel_area": 144,
+        "surface_m2": 14400,
+        "bounding_box": {
+            "x1": 1006,
+            "y1": 321,
+            "x2": 1015,
+            "y2": 337
+        }
+    },
+    {
+        "ship_id": "Ship #6",
+        "pixel_area": 121,
+        "surface_m2": 12100,
+        "bounding_box": {
+            "x1": 1145,
+            "y1": 129,
+            "x2": 1156,
+            "y2": 140
+        }
+    },
+    {
+        "ship_id": "Ship #7",
+        "pixel_area": 90,
+        "surface_m2": 9000,
+        "bounding_box": {
+            "x1": 831,
+            "y1": 344,
+            "x2": 840,
+            "y2": 354
+        }
+    },
+    {
+        "ship_id": "Ship #8",
+        "pixel_area": 152,
+        "surface_m2": 15200,
+        "bounding_box": {
+            "x1": 1048,
+            "y1": 94,
+            "x2": 1056,
+            "y2": 113
+        }
+    },
+    {
+        "ship_id": "Ship #9",
+        "pixel_area": 250,
+        "surface_m2": 25000,
+        "bounding_box": {
+            "x1": 863,
+            "y1": 518,
+            "x2": 873,
+            "y2": 543
+        }
+    },
+    {
+        "ship_id": "Ship #10",
+        "pixel_area": 153,
+        "surface_m2": 15300,
+        "bounding_box": {
+            "x1": 931,
+            "y1": 332,
+            "x2": 940,
+            "y2": 349
+        }
+    },
+    {
+        "ship_id": "Ship #11",
+        "pixel_area": 162,
+        "surface_m2": 16200,
+        "bounding_box": {
+            "x1": 959,
+            "y1": 588,
+            "x2": 968,
+            "y2": 606
+        }
+    },
+    {
+        "ship_id": "Ship #12",
+        "pixel_area": 72,
+        "surface_m2": 7200,
+        "bounding_box": {
+            "x1": 1125,
+            "y1": 229,
+            "x2": 1131,
+            "y2": 241
+        }
+    },
+    {
+        "ship_id": "Ship #13",
+        "pixel_area": 112,
+        "surface_m2": 11200,
+        "bounding_box": {
+            "x1": 870,
+            "y1": 330,
+            "x2": 878,
+            "y2": 344
+        }
+    },
+    {
+        "ship_id": "Ship #14",
+        "pixel_area": 54,
+        "surface_m2": 5400,
+        "bounding_box": {
+            "x1": 1027,
+            "y1": 223,
+            "x2": 1033,
+            "y2": 232
+        }
+    },
+    {
+        "ship_id": "Ship #15",
+        "pixel_area": 119,
+        "surface_m2": 11900,
+        "bounding_box": {
+            "x1": 974,
+            "y1": 398,
+            "x2": 981,
+            "y2": 415
+        }
+    },
+    {
+        "ship_id": "Ship #16",
+        "pixel_area": 40,
+        "surface_m2": 4000,
+        "bounding_box": {
+            "x1": 1293,
+            "y1": 192,
+            "x2": 1297,
+            "y2": 202
+        }
+    }
+]

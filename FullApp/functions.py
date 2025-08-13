@@ -221,7 +221,7 @@ def data_to_str(month,day):
 
 
 def get_downloadlist():
-    folder_path = "Ais_data"
+    folder_path = "../Ais_data"
     files = os.listdir(folder_path)
     dl=[]
     print(files)
@@ -236,8 +236,8 @@ def get_downloadlist():
             
 def get_storage_for_ais_used():
     total_size = 0
-    for file in os.listdir("Ais_data"):
-        total_size +=os.path.getsize("Ais_data/"+file)
+    for file in os.listdir("../Ais_data"):
+        total_size +=os.path.getsize("../Ais_data/"+file)
     return total_size / (1024 ** 3)
 print("Gb", get_storage_for_ais_used())
 ####### \/ this somehow needs to be ran in the beginning of the program so that only the oldest files get deleted
@@ -246,7 +246,7 @@ print(download_list)
 ####### /\ without the print ofc
 def get_ais_data(month,day,bar_func=None):
     url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_2024_" +data_to_str(month,day)+ ".zip"
-    local_filename = "Ais_data/"+str(month)+ "_" +str(day)+".zip"
+    local_filename = "../Ais_data/"+str(month)+ "_" +str(day)+".zip"
 
     # Send request with streaming enabled
     with requests.get(url, stream=True) as r:
@@ -270,7 +270,7 @@ def get_ais_data(month,day,bar_func=None):
 
 def check_for_Ais_and_create(month,day):
     delete_old_ais_files()
-    if os.path.exists("Ais_data/"+data_to_str(month,day)+".zip"):
+    if os.path.exists("../Ais_data/"+data_to_str(month,day)+".zip"):
         print("File already exists, skipping download.")
     else:
         get_ais_data(month,day)
@@ -281,7 +281,7 @@ def check_for_Ais_and_create(month,day):
 
 def delete_old_ais_files():
     if get_storage_for_ais_used() > 4.5:
-        os.remove("Ais_data/"+data_to_str(download_list[0][0],download_list[0][1])+".zip")
+        os.remove("../Ais_data/"+data_to_str(download_list[0][0],download_list[0][1])+".zip")
         download_list.pop(0)
     return
 

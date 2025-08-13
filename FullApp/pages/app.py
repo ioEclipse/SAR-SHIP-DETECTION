@@ -210,6 +210,24 @@ st.markdown(f"""
     background-color: #1a1a1a !important;
     color: #ffffff !important;
 }}
+.stDownloadButton > button {{
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    color: white !important;
+    font-weight: bold !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    transition: all 0.3s ease !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}}
+
+.stDownloadButton > button:hover {{
+    background: linear-gradient(135deg, #218838 0%, #1ea085 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
+}}
 
 /* Hide Streamlit default elements */
 #MainMenu {{visibility: hidden;}}
@@ -338,11 +356,11 @@ else:
     st.image(st.session_state.annotated_image, use_container_width=True)
 
     # Align the download button with the right edge of the image
-    col1, col2 = st.columns([8, 1])
+    col1, col2 = st.columns([15, 2])
     with col2:
         buf = io.BytesIO()
         st.session_state.annotated_image.save(buf, format="PNG")
-        st.download_button("Download", data=buf.getvalue(), file_name="annotated_image.png", key="download_annotated")
+        st.download_button("Download", data=buf.getvalue(),use_container_width=True ,file_name="annotated_image.png", key="download_annotated")
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -391,7 +409,7 @@ else:
                 # Download button for individual ship
                 crop_buf = io.BytesIO()
                 crop_img.save(crop_buf, format="JPEG")
-                st.download_button("📥 Download Ship", data=crop_buf.getvalue(), file_name=f"{selected_ship}.jpg", key="download_crop")
+                st.download_button("Download Ship", data=crop_buf.getvalue(), file_name=f"{selected_ship}.jpg", key="download_crop")
             
             st.markdown('</div>', unsafe_allow_html=True)
 
