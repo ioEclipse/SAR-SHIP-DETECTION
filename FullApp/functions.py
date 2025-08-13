@@ -211,13 +211,41 @@ import requests
 from tqdm import tqdm  # pip install tqdm
 import sys
 import os
-def get_ais_data(month,day,bar_func=None):
+def data_to_str(month,day):
     if(day < 10):
         day = "0"+str(day)
     if(month < 10):
         month = "0"+str(month)
-    
-    url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_2024_" +str(month)+ "_" +str(day)+ ".zip"
+    return str(month) + "_" + str(day)
+
+
+
+def get_downloadlist():
+    folder_path = "Ais_data"
+    files = os.listdir(folder_path)
+    dl=[]
+    print(files)
+    for file in files:
+        if file.endswith(".zip"):
+            month,day = file.split("_")
+            day = day.split(".")[0]
+            month = int(month)
+            day = int(day)
+            dl.append((month,day))
+    return dl
+            
+def get_storage_for_ais_used():
+    total_size = 0
+    for file in os.listdir("Ais_data"):
+        total_size +=os.path.getsize("Ais_data/"+file)
+    return total_size / (1024 ** 3)
+print("Gb", get_storage_for_ais_used())
+####### \/ this somehow needs to be ran in the beginning of the program so that only the oldest files get deleted
+download_list=get_downloadlist()
+print(download_list)
+####### /\ without the print ofc
+def get_ais_data(month,day,bar_func=None):
+    url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_2024_" +data_to_str(month,day)+ ".zip"
     local_filename = "Ais_data/"+str(month)+ "_" +str(day)+".zip"
 
     # Send request with streaming enabled
@@ -241,19 +269,23 @@ def get_ais_data(month,day,bar_func=None):
     print("Download complete!")
 
 def check_for_Ais_and_create(month,day):
-    monthstr = str(month)
-    daystr = str(day)
-    if(day < 10):
-        daystr = "0"+str(day)
-    if(month < 10):
-        monthstr = "0"+str(month)
-    
-    if os.path.exists("Ais_data/"+str(monthstr)+ "_" +str(daystr)+".zip"):
+    delete_old_ais_files()
+    if os.path.exists("Ais_data/"+data_to_str(month,day)+".zip"):
         print("File already exists, skipping download.")
     else:
         get_ais_data(month,day)
+    download_list.append((month,day))
 
 # check_for_Ais_and_create(11,2)
+
+
+def delete_old_ais_files():
+    if get_storage_for_ais_used() > 4.5:
+        os.remove("Ais_data/"+data_to_str(download_list[0][0],download_list[0][1])+".zip")
+        download_list.pop(0)
+    return
+
+
 
 
 
