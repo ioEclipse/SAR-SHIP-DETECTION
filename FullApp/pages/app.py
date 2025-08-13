@@ -4,11 +4,11 @@ import base64
 import pandas as pd
 import sys
 import os
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, NamedTemporaryFile as NTF
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from functions import *
+from functions import *   
 from streamlit_option_menu import option_menu
-
+import json
 
 # === Fonction pour charger le logo ===
 def load_logo_base64(path="assets/logo.png"):
@@ -210,24 +210,6 @@ st.markdown(f"""
     background-color: #1a1a1a !important;
     color: #ffffff !important;
 }}
-.stDownloadButton > button {{
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
-    color: white !important;
-    font-weight: bold !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 8px !important;
-    font-size: 12px !important;
-    transition: all 0.3s ease !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-}}
-
-.stDownloadButton > button:hover {{
-    background: linear-gradient(135deg, #218838 0%, #1ea085 100%) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
-}}
 
 /* Hide Streamlit default elements */
 #MainMenu {{visibility: hidden;}}
@@ -259,6 +241,12 @@ with st.sidebar:
         help="Supported formats: JPG, PNG, JPEG, TIFF (Max 200MB)"
     )
     
+    # AIS uploader left in place (no change to UI); not required by the fix
+    ais_csv_uploader = st.file_uploader(
+        'Upload AIS CSV for the image date (optional)', type=["csv"], key="ais_uploader",
+        help="Optional: upload the AIS CSV of the corresponding day (ex: AIS_2024_01_24.csv)"
+    )
+    
     if uploaded_image:
         st.success(f"✅ File uploaded: {uploaded_image.name}")
         if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
@@ -270,31 +258,106 @@ with st.sidebar:
     if st.button("🚀 Process & Predict", key="predict_button"):
         if uploaded_image:
             st.markdown('<div class="status-message">⏳ Running inference... Please wait</div>', unsafe_allow_html=True)
+            tmp_tif_path = None
+            tmp_ais_path = None
             try:
                 # Gestion spécifique pour les fichiers TIFF
                 if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
                     with NamedTemporaryFile(suffix=".tif", delete=False) as tmp_tif:
                         tmp_tif.write(uploaded_image.getvalue())
-                        tmp_path = tmp_tif.name
+                        tmp_tif_path = tmp_tif.name
                     
-                    annotated, crops, ship_counter, metadata = run_inference_with_crops(tmp_path)
-                    os.unlink(tmp_path)  # Nettoyage du fichier temporaire
+                    annotated, crops, ship_counter, metadata = run_inference_with_crops(tmp_tif_path)
                 else:
                     annotated, crops, ship_counter, metadata = run_inference_with_crops(uploaded_image)
                 
+                # Save session state (same names as before)
                 st.session_state.annotated_image = annotated
                 st.session_state.ship_crops = crops
                 st.session_state.ship_counter = ship_counter
                 st.session_state.metadata = metadata
                 st.success("✅ Processing complete!")
+                
+                # FIX: AIS — ensure the metadata on disk matches the in-memory metadata the UI shows
+                st.session_state.ais_results = None
+                if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
+                    # write the session metadata to a temp JSON that search_ais_for_metadata will read
+                    meta_tmp_path = "ship_metadata_ui.json"
+                    try:
+                        with open(meta_tmp_path, "w", encoding="utf-8") as mf:
+                            json.dump(metadata, mf, indent=2, ensure_ascii=False)
+                    except Exception as e:
+                        st.error(f"❌ Impossible d'écrire le fichier temporaire des métadonnées: {e}")
+                        meta_tmp_path = None
+
+                    # Determine ais_csv_path: use uploaded ais csv if provided, otherwise try common locations
+                    if ais_csv_uploader:
+                        with NamedTemporaryFile(suffix=".csv", delete=False) as tmp_ais:
+                            tmp_ais.write(ais_csv_uploader.getvalue())
+                            tmp_ais_path = tmp_ais.name
+                        ais_csv_path = tmp_ais_path
+                    else:
+                        # FIX: try several likely locations so the function finds the CSV without uploader
+                        candidates = [
+                            os.path.join(os.path.dirname(__file__), "AIS_2024_01_24.csv"),
+                            os.path.join(os.path.dirname(__file__), "pages", "AIS_2024_01_24.csv"),
+                            os.path.join(os.getcwd(), "AIS_2024_01_24.csv"),
+                            os.path.join(os.getcwd(), "pages", "AIS_2024_01_24.csv"),
+                            "AIS_2024_01_24.csv"
+                        ]
+                        ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_01_24.csv")
+                        if not os.path.exists(ais_csv_path):
+                            st.warning(f"Le fichier AIS n'a pas été trouvé automatiquement; ensure '{ais_csv_path}' exists or upload it via the sidebar (optional).")
+
+                    # Only call search_ais_for_metadata if at least one metadata item has geolocation (not None)
+                    has_geoloc = any((entry.get("geolocation") is not None) for entry in metadata)
+                    if has_geoloc and meta_tmp_path:
+                        try:
+                            ais_results = search_ais_for_metadata(
+                                metadata_path=meta_tmp_path,   # FIX: use the temporary metadata file we just wrote
+                                ais_csv_path=ais_csv_path,
+                                date_iso="2024-01-24T22:51:07.148377",
+                                output_path="AIS_search.json",
+                                time_window_s=300,
+                                search_radius_m=100,
+                                time_weight=0.5
+                            )
+                            st.session_state.ais_results = ais_results
+                        except Exception as e:
+                            st.session_state.ais_results = None
+                            st.error(f"❌ Error during AIS lookup: {e}")
+                    else:
+                        st.session_state.ais_results = None
+                        if not has_geoloc:
+                            st.info("No geolocation present in metadata; skipping AIS search.")
+                        else:
+                            st.error("Temporary metadata file not written; skipping AIS search.")
+                    
+                    # optional cleanup of temporary ais csv (leave tmp for debugging)
+                    if tmp_ais_path and os.path.exists(tmp_ais_path):
+                        try:
+                            os.unlink(tmp_ais_path)
+                        except Exception:
+                            pass
+
+                # cleanup tmp tif if created
+                if tmp_tif_path and os.path.exists(tmp_tif_path):
+                    try:
+                        os.unlink(tmp_tif_path)
+                    except Exception:
+                        pass
+
             except Exception as e:
                 st.error(f"❌ Error during inference: {str(e)}")
-                if 'tmp_path' in locals() and os.path.exists(tmp_path):
-                    os.unlink(tmp_path)
+                if 'tmp_tif_path' in locals() and tmp_tif_path and os.path.exists(tmp_tif_path):
+                    os.unlink(tmp_tif_path)
+                if 'tmp_ais_path' in locals() and tmp_ais_path and os.path.exists(tmp_ais_path):
+                    os.unlink(tmp_ais_path)
         else:
             st.warning("⚠️ Please upload an image first")
 
 # === Main content ===
+st.markdown('<div class="main-content" style=height:0;width:0;>', unsafe_allow_html=True)
 
 if "annotated_image" not in st.session_state or st.session_state.annotated_image is None:
     # === Default presentation block ===
@@ -356,11 +419,11 @@ else:
     st.image(st.session_state.annotated_image, use_container_width=True)
 
     # Align the download button with the right edge of the image
-    col1, col2 = st.columns([15, 2])
+    col1, col2 = st.columns([8, 1])
     with col2:
         buf = io.BytesIO()
         st.session_state.annotated_image.save(buf, format="PNG")
-        st.download_button("Download", data=buf.getvalue(),use_container_width=True ,file_name="annotated_image.png", key="download_annotated")
+        st.download_button("Download", data=buf.getvalue(), file_name="annotated_image.png", key="download_annotated")
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -397,6 +460,7 @@ else:
                     if entry['ship_id'] == selected_ship:
                         pixel_area = entry['pixel_area']
                         surface_m2 = entry['surface_m2']
+                        geoloc = entry.get("geolocation", None)
                         break
                 
                 st.markdown("### 📊 Ship Information")
@@ -406,10 +470,15 @@ else:
                 - **Surface:** {surface_m2} m²
                 """)
                 
+                if geoloc:
+                    st.markdown(f"- **Geolocation:** {geoloc.get('lat')}, {geoloc.get('lon')}")
+                else:
+                    st.markdown(f"- **Geolocation:** None")
+                
                 # Download button for individual ship
                 crop_buf = io.BytesIO()
                 crop_img.save(crop_buf, format="JPEG")
-                st.download_button("Download Ship", data=crop_buf.getvalue(), file_name=f"{selected_ship}.jpg", key="download_crop")
+                st.download_button("📥 Download Ship", data=crop_buf.getvalue(), file_name=f"{selected_ship}.jpg", key="download_crop")
             
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -427,5 +496,41 @@ else:
             st.dataframe(df, use_container_width=True)
         else:
             st.dataframe(df.head(5), use_container_width=True)
+
+        # NEW: Display AIS search results table under the metadata table (only if present)
+        if st.session_state.get("ais_results") is not None:
+            st.markdown("### 🛰️ AIS Search Results (matched to metadata ships)")
+            # ais_results is a dict ship_id -> dict or None
+            ais_results = st.session_state.ais_results
+            # build a table aligning with metadata order
+            rows = []
+            for entry in st.session_state.metadata:
+                sid = entry.get("ship_id")
+                res = ais_results.get(sid) if isinstance(ais_results, dict) else None
+                if res is None:
+                    rows.append({"ship_id": sid, "AIS_found": False})
+                else:
+                    # flatten some common AIS fields if present
+                    row = {"ship_id": sid, "AIS_found": True}
+                    row["MMSI"] = res.get("MMSI")
+                    row["VesselName"] = res.get("VesselName")
+                    row["BaseDateTime"] = res.get("BaseDateTime")
+                    row["LAT"] = res.get("LAT")
+                    row["LON"] = res.get("LON")
+                    row["SOG"] = res.get("SOG")
+                    row["COG"] = res.get("COG")
+                    row["IMO"] = res.get("IMO")
+                    rows.append(row)
+            ais_df = pd.DataFrame(rows)
+            st.dataframe(ais_df, use_container_width=True)
+
+            # provide download of AIS_search.json if exists
+            if os.path.exists("AIS_search.json"):
+                with open("AIS_search.json", "rb") as f:
+                    st.download_button("Download AIS_search.json", data=f.read(), file_name="AIS_search.json", key="download_ais_json")
+            else:
+                # fallback: offer to download the in-memory ais_results as JSON
+                ais_json_bytes = json.dumps(ais_results, indent=2, ensure_ascii=False).encode("utf-8")
+                st.download_button("Download AIS results (JSON)", data=ais_json_bytes, file_name="AIS_search.json", key="download_ais_json_mem")
 
 st.markdown('</div>', unsafe_allow_html=True)
