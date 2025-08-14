@@ -99,7 +99,7 @@ st.markdown("""
 # --- Sidebar ---
 st.sidebar.title("Filters")
 
-year = st.sidebar.selectbox("Select Year", [2022, 2023, 2024, 2025])
+year = st.sidebar.selectbox("Select Year", [2022, 2023, 2024, 2025], index=2)
 month = st.sidebar.selectbox(
     "Select Month",
     list(range(1, 13)),

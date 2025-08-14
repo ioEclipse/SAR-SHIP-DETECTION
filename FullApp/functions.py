@@ -14,6 +14,16 @@ import os
 from datetime import datetime,timedelta
 from math import radians, sin, cos, sqrt, asin
 import pandas as pd
+import requests
+from tqdm import tqdm
+
+# === LOAD CONFIGURATION ===
+def load_config():
+    config_path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
+    with open(config_path, 'r') as f:
+        return json.load(f)
+
+config = load_config()
 
 # === Local YOLO model setup ===
 CLIENT = get_local_client()
@@ -466,7 +476,12 @@ download_list=get_downloadlist()
 print(download_list)
 ####### /\ without the print ofc
 def get_ais_data(month,day,bar_func=None):
-    url = "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/AIS_2024_" +data_to_str(month,day)+ ".zip"
+    # Build URL from config
+    base_url = config['ais_data']['base_url']
+    url_pattern = config['ais_data']['url_pattern']
+    date_str = data_to_str(month,day)
+    filename = url_pattern.format(date=date_str)
+    url = base_url + filename
     local_filename = "../Ais_data/"+str(month)+ "_" +str(day)+".zip"
 
     # Send request with streaming enabled

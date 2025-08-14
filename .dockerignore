@@ -13,3 +13,10 @@ Homework/
 *.docx
 *.ipynb
 YOLOv11m/
+
+# Generated output files (user results)
+ship_metadata.json
+ship_metadata_*.json
+*_metadata.json
+images/
+Ais_data/
