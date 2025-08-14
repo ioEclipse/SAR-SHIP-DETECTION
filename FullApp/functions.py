@@ -25,15 +25,12 @@ def load_config():
 
 config = load_config()
 
-# === Local YOLO model setup ===
-CLIENT = get_local_client()
-
-
 # === Roboflow setup ===
 CLIENT = InferenceHTTPClient(
     api_url="https://serverless.roboflow.com",
     api_key="e33E5OuqhaAIPQiyMqLt"
 )
+
 MODEL_ID = "sar-ship-hbhns/1"
 
 
@@ -96,7 +93,16 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
 
             try:
                 result = CLIENT.infer(temp_path, model_id=MODEL_ID)
-                for pred in result.get("predictions", []):
+                
+                if not result or "predictions" not in result:
+                    print(f"Warning: Invalid result from Roboflow API for tile at {x},{y}")
+                    continue
+                    
+                predictions = result.get("predictions", [])
+                if not predictions:
+                    continue  # No ships detected in this tile
+                
+                for pred in predictions:
                     ship_counter += 1
                     x_center_tile, y_center_tile = pred["x"], pred["y"]
                     w_box, h_box = pred["width"], pred["height"]
