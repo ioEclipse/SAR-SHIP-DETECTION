@@ -115,46 +115,69 @@ The system has been refactored to use a single-host architecture where Streamlit
 ```
 SAR-SHIP-DETECTION/
 ├── .dockerignore                                    # Docker ignore file
-├── .env                                            # Environment variables file
 ├── .gitignore                                      # Git ignore file
-├── .vscode/                                        # VSCode configuration
-│   └── settings.json                               # VSCode settings
-├── BlueGuard_Documentation_FirstDraft.pdf         # Project documentation
+├── BlueGuard_Documentation_FirstDraft.docx        # Project documentation (Word)
+├── BlueGuard_Documentation_FirstDraft.pdf         # Project documentation (PDF)
 ├── CLAUDE.md                                       # Claude project instructions
 ├── Dockerfile                                      # Docker container configuration
 ├── docker-compose.yml                             # Docker compose configuration
 ├── LICENSE                                         # Project license
 ├── README.md                                       # Project README
-├── ais_detector.py                                 # Legacy AIS detection module
-├── config.json                                     # System configuration
-├── core_api.py                                     # Core API module (depreciated)
+├── config.json                                     # System configuration (Google Earth Engine, AIS data)
 ├── InfSlicer.py                                    # Inference coordination
+├── onnxtrasnform.py                               # Model conversion utility (PyTorch to ONNX)
 ├── requirements.txt                                # Python dependencies (includes ultralytics>=8.0.0)
 ├── test_ais.py                                     # AIS testing module
 ├── test_local_model.py                            # Local YOLO model integration test
-├── __pycache__/                                    # Python cache directory
-│   └── ais_detector.cpython-312.pyc              # Compiled Python file
+│
+├── Ais_data/                                       # AIS data storage (auto-managed)
+│   └── *.zip                                      # Downloaded NOAA AIS data files
 │
 ├── FullApp/                                        # Streamlit web application (primary system)
 │   ├── Test_image.png                             # Test image file
-│   ├── functions.py                               # Core backend functions (NEW - centralized functionality)
-│   ├── home.py                                    # Landing page
-│   ├── local_inference.py                        # Local YOLO model inference (NEW - replaces Roboflow)
-│   ├── ship_metadata.json                        # Ship metadata file
-│   ├── assets/                                    # Web app assets
+│   ├── auth.py                                    # Authentication utilities
+│   ├── engineAPI1.py                             # Google Earth Engine API integration
+│   ├── functions.py                               # Core backend functions (centralized functionality)
+│   ├── home.py                                    # Landing page entry point
+│   ├── local_inference.py                        # Local YOLO model inference (replaces Roboflow)
+│   ├── noise_filter.py                           # Noise filtering utilities
+│   ├── ship_metadata.json                        # Generated ship metadata (user results)
+│   ├── assets/                                    # Web app static assets
 │   │   ├── boundingboxes.png                     # UI asset - bounding box illustration
 │   │   ├── defaultcontent.png                    # Default content placeholder
-│   │   ├── engine1.png                           # Google Earth Engine illustration
+│   │   ├── ee_earth_satellite.png                # Earth Engine satellite illustration
 │   │   ├── home_background.png                   # Landing page background
+│   │   ├── insights_background.png               # Insights page background
 │   │   ├── logo.png                              # BlueGuard logo
 │   │   ├── preprocessing.png                     # Preprocessing workflow illustration
 │   │   ├── raw_img.png                           # Raw image example
+│   │   ├── raw_img_2.png                         # Raw image example 2
 │   │   ├── statisticalinsights.png               # Statistics illustration
+│   │   ├── stats4.png                            # Statistics chart example
 │   │   └── subimages.png                         # Subimages/crop illustration
+│   ├── images/                                    # Generated output images
+│   │   └── sar_sentinel1_jpg/                    # SAR processing results
+│   │       ├── *.jpg                             # Original, corrected, and detection images
+│   │       ├── *_metadata.json                   # Processing metadata
+│   │       └── crops/                            # Individual ship crop images
 │   └── pages/                                     # Streamlit pages
 │       ├── app.py                                 # SAR file upload interface
 │       ├── earthEngine.py                        # Google Earth Engine integration
+│       ├── earthEngine1.py                       # Alternative Earth Engine interface
+│       ├── earthEngineDesign.py                  # Earth Engine design variations
+│       ├── insights.py                           # Statistical insights page
 │       └── main.py                                # Mode selection page
+│
+├── debug_images/                                   # Debug and test images (organized)
+│   └── preprocessing_tests/                       # Preprocessing debug outputs
+│       ├── blured.jpg                            # Blur filter test
+│       ├── dark*.jpg                             # Dark enhancement tests
+│       ├── denoise.jpg                           # Denoising test
+│       ├── enlighten*.jpg                        # Enlightenment filter tests
+│       ├── masked.jpg                            # Land masking test
+│       ├── morph.jpg                             # Morphological operations test
+│       ├── no_land.jpg                           # Land removal test
+│       └── tresh.jpg                             # Thresholding test
 │
 ├── Homework/                                       # Development/test directory
 │   └── Homework.py                                # Development script
@@ -165,24 +188,28 @@ SAR-SHIP-DETECTION/
 │   ├── noise_filter.py                           # Gamma correction and alpha enhancement
 │   ├── whole_preprocessing.py                     # Complete preprocessing workflow
 │   ├── Yan_segmentation.py                       # Additional segmentation capabilities
-│   └── __pycache__/                              # Python cache directory
-│       ├── __init__.cpython-312.pyc             # Compiled Python file
-│       ├── Land_masking.cpython-312.pyc          # Compiled Python file
-│       └── noise_filter.cpython-312.pyc          # Compiled Python file
+│   ├── test.jpg                                  # Test image
+│   ├── ts.png                                    # Test image PNG
+│   └── vv2.jpg                                   # VV polarization test image
 │
 ├── tracking/                                       # Tracking algorithms (development)
-│   ├── __init__.py                                # Package initialization
-│   ├── image_preprocessing.py                     # Image preprocessing for tracking
-│   ├── Land_masking.py                           # Land masking for tracking
-│   ├── noise_filter.py                           # Noise filtering for tracking
-│   ├── processed_image.jpg                       # Processed image example
-│   ├── wake_test.jpg                             # Wake detection test image
 │   ├── wakedet_ver1.ipynb                        # Wake detection notebook
-│   └── __pycache__/                              # Python cache directory
-│       ├── Land_masking.cpython-313.pyc          # Compiled Python file
-│       └── noise_filter.cpython-313.pyc          # Compiled Python file
+│   ├── Original Image/                           # Original test images
+│   │   ├── *.jpg                                 # Test images (11.jpg, 22.jpg, etc.)
+│   │   ├── Land_masking.py                       # Land masking for tracking
+│   │   ├── det.py                                # Detection utilities
+│   │   ├── detector.ipynb                        # Detection notebook
+│   │   ├── image_preprocessing.py                # Image preprocessing for tracking
+│   │   ├── noise_filter.py                       # Noise filtering for tracking
+│   │   ├── processed_image.jpg                   # Processed image example
+│   │   ├── wake_test.jpg                         # Wake detection test image
+│   │   └── *.png                                 # Processing result images
+│   └── phase/                                    # Phase analysis
+│       ├── phase*.png                            # Phase analysis results
+│       └── radon.ipynb                           # Radon transform notebook
 │
 ├── YOLOv11m/                                      # Model artifacts and metrics
+│   ├── best.pt                                   # Trained model weights
 │   ├── Metrics-YOLOv11m.docx                     # Model performance metrics document
 │   └── Graphs/                                   # Training metrics visualizations
 │       ├── BoxF1_curve.png                       # F1 score curve
@@ -266,26 +293,27 @@ Docker provides a consistent, isolated environment that eliminates dependency co
 
 3. **Configuration Setup**: 
    * IMPORTANT WILL NOT WORK WITHOUT CONFIG
-   * Copy the example config below
-   * Add your AIS stream API key to `config.json`:
+   * Copy the example config below to `config.json`:
      ```json
      {
-      "google-earth": {
-        "api_key": "PUT_API_KEY_HERE"
-      },
-       "aisstream": {
-         "api_key": "your_aisstream_api_key_here"
-       },
-         "ais_detector": {
-            "spatial_threshold_meters": 500.0,
-            "temporal_threshold_seconds": 3600.0,
-            "min_match_confidence": 0.7
+         "google-earth": {
+             "service_account": {
+                 "type": "service_account",
+                 "project_id": "PUT_PROJECT_ID_HERE",
+                 "private_key_id": "PUT_PRIVATE_KEY_ID_HERE",
+                 "private_key": "PUT_PRIVATE_KEY_HERE",
+                 "client_email": "PUT_SERVICE_ACCOUNT_EMAIL_HERE",
+                 "client_id": "PUT_CLIENT_ID_HERE",
+                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                 "token_uri": "https://oauth2.googleapis.com/token",
+                 "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                 "client_x509_cert_url": "PUT_CLIENT_CERT_URL_HERE"
+             }
          },
-         "demo_locations": {
-            "san_francisco_bay": [37.0, -122.5, 38.0, -121.5],
-            "new_york_harbor": [40.0, -74.5, 41.0, -73.5],
-            "english_channel": [50.0, -1.0, 51.0, 2.0],
-            "singapore_strait": [1.0, 103.5, 1.5, 104.5]
+         "ais_data": {
+             "base_url": "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/",
+             "url_pattern": "AIS_2024_{date}.zip",
+             "year": 2024
          }
      }
      ```
@@ -413,16 +441,14 @@ To ensure a clean, reproducible, and isolated environment for running the applic
   3. Restart VSCode after selecting the correct interpreter
   4. Ensure `__init__.py` files exist in module directories (now included)
 
-#### AIS Connection Issues
-* **Issue**: "Connected to AISStream.io" followed immediately by "WebSocket error: Connection to remote host was lost"
-* **Root Cause**: Wrong WebSocket package - use `websockets` not `websocket-client`
+#### Google Earth Engine Issues
+* **Issue**: "Service account key file not found" or authentication errors
 * **Common Causes & Solutions**:
-  1. **Wrong Package**: Install `websockets==12.0` instead of `websocket-client`
-  2. **Invalid API Key**: Ensure you're using a valid API key from https://aisstream.io/
-  3. **Placeholder API Key**: Don't use "your_api_key_here" - replace with actual key
-  4. **Network/Firewall**: Corporate firewalls may block WebSocket connections
-  5. **API Key Format**: Ensure no extra spaces or characters in the API key
-* **Testing**: The updated code uses async/await with proper `websockets` package
+  1. **Missing Config**: Ensure `config.json` exists with proper Google Earth Engine service account credentials
+  2. **Invalid Credentials**: Verify all service account fields are correctly filled in config.json
+  3. **JSON Format**: Check that the service account JSON structure is valid
+  4. **Permissions**: Ensure the service account has Earth Engine access enabled
+* **Testing**: The system creates temporary credential files from config.json for authentication
 
 #### Other Issues
 * **Streamlit Issues**: Try `pip install --upgrade streamlit`

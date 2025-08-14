@@ -91,26 +91,27 @@ For developers who need direct Python environment access.
 
 4. **Create config.json**
    * IMPORTANT WILL NOT WORK WITHOUT CONFIG
-   * Copy the example config below
-   * Add your AIS stream API key to `config.json`:
+   * Copy the example config below to `config.json`:
      ```json
      {
-      "google-earth": {
-        "api_key": "PUT_API_KEY_HERE"
-      },
-       "aisstream": {
-         "api_key": "your_aisstream_api_key_here"
-       },
-         "ais_detector": {
-            "spatial_threshold_meters": 500.0,
-            "temporal_threshold_seconds": 3600.0,
-            "min_match_confidence": 0.7
+         "google-earth": {
+             "service_account": {
+                 "type": "service_account",
+                 "project_id": "PUT_PROJECT_ID_HERE",
+                 "private_key_id": "PUT_PRIVATE_KEY_ID_HERE",
+                 "private_key": "PUT_PRIVATE_KEY_HERE",
+                 "client_email": "PUT_SERVICE_ACCOUNT_EMAIL_HERE",
+                 "client_id": "PUT_CLIENT_ID_HERE",
+                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                 "token_uri": "https://oauth2.googleapis.com/token",
+                 "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                 "client_x509_cert_url": "PUT_CLIENT_CERT_URL_HERE"
+             }
          },
-         "demo_locations": {
-            "san_francisco_bay": [37.0, -122.5, 38.0, -121.5],
-            "new_york_harbor": [40.0, -74.5, 41.0, -73.5],
-            "english_channel": [50.0, -1.0, 51.0, 2.0],
-            "singapore_strait": [1.0, 103.5, 1.5, 104.5]
+         "ais_data": {
+             "base_url": "https://coast.noaa.gov/htdata/CMSP/AISDataHandler/2024/",
+             "url_pattern": "AIS_2024_{date}.zip",
+             "year": 2024
          }
      }
      ```
@@ -171,29 +172,36 @@ streamlit run home.py
 
 ### 📂 Directory Structure and File Descriptions
 
-The `FullApp` directory is structured as follows, with each file and directory serving a specific role:
+The project is organized with the following key structure:
 
 ```
-FullApp/
-├── assets/                    # Static images, stylesheets, icons, and visual assets
-├── pages/
-│   ├── main.py                # The main entry point of the Streamlit dashboard
-│   ├── earthengine.py         # Interface with Google Earth Engine SAR collections
-│   ├── infer2.py              # Local inference with slicing, bounding boxes, and subimages
-│   └── app.py                 # Core logic and UI for image prediction and download
-├── home.py                    # Optional: Landing page or welcome module
-├── Testimage.png              # A sample radar image for demonstration or testing
-├── requirements.txt           # Python dependency file for reproducibility
+SAR-SHIP-DETECTION/
+├── config.json                # System configuration (Google Earth Engine, AIS data)
+├── FullApp/                   # Streamlit web application (main system)
+│   ├── home.py               # Landing page entry point
+│   ├── functions.py          # Core backend functions
+│   ├── engineAPI1.py         # Google Earth Engine integration
+│   ├── local_inference.py    # Local YOLO model inference
+│   ├── assets/               # Static UI assets (logos, backgrounds, etc.)
+│   ├── pages/                # Streamlit pages
+│   │   ├── main.py          # Mode selection page
+│   │   ├── app.py           # SAR file upload interface
+│   │   ├── earthEngine.py   # Google Earth Engine interface
+│   │   └── insights.py      # Statistical insights page
+│   └── images/              # Generated output images and results
+├── preprocessing/            # Image preprocessing modules
+├── tracking/                # Ship tracking algorithms (development)
+├── YOLOv11m/                # Trained model weights and metrics
+├── debug_images/            # Organized debug and test images
+└── Ais_data/               # Downloaded AIS data (auto-managed)
 ```
 
-- **assets/**: Contains static files such as images (e.g., `logo.png`, `ship.png`), stylesheets, and icons used to enhance the application’s user interface.
-- **pages/main.py**: Serves as the primary Streamlit script, orchestrating the dashboard’s navigation and user interactions.
-- **pages/earthengine.py**: Manages integration with Google Earth Engine, enabling access to and processing of SAR data collections.
-- **pages/infer2.py**: Implements the inference pipeline, handling local SAR image processing, including slicing, bounding box detection, and sub-image generation.
-- **pages/app.py**: Contains the core application logic and UI components for image prediction, visualization, and result downloading.
-- **home.py**: Provides an optional landing page or welcome module to enhance user onboarding.
-- **Testimage.png**: A sample radar image for testing and demonstration purposes.
-- **requirements.txt**: Specifies all Python packages required to run the application, ensuring consistent setup across environments.
+**Key Components:**
+- **FullApp/**: Complete Streamlit web application with all user interfaces
+- **config.json**: Centralized configuration for Google Earth Engine and AIS data sources
+- **preprocessing/**: Advanced SAR image preprocessing pipeline with land-sea segmentation
+- **YOLOv11m/**: Contains trained model weights (best.pt) and performance metrics
+- **debug_images/**: Organized storage for debugging and test images (previously cluttering root directory)
 
 ### ✅ Features Included
 
