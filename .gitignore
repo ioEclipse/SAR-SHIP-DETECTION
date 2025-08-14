@@ -78,6 +78,7 @@ ship_metadata_*.json
 *_metadata.json
 images/
 Ais_data/
+debug_images/
 
 # OS generated files
 .DS_Store
