@@ -39,7 +39,8 @@ def run_inference(uploaded_image, resolution_m=20):
     ship_counter = 0
 
     # Envoyer l'image directement au modèle
-    result = CLIENT.infer(uploaded_image)
+    result = CLIENT.infer(temp_path, model_id=MODEL_ID)
+
 
     for pred in result.get("predictions", []):
         ship_counter += 1
