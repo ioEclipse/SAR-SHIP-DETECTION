@@ -8,7 +8,7 @@ import sys
 from PIL import Image
 
 # Add FullApp directory to path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'FullApp'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'FullApp'))
 
 def test_local_inference():
     """Test the local inference implementation"""
@@ -26,7 +26,7 @@ def test_local_inference():
         print(f"🤖 Model loaded: {'Yes' if client.model is not None else 'No (fallback mode)'}")
         
         # Test with a dummy image if available
-        test_image_path = os.path.join("FullApp", "Test_image.png")
+        test_image_path = os.path.join("..", "FullApp", "Test_image.png")
         if os.path.exists(test_image_path):
             print(f"🖼️ Found test image: {test_image_path}")
             
@@ -59,7 +59,7 @@ def test_functions_import():
     
     try:
         # Add FullApp to path
-        sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'FullApp'))
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'FullApp'))
         
         # Try importing functions
         import functions
@@ -90,7 +90,7 @@ if __name__ == "__main__":
         print("\n🎉 All tests passed! Your local model integration is ready.")
         print("\n📝 Next steps:")
         print("1. Run: pip install ultralytics (if not already installed)")
-        print("2. Convert your model to ONNX (optional): python onnxtrasnform.py")
+        print("2. Convert your model to ONNX (optional): python utilities/onnxtrasnform.py")
         print("3. Test your Streamlit app: cd FullApp && streamlit run home.py")
     else:
         print("\n⚠️ Some tests failed. Please fix the issues above.")

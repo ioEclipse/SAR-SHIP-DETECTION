@@ -106,10 +106,10 @@ The system has been refactored to use a single-host architecture where Streamlit
    * `pages/app.py`: SAR file upload interface (updated for timeframe specification)
    * `pages/earthEngine.py`: Google Earth Engine integration with area-of-interest selection
 5. **Inference System**:
-   * `InfSlicer.py`: Image slicing and inference coordination (updated for local model)
+   * `utilities/InfSlicer.py`: Large image slicing and inference coordination (modular, CLI-ready)
    * `FullApp/local_inference.py`: Local YOLO model inference replacing Roboflow SDK
-   * `test_local_model.py`: Integration testing for local model setup
-   * `onnxtrasnform.py`: Model conversion utility (PyTorch to ONNX)
+   * `utilities/test_local_model.py`: Integration testing for local model setup
+   * `utilities/onnxtrasnform.py`: Model conversion utility (PyTorch to ONNX)
 
 ### Complete File Structure
 ```
@@ -124,11 +124,12 @@ SAR-SHIP-DETECTION/
 ├── LICENSE                                         # Project license
 ├── README.md                                       # Project README
 ├── config.json                                     # System configuration (Google Earth Engine, AIS data)
-├── InfSlicer.py                                    # Inference coordination
-├── onnxtrasnform.py                               # Model conversion utility (PyTorch to ONNX)
+├── utilities/                                      # Utility scripts and tools
+│   ├── InfSlicer.py                               # Large image slicing and inference coordination
+│   ├── onnxtrasnform.py                          # Model conversion utility (PyTorch to ONNX)
+│   └── test_local_model.py                       # Local YOLO model integration test
 ├── requirements.txt                                # Python dependencies (includes ultralytics>=8.0.0)
 ├── test_ais.py                                     # AIS testing module
-├── test_local_model.py                            # Local YOLO model integration test
 │
 ├── Ais_data/                                       # AIS data storage (auto-managed)
 │   └── *.zip                                      # Downloaded NOAA AIS data files
@@ -280,7 +281,10 @@ Docker provides a consistent, isolated environment that eliminates dependency co
    cd SAR-SHIP-DETECTION
    ```
 
-2. **Build and Start the Application**:
+2. **Create Configuration File**:
+   **CRITICAL**: The application will not work without this step. Create `config.json` in the root directory using the template provided in step 4 below.
+
+3. **Build and Start the Application**:
    ```bash
    # Build and start the container in detached mode
    docker compose up -d --build
@@ -291,7 +295,7 @@ Docker provides a consistent, isolated environment that eliminates dependency co
    - Start the Streamlit web application
    - Make it available at `http://localhost:8501`
 
-3. **Configuration Setup**: 
+4. **Configuration Setup**: 
    * IMPORTANT WILL NOT WORK WITHOUT CONFIG
    * Copy the example config below to `config.json`:
      ```json
@@ -318,7 +322,7 @@ Docker provides a consistent, isolated environment that eliminates dependency co
      }
      ```
 
-4. **Access the Application**:
+5. **Access the Application**:
    Open your web browser and navigate to `http://localhost:8501`
 
 #### Docker Development Workflow
@@ -373,6 +377,15 @@ docker compose down
 
 # Stop, remove containers, and clean up images
 docker compose down --rmi local
+```
+
+**Managing Docker Volumes**:
+```bash
+# List all Docker volumes (useful for troubleshooting storage issues)
+docker volume ls
+
+# Remove unused volumes (cleanup)
+docker volume prune
 ```
 
 #### Docker Troubleshooting

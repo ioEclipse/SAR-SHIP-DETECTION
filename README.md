@@ -191,6 +191,7 @@ SAR-SHIP-DETECTION/
 │   └── images/              # Generated output images and results
 ├── preprocessing/            # Image preprocessing modules
 ├── tracking/                # Ship tracking algorithms (development)
+├── utilities/               # Utility scripts (model conversion, testing, image slicing)
 ├── YOLOv11m/                # Trained model weights and metrics
 ├── debug_images/            # Organized debug and test images
 └── Ais_data/               # Downloaded AIS data (auto-managed)
@@ -200,6 +201,7 @@ SAR-SHIP-DETECTION/
 - **FullApp/**: Complete Streamlit web application with all user interfaces
 - **config.json**: Centralized configuration for Google Earth Engine and AIS data sources
 - **preprocessing/**: Advanced SAR image preprocessing pipeline with land-sea segmentation
+- **utilities/**: Utility scripts for model conversion, testing, and large image processing
 - **YOLOv11m/**: Contains trained model weights (best.pt) and performance metrics
 - **debug_images/**: Organized storage for debugging and test images (previously cluttering root directory)
 
