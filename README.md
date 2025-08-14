@@ -44,21 +44,6 @@ docker compose up -d --build
 # Access the application at http://localhost:8501
 ```
 
-#### Docker Development Commands
-```bash
-# View logs
-docker compose logs -f
-
-# Access container shell for debugging
-docker compose exec web bash
-
-# Stop gracefully
-docker compose down
-
-# Rebuild after code changes to requirements
-docker compose up -d --build
-```
-
 #### Docker Troubleshooting
 ```bash
 # Check container status
@@ -86,28 +71,23 @@ For developers who need direct Python environment access.
 #### Installation Steps
 
 1.  **Clone the repository:**
-
     ```bash
     git clone https://github.com/ioEclipse/SAR-SHIP-DETECTION.git
     cd SAR-SHIP-DETECTION
     ```
 
 2.  **Set up a Python virtual environment:**
-
     ```bash
     python3 -m venv venv_sardetection
     source venv_sardetection/bin/activate
+    # OR using Conda: conda create -n sardetection python=3.8
     ```
 
-    *(Alternatively, using Conda: `conda create -n sardetection python=3.8` then `conda activate sardetection`)*
-
 3.  **Install dependencies:**
-
     ```bash
     pip install -r requirements.txt
     ```
-
-    *Ensure you have the correct NVIDIA drivers and CUDA toolkit installed for GPU acceleration, as specified in the documentation.*
+    *Ensure NVIDIA drivers and CUDA toolkit are installed for GPU acceleration.*
 
 4. **Create config.json**
    * IMPORTANT WILL NOT WORK WITHOUT CONFIG
@@ -158,66 +138,36 @@ Choose your preferred setup method:
 
 #### Docker Setup (Recommended)
 ```bash
-# One-time setup - builds and starts the application
 docker-compose up -d --build
-
 # Application available at http://localhost:8501
-# No additional environment configuration needed
 ```
 
 #### Local Environment Setup
-To ensure a clean, reproducible, and isolated environment for running the application locally:
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 
-1. **Create a Virtual Environment**  
-   Create a Python virtual environment (e.g., named `.venv`) to isolate dependencies and avoid conflicts with system-wide packages:
-
-   ```bash
-   python -m venv .venv
-   ```
-
-2. **Activate the Virtual Environment**  
-   Activate the virtual environment to use its isolated Python interpreter and packages:  
-   - On Windows:
-     ```bash
-     .venv\Scripts\activate
-     ```
-   - On macOS/Linux:
-     ```bash
-     source .venv/bin/activate
-     ```
-
-3. **Install Dependencies**  
-   Install the required Python packages listed in `requirements.txt` to ensure compatibility and reproducibility:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-   This command installs dependencies such as `streamlit`, `pandas`, and other libraries essential for the application's functionality.
+# Install dependencies
+pip install -r requirements.txt
+```
 
 ### 🚀 Launching the Application
 
-#### Docker Launch (Recommended)
+#### Launch Options
+
+**Docker (Recommended):**
 ```bash
-# Start the application (builds automatically if needed)
 docker-compose up -d
-
-# View logs (optional)
-docker-compose logs -f
-
 # Access at http://localhost:8501
 ```
 
-#### Local Launch
-Navigate to the `FullApp` directory and launch the Streamlit application by running the main entry point:
-
+**Local:**
 ```bash
-# Ensure virtual environment is activated first
 cd FullApp
 streamlit run home.py
 ```
-
-This command starts the SAR Ship Detection Dashboard, which opens in your default web browser (e.g., at `http://localhost:8501`).
 
 ### 📂 Directory Structure and File Descriptions
 

@@ -264,7 +264,33 @@ Docker provides a consistent, isolated environment that eliminates dependency co
    - Start the Streamlit web application
    - Make it available at `http://localhost:8501`
 
-3. **Access the Application**:
+3. **Configuration Setup**: 
+   * IMPORTANT WILL NOT WORK WITHOUT CONFIG
+   * Copy the example config below
+   * Add your AIS stream API key to `config.json`:
+     ```json
+     {
+      "google-earth": {
+        "api_key": "PUT_API_KEY_HERE"
+      },
+       "aisstream": {
+         "api_key": "your_aisstream_api_key_here"
+       },
+         "ais_detector": {
+            "spatial_threshold_meters": 500.0,
+            "temporal_threshold_seconds": 3600.0,
+            "min_match_confidence": 0.7
+         },
+         "demo_locations": {
+            "san_francisco_bay": [37.0, -122.5, 38.0, -121.5],
+            "new_york_harbor": [40.0, -74.5, 41.0, -73.5],
+            "english_channel": [50.0, -1.0, 51.0, 2.0],
+            "singapore_strait": [1.0, 103.5, 1.5, 104.5]
+         }
+     }
+     ```
+
+4. **Access the Application**:
    Open your web browser and navigate to `http://localhost:8501`
 
 #### Docker Development Workflow
@@ -349,75 +375,22 @@ docker compose up -d --build
 sudo chown -R $USER:$USER .
 ```
 
-4. **Configuration Setup**: 
-   * IMPORTANT WILL NOT WORK WITHOUT CONFIG
-   * Copy the example config below
-   * Add your AIS stream API key to `config.json`:
-     ```json
-     {
-      "google-earth": {
-        "api_key": "PUT_API_KEY_HERE"
-      },
-       "aisstream": {
-         "api_key": "your_aisstream_api_key_here"
-       },
-         "ais_detector": {
-            "spatial_threshold_meters": 500.0,
-            "temporal_threshold_seconds": 3600.0,
-            "min_match_confidence": 0.7
-         },
-         "demo_locations": {
-            "san_francisco_bay": [37.0, -122.5, 38.0, -121.5],
-            "new_york_harbor": [40.0, -74.5, 41.0, -73.5],
-            "english_channel": [50.0, -1.0, 51.0, 2.0],
-            "singapore_strait": [1.0, 103.5, 1.5, 104.5]
-         }
-     }
-     ```
-
-5. **Test the Installation**:
-
-### Running the Application
-
-#### Docker (Recommended)
-```bash
-# Start the application
-docker compose up -d
-
-# Access at http://localhost:8501
-# Logs: docker compose logs -f
-# Stop: docker compose down
-```
-
 #### Local Environment Setup
 To ensure a clean, reproducible, and isolated environment for running the application locally:
 
-1. **Create a Virtual Environment**  
-   Create a Python virtual environment (e.g., named `.venv`) to isolate dependencies and avoid conflicts with system-wide packages:
-
+1. **Create and Activate Virtual Environment**  
    ```bash
    python -m venv .venv
+   # On Windows:
+   .venv\Scripts\activate
+   # On macOS/Linux:
+   source .venv/bin/activate
    ```
 
-2. **Activate the Virtual Environment**  
-   Activate the virtual environment to use its isolated Python interpreter and packages:  
-   - On Windows:
-     ```bash
-     .venv\Scripts\activate
-     ```
-   - On macOS/Linux:
-     ```bash
-     source .venv/bin/activate
-     ```
-
-3. **Install Dependencies**  
-   Install the required Python packages listed in `requirements.txt` to ensure compatibility and reproducibility:
-
+2. **Install Dependencies**  
    ```bash
    pip install -r requirements.txt
    ```
-
-   This command installs dependencies such as `streamlit`, `pandas`, and other libraries essential for the application's functionality.
 
 ### Troubleshooting
 
@@ -522,7 +495,7 @@ cd FullApp
 streamlit run home.py
 
 # Test in Docker
-docker compose up -d --build
+docker compose up -d
 # Verify navigation works at http://localhost:8501
 ```
 
