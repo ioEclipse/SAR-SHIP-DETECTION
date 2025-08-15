@@ -33,12 +33,7 @@ The system has been refactored to use a single-host architecture where Streamlit
 * **Model**: YOLOv11m (preliminary model mentioned, trained with PyTorch, weights converted to ONNX/TensorRT).
 * **Output**: Annotated image and JSON file with ship geographical coordinates, confidence scores, and bounding box information. The model only detects presence of ships, not specific types.
 
-### 4. Tracking Algorithm
-* **Purpose**: Maintain persistent ship identities across sequential SAR images.
-* **Methodology**: DeepSort (or similar multi-object tracking).
-* **Integration**: Combine detection outputs with temporal association and appearance features. Potential fusion with AIS data for enhanced accuracy.
-
-### 4.1 AIS Integration Module
+### 4. AIS Integration Module
 * **Purpose**: Integrate Automatic Identification System (AIS) data with SAR detections to identify AIS-equipped vs non-AIS vessels (dark vessels).
 * **Data Source**: NOAA 2024 AIS historical data (daily zip archives, downloaded on-demand based on user-specified timeframe).
 * **Key Functions**:
@@ -119,8 +114,8 @@ SAR-SHIP-DETECTION/
 ├── BlueGuard_Documentation_FirstDraft.docx        # Project documentation (Word)
 ├── BlueGuard_Documentation_FirstDraft.pdf         # Project documentation (PDF)
 ├── CLAUDE.md                                       # Claude project instructions
-├── Dockerfile                                      # Docker container configuration
-├── docker-compose.yml                             # Docker compose configuration
+├── Dockerfile                                      # Docker container configuration (web_app service)
+├── docker-compose.yml                             # Docker compose configuration (dual-container)
 ├── LICENSE                                         # Project license
 ├── README.md                                       # Project README
 ├── config.json                                     # System configuration (Google Earth Engine, AIS data)
@@ -168,6 +163,15 @@ SAR-SHIP-DETECTION/
 │       ├── earthEngineDesign.py                  # Earth Engine design variations
 │       ├── insights.py                           # Statistical insights page
 │       └── main.py                                # Mode selection page
+│
+├── Jetson AGX Orin/                               # Edge deployment container (jetson_app service)
+│   ├── Dockerfile                                 # Jetson-optimized container configuration
+│   ├── Final_function.py                         # Edge processing pipeline
+│   ├── Test_image.png                            # Test image for edge inference
+│   ├── best1.pt                                  # Optimized model weights for Jetson
+│   ├── inference_with_ONNX.py                    # ONNX-based inference for GPU acceleration
+│   ├── onnxtrasnform.py                          # Model conversion utility (PyTorch to ONNX)
+│   └── ourmodel_inference_function.py            # Edge-optimized inference functions
 │
 ├── debug_images/                                   # Debug and test images (organized)
 │   └── preprocessing_tests/                       # Preprocessing debug outputs
@@ -225,12 +229,87 @@ SAR-SHIP-DETECTION/
 ```
 
 ### File Structure Notes
+* **Dual-Container Architecture**: The project implements a dual-container Docker setup with `web_app` and `jetson_app` services for different deployment scenarios
+* **Edge Deployment**: `Jetson AGX Orin/` directory contains self-contained edge processing optimized for NVIDIA Jetson AGX Orin with GPU acceleration
 * **Missing Referenced Files**: The documentation previously referenced `FullApp/pages/infer2.py` as an inference module, but this file does not exist in the current structure, renamed to `functions.py`
 * **Docker Support**: Full containerization setup with Dockerfile, docker-compose.yml, and .dockerignore
 * **Development Environment**: Includes VSCode configuration, virtual environment, and Python cache files
 * **Asset Completeness**: All required assets are present in `FullApp/assets/` including additional UI illustrations
 * **Duplicate Modules**: Some preprocessing modules appear in both `preprocessing/` and `tracking/` directories for specialized use cases
 * **Git Integration**: Complete git repository with .git/ directory (not shown) containing full version history
+
+## Docker Container Architecture
+
+The BlueGuard system implements a dual-container architecture designed to support both web-based operations and edge deployment scenarios:
+
+### Container Layout Structure
+
+The repository contains two distinct Docker services defined in `docker-compose.yml`:
+
+#### 1. **web_app Service** (Primary Web Application)
+```yaml
+web_app:
+  build:
+    context: .
+    args:
+      BASE_IMAGE: python:3.11-slim
+  ports:
+    - "8501:8501"
+```
+
+**Container Contents:**
+- **Inclusion**: Everything in the repository root except `.dockerignore` exclusions and the `Jetson AGX Orin/` folder
+- **Purpose**: Streamlit web application with full feature set
+- **Components**: 
+  - Complete `FullApp/` directory with web interface
+  - All preprocessing modules in `preprocessing/`
+  - Tracking algorithms in `tracking/`
+  - Utility scripts in `utilities/`
+  - Model artifacts in `YOLOv11m/`
+  - Configuration files (`config.json`, `requirements.txt`)
+
+#### 2. **jetson_app Service** (Edge Deployment Container)
+```yaml
+jetson_app:
+  build:
+    context: "./Jetson AGX Orin"
+    dockerfile: Dockerfile
+  runtime: nvidia
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - capabilities: [gpu]
+```
+
+**Container Contents:**
+- **Inclusion**: Only files within the `Jetson AGX Orin/` folder
+- **Purpose**: Self-contained edge processing optimized for NVIDIA Jetson AGX Orin
+- **Components**:
+  - `Final_function.py`: Complete edge processing pipeline
+  - `best1.pt`: Optimized model weights for Jetson hardware
+  - `inference_with_ONNX.py`: GPU-accelerated ONNX inference
+  - `ourmodel_inference_function.py`: Edge-optimized inference functions
+  - `onnxtrasnform.py`: Model format conversion utilities
+  - `Test_image.png`: Test image for validation
+
+### Container Isolation Benefits
+
+This architecture provides several key advantages:
+
+1. **Resource Optimization**: The jetson_app container contains only essential files for edge deployment, minimizing memory footprint and transfer requirements
+
+2. **Hardware Specialization**: Each container is optimized for its target hardware:
+   - `web_app`: CPU-focused with full Python ecosystem
+   - `jetson_app`: GPU-accelerated with NVIDIA runtime support
+
+3. **Deployment Flexibility**: Containers can be deployed independently:
+   - Web application for cloud/server deployment
+   - Edge container for on-device processing
+
+4. **Development Isolation**: Changes to web application don't affect edge deployment and vice versa
+
+5. **Security Separation**: Edge container has minimal attack surface with only essential processing components
 
 ## AIS Data Management (NOAA 2024)
 
@@ -471,11 +550,6 @@ To ensure a clean, reproducible, and isolated environment for running the applic
 
 ### Development Setup
 
-For development, install additional tools:
-```bash
-pip install black flake8 pytest  # Code formatting and testing
-```
-
 ## Streamlit Development Conventions
 
 **IMPORTANT**: Contributors must follow these Streamlit conventions to ensure proper navigation and Docker compatibility.
@@ -554,36 +628,81 @@ All required assets are present and the application should display correctly wit
 
 ## System Architecture
 
-The BlueGuard system architecture follows a containerized single-host design:
+The BlueGuard system architecture follows a dual-container design supporting both web-based and edge deployment scenarios:
 
 ```
-                     +------------------------+
-                     |  User's Web Browser    |
-                     |  (Accesses via URL)    |
-                     +-----------+------------+
-                                |
-                                v
-     +------------------------------------------------------+
-     |   Docker Container                                   |
-     |                                                      |
-     |  +----------------------+                            |
-     |  | Streamlit Frontend   |  <-- Handles user requests |
-     |  +----------+-----------+                            |
-     |             |                                        |
-     |  +----------v-----------+                            |
-     |  | Backend Logic        |  <-- Downloads AIS/SAR,    |
-     |  | (Python)             |      Outside APIs arrive   |
-     |  |                      |      here, queries data    |
-     |  +----------+-----------+                            |
-     |             |                                        |
-     |  +----------v-----------+                            |
-     |  |      (local DB)      |  <-- Stores AIS temp data  |
-     |  +----------------------+                            |
-     |                                                      |
-     +------------------------------------------------------+
+                        +------------------------+
+                        |  User's Web Browser    |
+                        |  (Accesses via URL)    |
+                        +-----------+------------+
+                                   |
+                                   v
+        +----------------------------------------------------------+
+        |               Docker Container: web_app                  |
+        |                                                          |
+        |  +----------------------+                                |
+        |  | Streamlit Frontend   |  <-- Handles user requests     |
+        |  +----------+-----------+                                |
+        |             |                                            |
+        |  +----------v-----------+                                |
+        |  | Backend Logic        |  <-- Downloads AIS/SAR,        |
+        |  | (Python)             |      Outside APIs arrive       |
+        |  |                      |      here, queries data        |
+        |  +----------+-----------+                                |
+        |             |                                            |
+        |  +----------v-----------+                                |
+        |  |      (local DB)      |  <-- Stores AIS temp data      |
+        |  +----------------------+                                |
+        |                                                          |
+        +----------------------------------------------------------+
+
+                                 =====
+                                   | Manual
+                                   | Data/Image Transfer
+                                   v
+
+        +----------------------------------------------------------+
+        |           Docker Container: jetson_app                   |
+        |           (NVIDIA Jetson AGX Orin Optimized)             |
+        |                                                          |
+        |  +----------------------+                                |
+        |  | Edge Processing      |  <-- GPU-accelerated inference |
+        |  | Pipeline (ONNX)      |      Minimal resource usage    |
+        |  +----------+-----------+                                |
+        |             |                                            |
+        |  +----------v-----------+                                |
+        |  | Preprocessing        |  <-- GPU-accelerated where     |
+        |  | (GPU-optimized)      |      possible for performance  |
+        |  +----------+-----------+                                |
+        |             |                                            |
+        |  +----------v-----------+                                |
+        |  | Ship Detection       |  <-- YOLO inference on GPU     |
+        |  | (YOLO + GPU)         |      Optimized model weights   |
+        |  +----------------------+                                |
+        |                                                          |
+        +----------------------------------------------------------+
 ```
 
 ### Architecture Benefits
-* **Single Container**: Streamlined deployment with all components in one Docker container
+* **Dual-Container Design**: Separate containers for web application and edge deployment with optimized resource allocation
+* **Edge Computing**: Jetson AGX Orin container optimized for GPU-accelerated inference with minimal resource requirements
+* **Hardware Specialization**: Each container optimized for its target hardware (CPU vs GPU acceleration)
 * **Local Processing**: Eliminates external API dependencies for core functionality
-* **Scalable Storage**: Efficient handling of large-scale AIS datasets with automatic cleanup 
+* **Scalable Storage**: Efficient handling of large-scale AIS datasets with automatic cleanup
+* **Deployment Flexibility**: Independent deployment of web and edge components
+
+### Jetson AGX Orin Edge Processing
+
+The `jetson_app` container is specifically optimized for the NVIDIA Jetson AGX Orin platform:
+
+**GPU Acceleration Features:**
+* **Model Inference**: YOLO detection runs entirely on GPU using ONNX runtime
+* **Preprocessing Optimization**: GPU-accelerated preprocessing operations where possible for enhanced performance
+* **Memory Efficiency**: Optimized model weights (`best1.pt`) specifically tuned for Jetson hardware constraints
+* **Real-time Processing**: Designed for real-time SAR image processing with minimal latency
+
+**Container Specifications:**
+* **NVIDIA Runtime**: Full GPU access with `runtime: nvidia`
+* **Resource Allocation**: Dedicated GPU device capabilities for compute operations
+* **Self-contained**: Complete processing pipeline independent of web application
+* **Minimal Footprint**: Only essential files included for optimal memory usage 

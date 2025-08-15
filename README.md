@@ -11,7 +11,6 @@ This project is still a Work In Progress, so you may see a few placeholders.
 ## 🚀 Features
 
   * **Automated Ship Detection:** Utilizes state-of-the-art deep learning models (e.g., YOLOv8) for accurate ship identification in complex SAR environments.
-  * **Multi-Object Tracking:** Implements robust tracking algorithms (e.g., DeepSort) to maintain persistent ship identities across sequential SAR images.
   * **Dark Vessel Detection:** Integrates AIS data with SAR detections to identify vessels not transmitting their position, crucial for illegal activity monitoring.
   * **SAR Data Preprocessing Pipeline:** Includes essential steps like speckle noise reduction, land-sea segmentation, and radiometric correction.
   * **Edge Device Optimization:** Models are optimized for high-performance, low-latency inference on resource-constrained hardware (e.g., NVIDIA Jetson Nano).
@@ -26,11 +25,12 @@ The project supports two setup methods: **Docker (Recommended)** for production-
 
 ### 🐳 Quick Start with Docker (Recommended)
 
-Docker provides a consistent, isolated environment that eliminates dependency conflicts.
+Docker provides a consistent, isolated environment that eliminates dependency conflicts. The project uses a dual-container architecture:
 
 #### Prerequisites
 * Docker Engine (20.10.0+) and Docker Compose (2.0.0+)
 * Git
+* NVIDIA Docker runtime (for Jetson AGX Orin edge deployment)
 
 #### Installation & Launch
 ```bash
@@ -38,11 +38,18 @@ Docker provides a consistent, isolated environment that eliminates dependency co
 git clone https://github.com/ioEclipse/SAR-SHIP-DETECTION.git
 cd SAR-SHIP-DETECTION
 
-# Build and start the application
-docker compose up -d --build
+# Build and start web application
+docker compose up web_app -d --build
 
 # Access the application at http://localhost:8501
+
+# Optional: Start Jetson AGX Orin edge container (requires NVIDIA GPU)
+docker compose up jetson_app -d --build
 ```
+
+#### Container Architecture
+- **web_app**: Complete Streamlit application with full functionality
+- **jetson_app**: GPU-optimized edge processing for NVIDIA Jetson AGX Orin
 
 #### Docker Troubleshooting
 ```bash
@@ -189,6 +196,11 @@ SAR-SHIP-DETECTION/
 │   │   ├── earthEngine.py   # Google Earth Engine interface
 │   │   └── insights.py      # Statistical insights page
 │   └── images/              # Generated output images and results
+├── Jetson AGX Orin/          # Edge deployment container (GPU-optimized)
+│   ├── Final_function.py     # Complete edge processing pipeline
+│   ├── best1.pt             # Optimized model weights for Jetson
+│   ├── inference_with_ONNX.py # GPU-accelerated ONNX inference
+│   └── ourmodel_inference_function.py # Edge-optimized inference
 ├── preprocessing/            # Image preprocessing modules
 ├── tracking/                # Ship tracking algorithms (development)
 ├── utilities/               # Utility scripts (model conversion, testing, image slicing)
@@ -199,6 +211,7 @@ SAR-SHIP-DETECTION/
 
 **Key Components:**
 - **FullApp/**: Complete Streamlit web application with all user interfaces
+- **Jetson AGX Orin/**: Self-contained edge processing optimized for NVIDIA Jetson AGX Orin with GPU acceleration
 - **config.json**: Centralized configuration for Google Earth Engine and AIS data sources
 - **preprocessing/**: Advanced SAR image preprocessing pipeline with land-sea segmentation
 - **utilities/**: Utility scripts for model conversion, testing, and large image processing
