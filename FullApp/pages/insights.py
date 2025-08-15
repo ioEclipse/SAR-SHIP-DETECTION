@@ -77,7 +77,7 @@ st.markdown(
             padding: 24px;
         }}
         /* Individual metric card styling */
-        .metric-card {{
+        .metric-card, .steps{{
             position: relative;
             background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
             border: 1px solid #2a2a2a;
@@ -93,12 +93,15 @@ st.markdown(
             width: 100%;
             margin-bottom: 20px;
         }}
-        .metric-card:hover {{
+        .steps{{
+            height: 35vh;
+        }}
+        .metric-card:hover, .steps:hover{{
             transform: translateY(-2px);
             box-shadow: 0 10px 24px rgba(0,0,0,0.35);
             border-color: #3a3a3a;
         }}
-        .metric-card::before {{
+        .metric-card::before, steps::before {{
             content: "";
             position: absolute;
             top: -1px;
@@ -112,9 +115,8 @@ st.markdown(
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 8px;
         }}
-        .metric-icon {{
+        .metric-icon, .steps-icon {{
             width: 32px;
             height: 32px;
             border-radius: 999px;
@@ -134,7 +136,7 @@ st.markdown(
             line-height: 1.2;
         }}
         .metric-value {{
-            font-size: 26px;
+            font-size: 4vh;
             font-weight: 800;
             margin: 8px 0;
         }}
@@ -142,6 +144,22 @@ st.markdown(
             color: #9a9a9a;
             font-size: 11px;
             line-height: 1.3;
+            text-align: center;
+        }}
+
+        .step-info{{
+            font-size: 3vh;
+            font-weight: 600;
+            margin-bottom: 40px;
+            text-align: center;
+            
+        }}
+
+        .bands{{
+            height: 20%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
             text-align: center;
         }}
         /* Color accents per card */
@@ -155,6 +173,19 @@ st.markdown(
         .metric-card.metric-map::before {{ background: linear-gradient(90deg, #d946ef, #fb7185); }}
         .metric-card.metric-iou .metric-icon {{ background: linear-gradient(135deg, #0ea5e9, #22d3ee); }}
         .metric-card.metric-iou::before {{ background: linear-gradient(90deg, #0ea5e9, #22d3ee); }}
+        
+        .steps.original-image .steps-icon {{ background: linear-gradient(135deg, #6366f1, #22d3ee); }}
+        .steps.metric-precision::before {{ background: linear-gradient(90deg, #6366f1, #22d3ee); }}
+        .steps.metric-recall .steps-icon {{ background: linear-gradient(135deg, #10b981, #34d399); }}
+        .steps.metric-recall::before {{ background: linear-gradient(90deg, #10b981, #34d399); }}
+        .steps.metric-f1 .steps-icon {{ background: linear-gradient(135deg, #f59e0b, #f97316); }}
+        .steps.metric-f1::before {{ background: linear-gradient(90deg, #f59e0b, #f97316); }}
+        .steps.metric-map .steps-icon {{ background: linear-gradient(135deg, #d946ef, #fb7185); }}
+        .steps.metric-map::before {{ background: linear-gradient(90deg, #d946ef, #fb7185); }}
+        .steps.metric-iou .steps-icon {{ background: linear-gradient(135deg, #0ea5e9, #22d3ee); }}
+        .steps.metric-iou::before {{ background: linear-gradient(90deg, #0ea5e9, #22d3ee); }}
+        
+        
         .footer-note {{
             margin-top: 24px;
             color: #8e8e8e;
@@ -241,5 +272,128 @@ for i, (title, desc, value) in enumerate(metrics):
             </div>
         """
         st.markdown(card_html, unsafe_allow_html=True)
+
+
+
+prep_steps = [
+    ("Original image", "Proportion of predicted ships that are correct", 0.92),
+    ("Recall", "Proportion of actual ships detected", 0.99),
+    ("F1-score", "Harmonic mean of precision and recall", 0.91),
+    ("mAP", "Mean average precision across all classes", 0.96),
+]
+
+icon_lookup = {
+    "Original Image": "🖼️",
+    "Recall": "📡",
+    "F1-score": "⚖️",
+    "mAP": "📈",
+    "IoU": "🧩",
+}
+
+st.markdown("---")
+col1,col2,col3=st.columns([1,1,1])
+with col2:
+    info = f"""
+                    <h4 style="text-align:center;">How the model works</h4>
+                """
+    st.markdown(info, unsafe_allow_html=True)
+
+col1, col2, col3, col4 = st.columns([2, 2, 2,2])
+
+with col1:
+    card_html = f"""
+            <div class="steps original-image">
+                <div class="metric-header">
+                    <div class="steps-icon">🛰️</div>
+                    <div class="metric-title">Geometric recalibration</div>
+                </div>
+                <div class="step-info" style="font-size:2vh; padding-bottom:10px;">Adjusts TIFF image geometry using satellite orbital files to ensure accurate alignment and positioning.</div>
+            </div>
+        """
+    st.markdown(card_html, unsafe_allow_html=True) 
+   
+
+with col2:
+    card_html = f"""
+            <div class="steps original-image">
+                <div class="metric-header">
+                    <div class="steps-icon">⚙️</div>
+                    <div class="metric-title">Preprocessing</div>
+                </div>
+                <div class="step-info">
+                <ul style="padding-top:5px; margin:0;font-size:2vh;list-style:none">
+                    <li>Gamma Correction</li>
+                    <li>Contrast Enhancement</li>
+                    <li>Thermal Noise Reduction</li>
+                    <li>Gaussian Blur</li>
+                    <li>Refined Lee Filter</li>
+                    <li>CLAHE</li>
+                    <li>Contour Filtering</li>
+                </ul>
+            
+        """
+    st.markdown(card_html, unsafe_allow_html=True)
+
+with col3:
+    card_html = f"""
+                <div class="steps original-image">
+                    <div class="metric-header">
+                        <div class="steps-icon">🖼️</div>
+                        <div class="metric-title">Raw picture</div>
+                    </div>
+                    <div class="step-info" style="padding-bottom:13px;">Our model takes the raw image in the form of a tiff file</div>
+                </div>
+            """
+    st.markdown(card_html, unsafe_allow_html=True)
+    
+    bands_html = f"""
+                <div class="steps bands" style="height: 40px; padding-top:5px;padding-bottom:10px;margin-bottom: 20px;">
+                    <p>Bands</p>
+                </div>
+            """
+    st.markdown(bands_html, unsafe_allow_html=True)
+    
+    col1_1, col1_2 = st.columns([2, 2])
+    with col1_1:
+        bands_html = f"""
+                <div class="steps bands" style="height: 60px; padding-top:10px;padding-bottom:10px;margin-bottom: 30px;">
+                    <div class="step-info">VV</div>
+                </div>
+            """
+        st.markdown(bands_html, unsafe_allow_html=True)
+    with col1_2:
+        bands_html = f"""
+                <div class="steps bands" style="height: 60px; padding-top:10px;padding-bottom:10px;margin-bottom: 30px;">
+                    <div class="step-info">VH</div>
+                </div>
+            """
+        st.markdown(bands_html, unsafe_allow_html=True)
+
+    
+with col4:
+    card_html = f"""
+            <div class="steps original-image">
+                <div class="metric-header">
+                    <div class="steps-icon">✏️</div>
+                    <div class="metric-title">Annotated image</div>
+                </div>
+                <div class="step-info" style="font-size:2.5vh;padding-top:5px;padding-bottom:10px;margin-bottom: 20px;">
+                <ul style="margin:0; padding-left: 20px;list-style:none">
+                    <li>Detected ships highlighted with bounding boxes</li>
+                    <li>Labeled ships with a unique number</li>
+                    <li>Geolocation provided for every detected ship</li>
+                </ul>
+                </div>
+            </div>
+        """
+    st.markdown(card_html, unsafe_allow_html=True)
+    
+    
+
+
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+
 
 st.markdown('</div>', unsafe_allow_html=True)
