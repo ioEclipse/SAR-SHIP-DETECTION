@@ -7,20 +7,16 @@ import rasterio
 from PIL import Image, ImageDraw, ImageFont
 from geemap import ee_export_image
 from noise_filter import apply_correction
+from inference_sdk import InferenceHTTPClient
+import json
 from tempfile import NamedTemporaryFile
-from local_inference import get_local_client
 
-# === LOAD CONFIGURATION ===
-def load_config():
-    config_path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
-    with open(config_path, 'r') as f:
-        return json.load(f)
-
-config = load_config()
-SERVICE_ACCOUNT_CREDENTIALS = config['google-earth']['service_account']
-
-# === Local YOLO model setup ===
-CLIENT = get_local_client()
+# === Roboflow setup ===
+CLIENT = InferenceHTTPClient(
+    api_url="https://serverless.roboflow.com",
+    api_key="e33E5OuqhaAIPQiyMqLt"
+)
+MODEL_ID = "sar-ship-hbhns/1"
 
 def run_inference(uploaded_image, resolution_m=20):
     # Ouvrir l'image
@@ -39,8 +35,7 @@ def run_inference(uploaded_image, resolution_m=20):
     ship_counter = 0
 
     # Envoyer l'image directement au modèle
-    result = CLIENT.infer(temp_path, model_id=MODEL_ID)
-
+    result = CLIENT.infer(uploaded_image, model_id=MODEL_ID)
 
     for pred in result.get("predictions", []):
         ship_counter += 1
@@ -114,33 +109,13 @@ def extract_coordinates_from_geojson(geojson_path: str) -> List[Tuple[float, flo
         [min(lons), max(lats)]
     ]
 
-
 def get_sentinel1_jpg(polygon_coords, year, month, output_dir='images/sar_sentinel1_jpg', resolution_m=10):
     # Authentification et initialisation
     try:
-        # Create credentials from config data using email and private key
-        service_account_email = SERVICE_ACCOUNT_CREDENTIALS['client_email']
-        private_key = SERVICE_ACCOUNT_CREDENTIALS['private_key']
-        
-        # Create temporary credentials file approach
-        import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
-            json.dump(SERVICE_ACCOUNT_CREDENTIALS, temp_file, indent=2)
-            temp_credentials_path = temp_file.name
-        
-        try:
-            credentials = ee.ServiceAccountCredentials(service_account_email, temp_credentials_path)
-            ee.Initialize(credentials)
-            print("✅ Google Earth Engine initialized with service account from config.")
-        finally:
-            # Clean up temporary file
-            if os.path.exists(temp_credentials_path):
-                os.remove(temp_credentials_path)
-                
-    except Exception as e:
-        print(f"❌ Failed to initialize Earth Engine: {e}")
-        print(f"Check that your config.json has valid service account credentials in google-earth.service_account")
-        raise
+        ee.Initialize()
+    except:
+        ee.Authenticate(auth_mode='localhost')
+        ee.Initialize(project='eendve-bouazizchahine7')
     
     # Créer les dossiers de sortie
     os.makedirs(output_dir, exist_ok=True)
