@@ -52,6 +52,9 @@ def compare_images(original, filtered):
 def compute_mask(image, invert_mask=False,bull=False,return_steps=False):
     # 1. Load and preprocess
     img = image.copy()
+    img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75) 
+    img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75) 
+    img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75)
     if bull: step_1=img
     # 2. Multi-stage denoising
     blurred = cv2.GaussianBlur(img, (7, 7), 0)
@@ -69,8 +72,8 @@ def compute_mask(image, invert_mask=False,bull=False,return_steps=False):
     # 4. Fusion of thresholding methods
     combined = cv2.bitwise_or(otsu_thresh, adaptive_thresh)
     combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75) 
-    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75) 
-    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75) 
+    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75)
+    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75)
     if bull: step_3=combined
     # 5. Advanced morphological processing
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
