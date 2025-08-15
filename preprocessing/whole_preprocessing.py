@@ -14,7 +14,7 @@ def preprocess(image):
     
 
 
-image_path = "preprocessing/vv2.jpg"
+image_path = "../FullApp\Test_image.png"
 
 print("Starting preprocessing...")
 #      noise reduction and enhancement

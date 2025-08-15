@@ -103,9 +103,11 @@ def compute_mask(image, invert_mask=False,bull=False,return_steps=False):
     if invert_mask:
         land_mask = cv2.bitwise_not(land_mask)
     if bull: step_5=land_mask
-
+    
+    
     if return_steps:
         return step_1, step_2, step_3, step_4,step_5, land_mask
+    
     return land_mask
 
 def calculate_land_percentage(mask):
@@ -169,6 +171,7 @@ def process_image(image, visualize=True,return_steps=False):
             return black_img
 
         # Remove land areas
+        
         masked_image = remove_land_areas(masked_image, land_mask)
         current_image = remove_land_areas(current_image, land_mask)
         current_image= refined_lee_filter(current_image, window_size=15, k=35)
@@ -188,7 +191,10 @@ def process_image(image, visualize=True,return_steps=False):
         else:
             print(f"Land percentage acceptable ({land_percentage:.2f}%), stopping cleanup.")
             break
-
+    buffer_radius = 10  # pixels
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (buffer_radius, buffer_radius))
+    mask_fin = cv2.dilate(mask_fin, kernel, iterations=1)
+    masked_image=remove_land_areas(masked_image, mask_fin)
     if return_steps:
         return step_1, step_2, step_3, step_4,step_5, masked_image, mask_fin
     
