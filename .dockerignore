@@ -20,3 +20,6 @@ ship_metadata_*.json
 *_metadata.json
 images/
 Ais_data/
+
+# Jetson AGX Orin directory (handled by separate container)
+Jetson AGX Orin/

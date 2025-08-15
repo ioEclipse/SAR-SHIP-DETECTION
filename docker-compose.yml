@@ -1,6 +1,6 @@
 
 services:
-  web:
+  web_app:
     build:
       context: .
       args:
@@ -11,3 +11,22 @@ services:
       - ENV=dev
     volumes:
       - .:/app
+
+  jetson_app:
+    build:
+      context: "./Jetson AGX Orin"
+      dockerfile: Dockerfile
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    volumes:
+      - "./Jetson AGX Orin:/app"
+    working_dir: /app
+    stdin_open: true
+    tty: true
