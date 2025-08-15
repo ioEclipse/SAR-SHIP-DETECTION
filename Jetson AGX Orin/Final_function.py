@@ -9,7 +9,7 @@ import os
 from scipy.ndimage import uniform_filter
 
 
-# === Chargement du modèle local ===
+# === Loading local model ===
 LOCAL_MODEL = YOLO("best1.onnx", task="detect")
 
 
@@ -229,7 +229,7 @@ def pixel_to_lonlat(tif_path, x_pixel, y_pixel):
     return lon, lat   
 
 def convert_radar_tif_to_jpg(tif_path, jpg_path):
-    """Convertit une image radar TIFF en JPEG avec normalisation adaptée"""
+    """Converts radar TIFF image to JPEG with adapted normalization"""
     with rasterio.open(tif_path) as src:
         img_array = src.read(1)
     
@@ -237,25 +237,25 @@ def convert_radar_tif_to_jpg(tif_path, jpg_path):
     p2, p98 = np.percentile(img_array, (2, 98))
     img_normalized = np.clip((img_array - p2) / (p98 - p2) * 255, 0, 255).astype(np.uint8)
     
-    # Conversion en JPEG avec qualité maximale
+    # Convert to JPEG with maximum quality
     Image.fromarray(img_normalized, mode='L').convert("RGB").save(jpg_path, 'JPEG', quality=100)
     return jpg_path
 
 def is_on_land(mask, x1, y1, x2, y2, threshold=0.5):
-    """Vérifie si une bounding box est principalement sur terre"""
-    # S'assurer que les coordonnées sont dans les limites de l'image
+    """Checks if a bounding box is mainly on land"""
+    # Ensure coordinates are within image bounds
     x1, y1, x2, y2 = int(max(0, x1)), int(max(0, y1)), int(min(mask.shape[1], x2)), int(min(mask.shape[0], y2))
     
     if x2 <= x1 or y2 <= y1:
         return False
     
-    # Extraire la région correspondant à la bounding box
+    # Extract region corresponding to bounding box
     region = mask[y1:y2, x1:x2]
     
     if region.size == 0:
         return False
     
-    # Calculer le ratio de pixels de terre dans la région
+    # Calculate ratio of land pixels in region
     land_pixels = np.sum(region)
     total_pixels = region.size
     land_ratio = land_pixels / total_pixels
@@ -264,13 +264,13 @@ def is_on_land(mask, x1, y1, x2, y2, threshold=0.5):
 
 def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, filter_abnormal=True):
     """
-    Exécute l'inférence avec découpage en tuiles
+    Execute inference with tile slicing
     
     Args:
         uploaded_image: Chemin ou objet image
-        tile_size: Taille des tuiles pour le découpage
-        resolution_m: Résolution spatiale en mètres par pixel
-        filter_abnormal: Si True, filtre les détections avec pixel_area <= 110 ou > 2000
+        tile_size: Size of tiles for slicing
+        resolution_m: Spatial resolution in meters per pixel
+        filter_abnormal: If True, filter detections with pixel_area <= 110 or > 2000
     """
     # Keep path to original tif if provided (used later for geolocation)
     original_tif_path = None
@@ -284,18 +284,18 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
     else:
         image = Image.open(uploaded_image).convert("RGB")
     
-    # === Pré-traitement de l'image avant l'inférence ===
+    # === Pre-process image before inference ===
     # Convertir l'image PIL en array OpenCV
     cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
     gray_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
     
-    # Appliquer uniquement le débruitage pour l'inférence et l'image finale
+    # Apply only denoising for inference and final image
     denoised_image = apply_correction(gray_image, times=3)
     
-    # Obtenir le land mask séparément pour le filtrage
+    # Get land mask separately for filtering
     _, land_mask = process_image(gray_image, visualize=False)
     
-    # Convertir l'image débruitée en RGB pour le modèle et l'annotation finale
+    # Convert denoised image to RGB for model and final annotation
     denoised_rgb = cv2.cvtColor(denoised_image, cv2.COLOR_GRAY2RGB)
     denoised_image_pil = Image.fromarray(denoised_rgb)
     
@@ -316,10 +316,10 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
     filtered_land = 0
     filtered_abnormal = 0
 
-    # Découpage en tuiles et traitement
+    # Slice into tiles and process
     for y in range(0, h, tile_size):
         for x in range(0, w, tile_size):
-            # Utilise l'image DÉBRUITÉE pour l'inférence
+            # Use DENOISED image for inference
             tile = denoised_image_pil.crop((x, y, min(x+tile_size, w), min(y+tile_size, h)))
             with NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
                 tile.save(temp_file.name, quality=95)
@@ -335,7 +335,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
                     verbose=False
                 )
                 
-                # Traitement des résultats
+                # Process results
                 predictions = []
                 for result in results:
                     for box in result.boxes:
@@ -352,7 +352,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
                     x_center_tile, y_center_tile = pred["x"], pred["y"]
                     w_box, h_box = pred["width"], pred["height"]
 
-                    # Conversion des coordonnées relatives en absolues
+                    # Convert relative coordinates to absolute
                     x_center_abs = int(x + x_center_tile)
                     y_center_abs = int(y + y_center_tile)
 
@@ -364,16 +364,16 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
                     # Calcul de la surface en pixels
                     pixel_area = (x2 - x1) * (y2 - y1)
 
-                    # Vérifier si la bounding box est sur terre
+                    # Check if bounding box is on land
                     if is_on_land(land_mask, x1, y1, x2, y2):
                         filtered_land += 1
-                        continue  # Ignorer cette détection
+                        continue  # Ignore this detection
                     
-                    # Filtrage des valeurs aberrantes si activé
+                    # Filter outlier values if enabled
                     if filter_abnormal:
                         if pixel_area <= 110 or pixel_area > 2000:
                             filtered_abnormal += 1
-                            continue  # Ignorer cette détection
+                            continue  # Ignore this detection
 
                     ship_counter += 1
 
@@ -381,7 +381,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
                     draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
                     draw.text((x1 + 5, y1 + 5), f"#{ship_counter}", fill="yellow", font=font)
 
-                    # Extraction de la zone détectée depuis l'image DÉBRUITÉE
+                    # Extract detected area from DENOISED image
                     margin = int(max(w_box, h_box) * 0.3)
                     crop_x1 = max(x1 - margin, 0)
                     crop_y1 = max(y1 - margin, 0)
@@ -393,7 +393,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
                     # Calcul de la surface en m²
                     area_m2 = pixel_area * (resolution_m ** 2)
 
-                    # Géolocalisation
+                    # Geolocation
                     pixel_coord = {"pixel_x": x_center_abs, "pixel_y": y_center_abs}
                     geoloc = None
                     
@@ -427,7 +427,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
     draw.text((10, 10), f"Total Ships Detected: {ship_counter}", fill="cyan", font=font)
     draw.text((10, 40), f"Filtered (land): {filtered_land}", fill="cyan", font=font)
     draw.text((10, 70), f"Filtered (abnormal): {filtered_abnormal}", fill="cyan", font=font)
-    draw.text((10, 100), f"Résolution: {resolution_m}m/pixel", fill="cyan", font=font)
+    draw.text((10, 100), f"Resolution: {resolution_m}m/pixel", fill="cyan", font=font)
 
     # Write metadata JSON
     with open("ship_metadata.json", "w") as f:
@@ -436,10 +436,10 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
     return annotated, crops, ship_counter, metadata
 
 if __name__ == "__main__":
-    # appel identique qu'avant — si tu passes un TIFF, la geolocation sera ajoutée
+    # identical call as before - if you pass a TIFF, geolocation will be added
     annotated_img, crops, count, metadata = run_inference_with_crops("Test_image.png", tile_size=640, resolution_m=10)
     print("Detected ships:", count)
-    # affiche les 1ères métadonnées
+    # display first metadata
     for m in metadata[:1]:
         print(m)
 

@@ -51,7 +51,7 @@ def convert_radar_tif_to_jpg(tif_path, jpg_path):
     p2, p98 = np.percentile(img_array, (2, 98))
     img_normalized = np.clip((img_array - p2) / (p98 - p2) * 255, 0, 255).astype(np.uint8)
     
-    # Conversion en JPEG avec qualité maximale
+    # Convert to JPEG with maximum quality
     Image.fromarray(img_normalized, mode='L').convert("RGB").save(jpg_path, 'JPEG', quality=100)
     return jpg_path
 
@@ -60,10 +60,10 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     # Keep path to original tif if provided (used later for geolocation)
     original_tif_path = None
 
-    # Conversion et sauvegarde si l'image est un TIFF
+    # Convert and save if the image is a TIFF
     if isinstance(uploaded_image, str) and uploaded_image.lower().endswith('.tif'):
         # preserve original tif path for pixel->lonlat mapping
-        original_tif_path = uploaded_image  # CHANGE: conserve le TIF pour géolocalisation
+        original_tif_path = uploaded_image  # CHANGE: preserve TIF for geolocation
         converted_path = "converted_from_tif.jpg"
         convert_radar_tif_to_jpg(uploaded_image, converted_path)
         image = Image.open(converted_path).convert("RGB")
@@ -83,12 +83,12 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     metadata = []
     ship_counter = 0
 
-    # Découpage en tuiles et traitement
+    # Slice into tiles and process
     for y in range(0, h, tile_size):
         for x in range(0, w, tile_size):
             tile = image.crop((x, y, min(x+tile_size, w), min(y+tile_size, h)))
             with NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
-                tile.save(temp_file.name, quality=95)  # Qualité légèrement réduite pour les tuiles
+                tile.save(temp_file.name, quality=95)  # Slightly reduced quality for tiles
                 temp_path = temp_file.name
 
             try:
@@ -107,21 +107,21 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     x_center_tile, y_center_tile = pred["x"], pred["y"]
                     w_box, h_box = pred["width"], pred["height"]
 
-                    # Conversion des coordonnées relatives en absolues (par rapport à l'image complète)
-                    x_center_abs = int(x + x_center_tile)   # CHANGE: pixel_x centre absolu
-                    y_center_abs = int(y + y_center_tile)   # CHANGE: pixel_y centre absolu
+                    # Convert relative coordinates to absolute (relative to full image)
+                    x_center_abs = int(x + x_center_tile)   # CHANGE: absolute center pixel_x
+                    y_center_abs = int(y + y_center_tile)   # CHANGE: absolute center pixel_y
 
                     x1 = int(x + x_center_tile - w_box / 2)
                     y1 = int(y + y_center_tile - h_box / 2)
                     x2 = int(x + x_center_tile + w_box / 2)
                     y2 = int(y + y_center_tile + h_box / 2)
 
-                    # Annotation (garde comme avant)
+                    # Annotation (keep as before)
                     draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
                     draw.text((x1 + 5, y1 + 5), f"Ship #{ship_counter}", fill="yellow", font=font)
 
-                    # Extraction de la zone détectée (crop)
-                    margin = int(max(w_box, h_box) * 0.3)  # Marge proportionnelle
+                    # Extract detected area (crop)
+                    margin = int(max(w_box, h_box) * 0.3)  # Proportional margin
                     crop_x1 = max(x1 - margin, 0)
                     crop_y1 = max(y1 - margin, 0)
                     crop_x2 = min(x2 + margin, w)
@@ -129,27 +129,27 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     crop_img = image.crop((crop_x1, crop_y1, crop_x2, crop_y2))
                     crops.append((f"Ship #{ship_counter}", crop_img))
 
-                    # Calcul de la surface
+                    # Calculate surface area
                     pixel_area = (x2 - x1) * (y2 - y1)
                     area_m2 = pixel_area * (resolution_m ** 2)
 
                     # --- GEOMETRY / PIXEL COORDS CHANGE ---
-                    # CHANGE: remplacer la clé 'bounding_box' par les coordonnées pixel du centre
-                    # on garde le nom 'bounding_box' pour compatibilité UI mais on met les pixels.
+                    # CHANGE: replace 'bounding_box' key with pixel center coordinates
+                    # keep 'bounding_box' name for UI compatibility but put pixels.
                     pixel_coord = {"pixel_x": x_center_abs, "pixel_y": y_center_abs}
 
-                    # CHANGE: si image d'origine est un TIF, calculer la géolocalisation (lon/lat)
+                    # CHANGE: if original image is TIF, calculate geolocation (lon/lat)
                     geoloc = None
                     if original_tif_path:
                         try:
                             lon, lat = pixel_to_lonlat(original_tif_path, x_center_abs, y_center_abs)
                             geoloc = {"lon": float(lon), "lat": float(lat)}
                         except Exception as e:
-                            # ne pas planter l'UI, simplement stocker None en cas d'erreur
+                            # don't crash UI, simply store None in case of error
                             geoloc = None
                             print(f"[WARN] pixel_to_lonlat failed for ship {ship_counter}: {e}")
 
-                    # Metadata (modifié)
+                    # Metadata (modified)
                     metadata.append({
                         "ship_id": f"Ship #{ship_counter}",
                         "pixel_area": pixel_area,
@@ -160,17 +160,17 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     })
 
             except Exception as e:
-                print(f"Erreur sur la tuile {x},{y}: {str(e)}")
+                print(f"Error on tile {x},{y}: {str(e)}")
                 continue
             finally:
                 try:
-                    os.unlink(temp_path)  # Nettoyage obligatoire
+                    os.unlink(temp_path)  # Mandatory cleanup
                 except Exception:
                     pass
 
-    # Annotation finale
+    # Final annotation
     draw.text((10, 10), f"Total Ships Detected: {ship_counter}", fill="cyan", font=font)
-    draw.text((10, 40), f"Résolution: {resolution_m}m/pixel", fill="cyan", font=font)
+    draw.text((10, 40), f"Resolution: {resolution_m}m/pixel", fill="cyan", font=font)
 
     # Write metadata JSON
     with open("ship_metadata.json", "w") as f:
@@ -201,16 +201,16 @@ def find_best_ship(lon, lat, date_iso, ais_csv_path,
 
     best_per_mmsi = {}  # MMSI -> (score, row_dict)
 
-    # lecture par chunks pour gros fichier
+    # read by chunks for large file
     for chunk in pd.read_csv(ais_csv_path, parse_dates=["BaseDateTime"],
                              infer_datetime_format=True, chunksize=chunksize, low_memory=True):
-        # garder seulement la fenêtre temporelle
+        # keep only the time window
         chunk = chunk[(chunk["BaseDateTime"] >= tmin) & (chunk["BaseDateTime"] <= tmax)]
         if chunk.empty:
             continue
 
-        # calculer distance et delta temps
-        # assure conversion float pour lat/lon
+        # calculate distance and time delta
+        # ensure float conversion for lat/lon
         chunk = chunk.copy()
         chunk["LAT"] = pd.to_numeric(chunk["LAT"], errors="coerce")
         chunk["LON"] = pd.to_numeric(chunk["LON"], errors="coerce")
@@ -218,43 +218,43 @@ def find_best_ship(lon, lat, date_iso, ais_csv_path,
         if chunk.empty:
             continue
 
-        # vecteur distances (appliqué ligne à ligne)
+        # distance vector (applied row by row)
         chunk["distance_m"] = chunk.apply(
             lambda r: haversine_m(lat, lon, float(r["LAT"]), float(r["LON"])), axis=1
         )
-        # delta temps en secondes absolu
+        # absolute time delta in seconds
         chunk["time_diff_s"] = chunk["BaseDateTime"].apply(lambda t: abs((t - sentinel_time).total_seconds()))
 
-        # on peut restreindre aux points dans le rayon (sinon garder pour nearest fallback)
+        # can restrict to points within radius (otherwise keep for nearest fallback)
         in_radius = chunk[chunk["distance_m"] <= search_radius_m]
         consider = in_radius if not in_radius.empty else chunk
 
-        # mettre à jour meilleur par MMSI
+        # update best per MMSI
         for _, row in consider.iterrows():
             mmsi = row.get("MMSI", None)
             if pd.isna(mmsi):
                 continue
             score = float(row["distance_m"]) + time_weight * float(row["time_diff_s"])
-            # si nouveau MMSI ou meilleur score, remplacer
+            # if new MMSI or better score, replace
             prev = best_per_mmsi.get(mmsi)
             if (prev is None) or (score < prev[0]):
-                # stocker score et la ligne entière (convertie en dict pour économie memoire)
+                # store score and entire row (converted to dict for memory efficiency)
                 best_per_mmsi[mmsi] = (score, row.to_dict())
 
-    # si aucun candidat trouvé dans toute la fenêtre
+    # if no candidate found in entire window
     if not best_per_mmsi:
         return None
 
-    # choisir le MMSI avec le meilleur score
+    # choose MMSI with best score
     best_mmsi = min(best_per_mmsi.items(), key=lambda kv: kv[1][0])[0]
     best_score, best_row = best_per_mmsi[best_mmsi]
 
-    # enrichir la ligne avec des champs distance_m/time_diff_s/score (si absent)
+    # enrich row with distance_m/time_diff_s/score fields (if missing)
     best_row["distance_m"] = best_row.get("distance_m", None)
     best_row["time_diff_s"] = best_row.get("time_diff_s", None)
     best_row["score"] = best_score
 
-    # retourner la ligne meilleure sous forme de dict (ou pd.Series si tu préfères)
+    # return best row as dict (or pd.Series if you prefer)
     return best_row
 
 def _to_json_serializable(obj):
@@ -296,7 +296,7 @@ def search_ais_for_metadata(metadata_path="ship_metadata.json",
                             output_path="AIS_search.json",
                             # below params forwarded to find_best_ship if you want to override:
                             time_window_s=300, search_radius_m=100, time_weight=0.5):
-        # Chargement metadata
+        # Load metadata
     metadata_path = Path(metadata_path)
     if not metadata_path.exists():
         raise FileNotFoundError(f"{metadata_path} not found")
@@ -328,7 +328,7 @@ def search_ais_for_metadata(metadata_path="ship_metadata.json",
             results[ship_id] = None
             continue
 
-        # Appel de la fonction existante (assume définie)
+        # Call existing function (assume defined)
         try:
             best = find_best_ship(lon, lat, date_iso, ais_csv_path,
                                   time_window_s=time_window_s,
@@ -343,9 +343,9 @@ def search_ais_for_metadata(metadata_path="ship_metadata.json",
             print("no AIS match")
             results[ship_id] = None
         else:
-            # s'assurer que tout est JSON serializable
+            # ensure everything is JSON serializable
             serial = _to_json_serializable(best)
-            # ajouter le ship_id et l'origine de la recherche pour traçabilité
+            # add ship_id and search origin for traceability
             if isinstance(serial, dict):
                 serial["_queried_ship_id"] = ship_id
                 serial["_queried_geolocation"] = {"lon": lon, "lat": lat}
@@ -353,7 +353,7 @@ def search_ais_for_metadata(metadata_path="ship_metadata.json",
             results[ship_id] = serial
             print("found")
 
-    # Ecrire le résultat
+    # Write result
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 

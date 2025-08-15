@@ -12,28 +12,28 @@ def resize_height(img, height):
     return img.resize((new_w, height))
 
 
-# Charger les images avec redimensionnement cohérent
+# Load images with consistent resizing
 raw_img = resize_height(Image.open("assets/raw_img_2.png"), fixed_height)
 gee_img = Image.open("assets/ee_earth_satellite.png").resize((500, 364))
 stats_img = resize_height(Image.open("assets/stats4.png"), fixed_height)
 
-# Masquer la sidebar
+# Hide sidebar
 st.set_page_config(page_title="Main", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS pour tout passer en fond noir
+# CSS to set everything to black background
 custom_css = """
     <style>
-        /* Cacher le bouton de sidebar */
+        /* Hide sidebar button */
         [data-testid="collapsedControl"] {
             display: none;
         }
 
-        /* Mettre toute la page en fond noir */
+        /* Set entire page to black background */
         html, body, [class*="stApp"] {
             background-color: #000000;
         }
 
-        /* Conteneur des options */
+        /* Options container */
         .option-container {
             background-color: #000000;
             padding: 40px;
@@ -83,9 +83,12 @@ custom_css = """
             justify-content: center;
         }
         .stImage img {
-            max-height: 400px;
+            max-height: 300px;
+            max-width: 100%;
             width: auto;
+            height: auto;
             object-fit: contain;
+            border-radius: 10px;
         }
     </style>
 """
@@ -110,7 +113,7 @@ st.markdown(f'''
     <hr style="border: 1px solid #E9E9E9; margin-bottom: 40px;">
 ''', unsafe_allow_html=True)
 
-# === Mise en page avec trois colonnes ===
+# === Layout with three columns ===
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -123,7 +126,7 @@ with col1:
     Detailed detection on multi-polarizations and resolutions.
     </div>
     """, unsafe_allow_html=True)
-    st.image(raw_img, caption="Raw Data", use_container_width=True)
+    st.image(raw_img, caption="Raw Data")
     if st.button("Get started", key="raw"):
         st.switch_page("pages/app.py")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -149,7 +152,7 @@ with col3:
     </h2>
     <div class="description" style="font-size: 1.1em; color: #cccccc; margin-bottom: 18px;">Visualize and analyze the model's metrics.</div>
     """, unsafe_allow_html=True)
-    st.image(stats_img, caption="Insights", use_container_width=True)
+    st.image(stats_img, caption="Insights")
     if st.button("Get started", key="gee"):
         st.switch_page("pages/insights.py")
     st.markdown('</div>', unsafe_allow_html=True)

@@ -8,8 +8,8 @@ import rasterio
 import os
 
 
-# === Chargement du modèle local ===
-LOCAL_MODEL = YOLO("best.onnx",task="detect")  # Modèle local
+# === Loading local model ===
+LOCAL_MODEL = YOLO("best.onnx",task="detect")  # Local model
 def pixel_to_lonlat(tif_path, x_pixel, y_pixel):
     """Fallback si pixel_to_lonlat non fourni"""
     with rasterio.open(tif_path) as src:
@@ -17,15 +17,15 @@ def pixel_to_lonlat(tif_path, x_pixel, y_pixel):
     return lon, lat   
 
 def convert_radar_tif_to_jpg(tif_path, jpg_path):
-    """Convertit une image radar TIFF en JPEG avec normalisation adaptée"""
+    """Converts radar TIFF image to JPEG with adapted normalization"""
     with rasterio.open(tif_path) as src:
         img_array = src.read(1)
     
-    # Normalisation des valeurs radar
+    # Normalize radar values
     p2, p98 = np.percentile(img_array, (2, 98))
     img_normalized = np.clip((img_array - p2) / (p98 - p2) * 255, 0, 255).astype(np.uint8)
     
-    # Conversion en JPEG avec qualité maximale
+    # Convert to JPEG with maximum quality
     Image.fromarray(img_normalized, mode='L').convert("RGB").save(jpg_path, 'JPEG', quality=100)
     return jpg_path
 
@@ -34,7 +34,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     # Keep path to original tif if provided (used later for geolocation)
     original_tif_path = None
 
-    # Conversion et sauvegarde si l'image est un TIFF
+    # Convert and save if the image is a TIFF
     if isinstance(uploaded_image, str) and uploaded_image.lower().endswith('.tif'):
         # preserve original tif path for pixel->lonlat mapping
         original_tif_path = uploaded_image
@@ -57,7 +57,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     metadata = []
     ship_counter = 0
 
-    # Découpage en tuiles et traitement
+    # Slice into tiles and process
     for y in range(0, h, tile_size):
         for x in range(0, w, tile_size):
             tile = image.crop((x, y, min(x+tile_size, w), min(y+tile_size, h)))
@@ -66,20 +66,20 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                 temp_path = temp_file.name
 
             try:
-                # === INFÉRENCE AVEC MODÈLE LOCAL ===
+                # === INFERENCE WITH LOCAL MODEL ===
                 results = LOCAL_MODEL.predict(
                     temp_path,
-                    conf=0.25,          # Seuil de confiance
-                    imgsz=tile_size,     # Taille d'inférence
-                    device="cpu",        # Utiliser "cuda" pour GPU
-                    verbose=False        # Désactiver les logs
+                    conf=0.25,          # Confidence threshold
+                    imgsz=tile_size,     # Inference size
+                    device="cpu",        # Use "cuda" for GPU
+                    verbose=False        # Disable logs
                 )
                 
-                # Traitement des résultats
+                # Process results
                 predictions = []
                 for result in results:
                     for box in result.boxes:
-                        # Extraction des coordonnées (format XYWH)
+                        # Extract coordinates (XYWH format)
                         x_center, y_center, width, height = box.xywh[0].tolist()
                         predictions.append({
                             "x": x_center,
@@ -89,14 +89,14 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                             "confidence": box.conf.item()
                         })
                 
-                # === FIN DE LA SECTION MODIFIÉE ===
+                # === END OF MODIFIED SECTION ===
                 
                 for pred in predictions:
                     ship_counter += 1
                     x_center_tile, y_center_tile = pred["x"], pred["y"]
                     w_box, h_box = pred["width"], pred["height"]
 
-                    # Conversion des coordonnées relatives en absolues
+                    # Convert relative coordinates to absolute
                     x_center_abs = int(x + x_center_tile)
                     y_center_abs = int(y + y_center_tile)
 
@@ -109,7 +109,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
                     draw.text((x1 + 5, y1 + 5), f"Ship #{ship_counter}", fill="yellow", font=font)
 
-                    # Extraction de la zone détectée
+                    # Extract detected area
                     margin = int(max(w_box, h_box) * 0.3)
                     crop_x1 = max(x1 - margin, 0)
                     crop_y1 = max(y1 - margin, 0)
@@ -118,11 +118,11 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     crop_img = image.crop((crop_x1, crop_y1, crop_x2, crop_y2))
                     crops.append((f"Ship #{ship_counter}", crop_img))
 
-                    # Calcul de la surface
+                    # Calculate surface area
                     pixel_area = (x2 - x1) * (y2 - y1)
                     area_m2 = pixel_area * (resolution_m ** 2)
 
-                    # Géolocalisation
+                    # Geolocation
                     pixel_coord = {"pixel_x": x_center_abs, "pixel_y": y_center_abs}
                     geoloc = None
                     
@@ -144,7 +144,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     })
 
             except Exception as e:
-                print(f"Erreur sur la tuile {x},{y}: {str(e)}")
+                print(f"Error on tile {x},{y}: {str(e)}")
                 continue
             finally:
                 try:
@@ -152,9 +152,9 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                 except Exception:
                     pass
 
-    # Annotation finale
+    # Final annotation
     draw.text((10, 10), f"Total Ships Detected: {ship_counter}", fill="cyan", font=font)
-    draw.text((10, 40), f"Résolution: {resolution_m}m/pixel", fill="cyan", font=font)
+    draw.text((10, 40), f"Resolution: {resolution_m}m/pixel", fill="cyan", font=font)
 
     # Write metadata JSON
     with open("ship_metadata.json", "w") as f:
@@ -166,17 +166,17 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
 
 
 if __name__ == "__main__":
-    # appel identique qu'avant — si tu passes un TIFF, la geolocation sera ajoutée
+    # identical call as before - if you pass a TIFF, geolocation will be added
     annotated_img, crops, count, metadata = run_inference_with_crops("Test_image.png", tile_size=640, resolution_m=10)
     print("Detected ships:", count)
-    # affiche les 1ères métadonnées
+    # display first metadata
     for m in metadata[:1]:
         print(m)
 
-        # Convertir PIL → NumPy (BGR pour OpenCV)
+        # Convert PIL → NumPy (BGR for OpenCV)
     annotated_img_cv = cv2.cvtColor(np.array(annotated_img), cv2.COLOR_RGB2BGR)
 
-    # Sauvegarder en PNG
+    # Save as PNG
     cv2.imwrite("annotated_image.png", annotated_img_cv)
     
     

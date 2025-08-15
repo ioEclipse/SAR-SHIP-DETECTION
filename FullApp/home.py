@@ -92,7 +92,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Deux boutons côte à côte
+# Two buttons side by side
 col1, col2 = st.columns([1, 1])
 with col1:
     if st.button("Try Here", key="try_here"):
@@ -102,5 +102,5 @@ with col1:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Rien d’autre à afficher
+# Nothing else to display
 st.write("")
