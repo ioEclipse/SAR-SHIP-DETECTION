@@ -17,13 +17,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-# === LOAD CONFIGURATION ===
-def load_config():
-    config_path = os.path.join(os.path.dirname(__file__),'config.json')
-    with open(config_path, 'r') as f:
-        return json.load(f)
 
-config = load_config()
 
 # === Roboflow setup ===
 CLIENT = InferenceHTTPClient(
@@ -97,13 +91,12 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                 if not result or "predictions" not in result:
                     print(f"Warning: Invalid result from Roboflow API for tile at {x},{y}")
                     continue
-                    
+                        
                 predictions = result.get("predictions", [])
                 if not predictions:
                     continue  # No ships detected in this tile
                 
                 for pred in predictions:
-                    ship_counter += 1
                     x_center_tile, y_center_tile = pred["x"], pred["y"]
                     w_box, h_box = pred["width"], pred["height"]
 
@@ -115,6 +108,17 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     y1 = int(y + y_center_tile - h_box / 2)
                     x2 = int(x + x_center_tile + w_box / 2)
                     y2 = int(y + y_center_tile + h_box / 2)
+
+                    # Calculate surface area (pixel area) BEFORE drawing
+                    pixel_area = (x2 - x1) * (y2 - y1)
+
+                    # FILTER: if pixel area is strictly greater than 2000, skip this detection
+                    if pixel_area > 2000:
+                        print(f"Info: Skipping detection at tile {x},{y} with pixel_area {pixel_area} (>2000)")
+                        continue  # do not draw, do not add to crops or metadata
+
+                    # Only increment and annotate for accepted ships
+                    ship_counter += 1
 
                     # Annotation (keep as before)
                     draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
@@ -129,8 +133,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     crop_img = image.crop((crop_x1, crop_y1, crop_x2, crop_y2))
                     crops.append((f"Ship #{ship_counter}", crop_img))
 
-                    # Calculate surface area
-                    pixel_area = (x2 - x1) * (y2 - y1)
+                    # Calculate surface area in m^2
                     area_m2 = pixel_area * (resolution_m ** 2)
 
                     # --- GEOMETRY / PIXEL COORDS CHANGE ---
@@ -147,7 +150,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                         except Exception as e:
                             # don't crash UI, simply store None in case of error
                             geoloc = None
-                            print(f"[WARN] pixel_to_lonlat failed for ship {ship_counter}: {e}")
+                            print(f"[WARN] pixel_to_lonlat failed for a ship: {e}")
 
                     # Metadata (modified)
                     metadata.append({
@@ -177,6 +180,8 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
         json.dump(metadata, f, indent=4)
 
     return annotated, crops, ship_counter, metadata
+
+
 
 def find_best_ship(lon, lat, date_iso, ais_csv_path,
                    time_window_s=300, search_radius_m=100,
