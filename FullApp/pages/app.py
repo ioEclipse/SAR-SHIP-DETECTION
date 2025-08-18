@@ -437,12 +437,38 @@ else:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Replace the preprocessing pipeline section in your app.py with this:
-
+# Replace the preprocessing pipeline section in your app.py with this:
 if uploaded_image is not None and "annotated_image" in st.session_state and st.session_state.annotated_image is not None:
     try:
-        # Call preprocessing pipeline with the uploaded file object
-        image_paths = preprocessing_pipeline(uploaded_image)
+        # Handle TIFF files by converting them to JPG first
+        if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
+            with NamedTemporaryFile(suffix=".tif", delete=False) as tmp_tif:
+                tmp_tif.write(uploaded_image.getvalue())
+                tmp_tif_path = tmp_tif.name
+            
+            # Convert to JPG using your existing function
+            with NamedTemporaryFile(suffix=".jpg", delete=False) as tmp_jpg:
+                tmp_jpg_path = tmp_jpg.name
+                convert_radar_tif_to_jpg(tmp_tif_path, tmp_jpg_path)
+            
+            # Call preprocessing pipeline with the converted JPG
+            image_paths = preprocessing_pipeline(tmp_jpg_path)
+            
+            # Clean up temporary files
+            if tmp_tif_path and os.path.exists(tmp_tif_path):
+                try:
+                    os.unlink(tmp_tif_path)
+                except Exception:
+                    pass
+            if tmp_jpg_path and os.path.exists(tmp_jpg_path):
+                try:
+                    os.unlink(tmp_jpg_path)
+                except Exception:
+                    pass
+        else:
+            # For non-TIFF files, call directly with the uploaded file
+            image_paths = preprocessing_pipeline(uploaded_image)
+        
         st.session_state.preprocessing_paths = image_paths
         
         # Debug info
