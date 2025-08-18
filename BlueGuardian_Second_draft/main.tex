@@ -116,12 +116,14 @@
 \date{July 24, 2025}
 
 \begin{document}
+	\captionsetup{font={footnotesize}} 
 	\sloppy
 	
 	\maketitle
 	
 	\begin{abstract}
-		This document outlines the SAR Ship Detection Project, aiming to detect and track ships using Synthetic Aperture Radar (SAR) data from sources like Sentinel-1. The core functionality involves machine learning models for land-sea segmentation and image correction, together with deep learning models for ship detection and tracking. The system offers three user interfaces: a Jetson AGX Orin for on-orbit inference and data downlink, a web-based interface for on-demand analysis of SAR data selected via a mAP, and an image upload feature for user-provided raw SAR imagery. Key objectives include developing lightweight, high-accuracy models for real-time ship identification, tracking, and potential applications such as monitoring illegal activities, aiding in search and rescue operations, and general maritime surveillance. \\\\Associated Code Repository: https://github.com/ioEclipse/\acrshort{sar}-SHIP-DETECTION 
+		This document outlines the SAR Ship Detection Project, aiming to detect and track ships using Synthetic Aperture Radar (SAR) data from sources like Sentinel-1. The core functionality involves machine learning models for land-sea segmentation and image correction, together with deep learning models for ship detection and tracking. The system offers three user interfaces: a Jetson AGX Orin for on-orbit inference and data downlink, a web-based interface for on-demand analysis of SAR data selected via a mAP, and an image upload feature for user-provided raw SAR imagery. Key objectives include developing lightweight, high-accuracy models for real-time ship identification, tracking, and potential applications such as monitoring illegal activities, aiding in search and rescue operations, and general maritime surveillance.
+		 \\\\Associated Code Repository: https://github.com/ioEclipse/\acrshort{sar}-SHIP-DETECTION 
 		
 		
 	\end{abstract}
@@ -558,22 +560,7 @@
 	For more detailed information, see Appendix \ref{appendix:linsca}.
 	
 	
-	\paragraph{Noise Reduction and edge enhancing}
-	This preprocessing step aims to reduce noise in the SAR image and enhance the shapes of ships, minimizing the risk of false negatives by preventing the AI from confusing noise with actual targets. The process starts with a gamma correction filter using a gamma value of 0.6. Since ships appear very bright in VV-polarized SAR images, this gamma correction reduces overall image brightness, significantly dimming the noise—which is less bright—without obscuring the ships. This effectively makes the noise close to zero, while the ships remain visible.
-	
-	After gamma correction, an image enhancement filter with an alpha of approximately 1.43 is applied. This filter boosts brighter regions more than dimmer ones, further enhancing ship shapes and diminishing any residual noise. The combined effect improves the visibility and definition of ships, aiding both human interpretation and algorithmic detection.
-	
-	Gamma correction in SAR imagery adjusts contrast nonlinearly to enhance detail visibility and make features more distinguishable without altering average brightness. This enhances important image details such as ship edges, leading to better detection performance.
-	
-	The processed result is illustrated in Figure~\ref{fig:noise_reduction_comparison}.
-	\begin{figure}[!ht]
-		\centering
-		\includegraphics[width=0.7\textwidth]{image.png}
-		\caption{Before \& After: Noise Reduction \& Edge Enhancement}
-		\label{fig:noise_reduction_comparison}
-	\end{figure}
-	For more detailed information, see Appendix \ref{appendix:gamma}
-	
+
 	
 	\paragraph{Land Masking}
 	The final step in the preprocessing pipeline for ship detection in \acrshort{sar} images is land segmentation, which aims to separate land areas from water bodies to reduce false positives in ship detection. The implemented approach consists of several stages, combining advanced image processing techniques to achieve robust land masking. In \acrshort{sar}-based land-water segmentation, the primary objective is robust separation of terrestrial and aquatic regions not the preservation of fine details such as ship signatures or wave textures. However, this task is complicated by speckle noise, an inherent granular distortion in \acrshort{sar} imagery caused by coherent radar wave interference. Unlike additive noise, speckle is multiplicative, meaning it scales with local backscatter intensity, obscuring true land-water boundaries. While conventional filters (e.g., Gaussian blur) indiscriminately smooth noise and edges alike, the Lee filter excels by adaptively suppressing speckle while preserving critical structural features like coastlines.\\
@@ -583,17 +570,18 @@
 	
 	\begin{figure}[!ht]
 		\centering
-		\includegraphics[width=0.75\textwidth]{Lee_filter.png}
-		\caption{Before \& After: Lee filter Application}
+		\includegraphics[width=0.55\textwidth]{Lee_filter.png}
+		\caption{ \centering Before \& After: Lee filter Application\\ This figure visualizes the effect of applying a Lee filter to a SAR image—a key preprocessing step in ship and dark vessel detection. The left panel (“Original”) shows the raw SAR imagery, where ships and coastal features are visible but surrounded by significant speckle noise. The right panel (“After Lee Filter”) demonstrates how the Lee filter smooths the sea surface, effectively reducing noise while preserving the major coastline and vessel signatures.}
 		\label{fig:lee_filter_comparison}
+
 	\end{figure}
 	
 	
 	A multi-stage denoising and enhancement strategy is applied before land segmentation: Gaussian Blurring reduces random noise without excessive edge loss, while CLAHE locally improves image contrast without amplifying noise—particularly critical for distinguishing land and water in regions with complex backscatter. \\
 	\begin{figure}[!ht]
 		\centering
-		\includegraphics[width=0.75\textwidth]{denoising.png}
-		\caption{Before \& After: Multi-stage Denoising}
+		\includegraphics[width=0.5\linewidth]{denoising.png}
+		\caption{\centering Before \& After: Multi-stage Denoising \newline This figure compares SAR image patches before and after multi-stage denoising and enhancement—a crucial step in the preprocessing pipeline for ship and dark vessel detection. The left image ("Before Enhancement") retains some noise and less pronounced vessel and coastline features. The right image ("After Enhancement") shows clearer separation between land, sea, and detected objects, with reduced noise and more distinct ship-like targets.} 
 		\label{fig:denoising_comparison}
 	\end{figure}
 	
@@ -607,18 +595,19 @@
 		\centering
 		\begin{subfigure}{0.48\linewidth}
 			\centering
-			\includegraphics[width=0.5\textwidth]{Threshold.png}
+			\includegraphics[width=0.9\textwidth]{Threshold.png}
 			\caption{Application of Thresholds}
 			\label{fig:threshold_comparison}
 		\end{subfigure}
 		\hfill
 		\begin{subfigure}{0.48\linewidth}
 			\centering
-			\includegraphics[width=0.5\linewidth]{Morph.png}
+			\includegraphics[width=0.9\linewidth]{Morph.png}
 			\caption{Before \& After: Morphological Processing}
 			\label{fig:morph_comparison}
 		\end{subfigure}
-		\caption{Comparison of image processing techniques}
+		\caption{\centering Comparison of image processing techniques\\ The left subpanel shows the results of Otsu thresholding (global method) and adaptive thresholding (local method). These techniques convert grayscale SAR imagery into binary land–and–sea masks by isolating regions with distinct radar backscatter. Accurate segmentation is fundamental for excluding land from detection processes—ensuring ships and dark vessels in the water are not confused with terrestrial features.\\ The right subpanel illustrates how morphological operations (opening and closing) refine the binary mask produced by thresholding. Before morphology, small gaps and noisy areas remain in the land mask, potentially leading to detection errors. After morphology, the mask is smoothed and small artifacts are removed, resulting in more precise separation between sea and land.			
+		}
 		\label{fig:comparison}
 	\end{figure}
 	
@@ -631,17 +620,36 @@
 	
 	\begin{figure}[!ht]
 		\centering
-		\includegraphics[width=0.4\textwidth]{mask.png}
-		\caption{Final Mask Obtained}
+		\includegraphics[width=0.3\linewidth]{mask.png}
+		\caption{\centering Final Mask Obtained \\ This figure shows the final land mask generated during SAR image preprocessing. The mask delineates land (white) from sea (black), effectively excluding terrestrial regions from subsequent ship detection analysis.}
 		\label{fig:final_mask}
 	\end{figure}
 	
 	\begin{figure}[!ht]
 		\centering
 		\includegraphics[width=1\textwidth]{masking.png}
-		\caption{Comparization between Original Image and Resuts of first ans second preprocessing iteration}
+		\caption{\centering Comparization between Original Image and Resuts of first and second preprocessing iteration\\ This figure shows that land masking is applied repeatedly throughout the preprocessing pipeline to fully eliminate land areas from SAR images. The sequence demonstrates how each preprocessing iteration further refines the segmentation mask—progressively removing residual land regions and isolating only the sea.}
 		\label{fig:masking_iteration_comparison}
 	\end{figure}
+	
+	
+		\paragraph{Noise Reduction and edge enhancing}
+	This preprocessing step aims to reduce noise in the SAR image and enhance the shapes of ships, minimizing the risk of false negatives by preventing the AI from confusing noise with actual targets. The process starts with a gamma correction filter using a gamma value of 0.6. Since ships appear very bright in VV-polarized SAR images, this gamma correction reduces overall image brightness, significantly dimming the noise—which is less bright—without obscuring the ships. This effectively makes the noise close to zero, while the ships remain visible.
+	
+	After gamma correction, an image enhancement filter with an alpha of approximately 1.43 is applied. This filter boosts brighter regions more than dimmer ones, further enhancing ship shapes and diminishing any residual noise. The combined effect improves the visibility and definition of ships, aiding both human interpretation and algorithmic detection.
+	
+	Gamma correction in SAR imagery adjusts contrast nonlinearly to enhance detail visibility and make features more distinguishable without altering average brightness. This enhances important image details such as ship edges, leading to better detection performance.
+	
+	The processed result is illustrated in Figure~\ref{fig:noise_reduction_comparison}.
+	\begin{figure}[!ht]
+		\centering
+		\includegraphics[width=0.7\textwidth]{image.png}
+		\caption{ \centering Before \& After: Noise Reduction \& Edge Enhancement\\
+			The figure displays a side-by-side comparison of a SAR (Synthetic Aperture Radar) image before and after noise reduction and edge enhancement. The left image ("Before filter") shows prominent speckle noise and less distinct ship targets, while the right image ("After filter") demonstrates clearer, enhanced ship signatures against a smoother background.}
+		\label{fig:noise_reduction_comparison}
+	\end{figure}
+	For more detailed information, see Appendix \ref{appendix:gamma}
+	
 	
 	\subsubsection{Machine Learning Detection Model}
 	The performance comparison graph provided by Ultralytics, which plots mean average precision (\acrshort{map}) at IoU thresholds from 0.5 to 0.95 against latency in milliseconds per image on a T4 \acrshort{tensorrt} FP16 platform (Figure \ref{fig:performance_comparison_graph}), serves as a critical diagnostic tool for evaluating candidate models for our \acrshort{sar}-based ship detection and tracking project.\\
@@ -649,7 +657,7 @@
 	Analyzing the graph reveals that YOLOv11n achieves a modest 40\% \acrshort{map} with a latency of 2-3 milliseconds, indicating high speed but insufficient precision for detecting small ships in \acrshort{sar} imagery, where targets often occupy a tiny fraction of the image. \begin{figure}
 		\centering
 		\includegraphics[width=0.75\textwidth]{performance-comparison.png}
-		\caption{Performance Comparison Graph}
+		\caption{\centering Performance Comparison Graph\\ This performance comparison graph illustrates the trade-off between detection accuracy (COCO mAP@0.5) and inference latency (ms/img) for various YOLO-based models and other architectures on a T4 TensorRT platform. The curve for YOLOv11 demonstrates it achieves high accuracy with low latency, outperforming earlier YOLO versions and alternative models.}
 		\label{fig:performance_comparison_graph}
 	\end{figure}
 	YOLOv11l, while offering a higher \acrshort{map} of 54\% with 8 milliseconds latency, exceeds the computational capacity of the resource-constrained NVIDIA Jetson AGX Orin, a low-power edge device with a 128-core Maxwell GPU, making it impractical for real-time deployment. YOLOv8m and YOLOv10m, with \acrshort{map} values of 46\% and 50\% respectively and latencies around 6 milliseconds, provide moderate performance but fall short in precision for small-object detection and remain borderline for Jetson Nano compatibility.\\
@@ -659,70 +667,99 @@
 	Furthermore, with optimizations reducing memory usage and accelerating inference up to 4x it can achieve real-time processing rates of 10-20 frames per second on the Jetson AGX Orin, as supported by studies like \cite{rasheed2025yolov11} on edge optimization of YOLO models and \cite{en15238816} on efficient neural networks, solidifying \acrshort{yolov11m} as the best fit for our maritime surveillance application. 
 	
 	\subsection{Data Flow and Workflow}
-	This section provides a detailed, step-by-step explanation of the data pipeline within the \acrshort{sar} Ship Detection system, elaborating on the high-level architecture presented previously. It provides an overview of the solution implementation and describes the processes that each stage goes through from raw \acrshort{sar} data ingestion to the final output of detected and tracked ships.\\
+	This section provides a detailed, step-by-step explanation of the data pipeline within the SAR Ship Detection system, elaborating on the high-level architecture presented previously. It provides an overview of the solution implementation and describes the processes that each stage goes through from raw SAR data ingestion to the final output of detected and tracked ships.\\
 	
-	The data flow within the \acrshort{sar} Ship Detection Project follows a structured pipeline designed for efficiency and accuracy. The primary stages are:
+	The data flow within the SAR Ship Detection Project follows a structured pipeline designed for efficiency and accuracy. The primary stages are:
+	
+	\paragraph{SAR Data Acquisition:}
+\begin{itemize}
+	\item \textbf{Process}: The pipeline initiates with the acquisition of raw Synthetic Aperture Radar (SAR) imagery. Acquisition of data is done via the Copernicus Browser. For the hardware implementation (Jetson AGX Orin Edge) various raw SAR image files are preloaded into the file system into the Input Folder. The model will inference all the images contained within the folder.  For the cloud implementation the SAR data is either uploaded from the user or queried from Copernicus via user requests initiated through Google Earth.
+	\item \textbf{Details:} Data can be downloaded directly from Copernicus in either raw or processed formats. Data can be in multiple file types such as .png and .jpeg as well as .tiff format which allows for use with larger image sizes through special software. The Data is uploaded to the solution via the BlueGuard website which is running the model. Data uploaded by users is first fed into a queue to ensure the page can handle the traffic. Data given to the input folder to the Jetson AGX Orin processes and inferences all of the inputted data. For development purposes it doesn’t delete this data.
+\end{itemize}
+\paragraph{Preprocessing Queue Management:}
+\begin{itemize}
+\item  \textbf{Process}: Once a SAR image is ingested, it is placed in a preprocessing queue. This queue serializes and throttles incoming processing requests, ensuring that system memory and CPU/GPU resources are not overloaded when many users access the site concurrently.
+\item \textbf{Details}: A simple in-memory First-In-First-Out (FIFO) job queue is implemented using Python. A dedicated background worker thread or asyncio task continuously monitors the queue and processes jobs one by one. While in the queue, users are shown an estimate of their position in the queue and approximate wait time. This is implemented with Streamlit’s session state and periodic UI refresh (st.experimental rerun or st autorefresh).
+\end{itemize}
+
+\paragraph{Initial Data Ingestion and Storage:}
+\begin{itemize}
+	\item \textbf{Process}: Upon receiving a user request via the Streamlit web interface, the system initiates a data ingestion process that either: (1) Downloads SAR imagery from the Copernicus API based on user-specified coordinates and time range. (2) Accepts user-uploaded SAR .tiff, .png, or .jpeg images directly through the web interface. (3) Finally, optionally queries AIS data for the corresponding area and time from a third-party API. Once retrieved or uploaded, the data is temporarily stored for processing and version tracking.
+\item \textbf{Details}: Data is stored in local server only while in use. A structured directory or database system is utilized to manage large volumes of SAR images. The images once outputted to the user will be automatically deleted from the server once the unique session is over or times outs. SAR images and associated metadata are stored locally in a structured directory on the host laptop. Each request is isolated in a temporary directory, identified by a unique session or request ID, which avoids filename collisions and supports simple cleanup. Due to limited disk space on the host laptop, data is stored ephemerally. A background cleanup job (using a lightweight Python scheduler like APScheduler) deletes session data older than a set threshold (e.g., 15 minutes or after download).\\
+
+Each ingestion is isolated to its own session. Streamlit’s session-based design supports this naturally, but in addition, image download requests are asynchronous using threads or background tasks to avoid freezing the Streamlit UI.
+\end{itemize}
+\paragraph{SAR Image Preprocessing (Subsystem):}
+\begin{itemize}
+	\item \textbf{Process}: The raw SAR images undergo a series of critical transformations to enhance features, reduce noise, and prepare them for machine learning inference. This stage is crucial for improving detection accuracy.
+	
+	\item \textbf{Details}:
 	\begin{itemize}
-		\item \textbf{\acrshort{sar} Data Acquisition}:
+		
+		\item \textbf{Amplitude Scaling and Grayscale Conversion} \\
+		\textit{Technique}: Linear intensity amplification and RGB channel duplication. \\
+		\textit{Description}: The VV polarization channel is amplified by a factor of 2 to improve contrast between ships and sea clutter, then converted to grayscale by copying it into all three RGB channels.
+		
+		\item \textbf{Land Masking} \\
+		\textit{Techniques}: Lee Filter, CLAHE, Gaussian Blurring, Dual Thresholding, Adaptive Gaussian Thresholding, Morphological Processing, Flood-Fill, Contour Filtering, Iterative Refinement. \\
+		\textit{Descriptions}: 
 		\begin{itemize}
-			\item \textbf{Process}: The pipeline initiates with the acquisition of raw Synthetic Aperture Radar (\acrshort{sar}) imagery. Acquisition of data is done via the Copernicus Browser. For the hardware implementation (Jetson Nano Edge) various raw \acrshort{sar} image files are preloaded into the file system that it randomly chooses from upon use. For the cloud implementation the \acrshort{sar} data is either uploaded from the user or queried from Copernicus via user requests initiated through Google Earth. \item Details: Data can be downloaded directly from Copernicus in either raw or processed formats. Data can be in multiple file types such as .png and .jpeg as well as .tiff format which allows for use with larger image sizes through special software. The Data is uploaded to the solution via the BlueGuard website which is running the model. Data uploaded by users is first fed into a queue to ensure the page can handle the traffic. \end{itemize}
-		\item \textbf{Initial Data Ingestion and Storage}:
-		\begin{itemize}
-			\item \textbf{Process}: Upon receiving a user request via the Streamlit web interface, the system initiates a data ingestion process that either: (1) Downloads \acrshort{sar} imagery from the Copernicus \acrshort{api} based on user-specified coordinates and time range. (2) Accepts user-uploaded \acrshort{sar} .tiff, .png, or .jpeg images directly through the web interface. (3) Finally, optionally queries \acrshort{ais} data for the corresponding area and time from a third-party \acrshort{api}. Once retrieved or uploaded, the data is temporarily stored for processing and version tracking. \item \textbf{Details}: Data is stored in local server only while in use. A structured directory or database system is utilized to manage large volumes of \acrshort{sar} images. The images once outputted to the user will be automatically deleted from the server once the unique session is over or times outs. \acrshort{sar} images and associated metadata are stored locally in a structured directory on the host laptop. Each request is isolated in a temporary directory, identified by a unique session or request ID, which avoids filename collisions and supports simple cleanup. Due to limited disk space on the host laptop, data is stored ephemerally. A background cleanup job (using a lightweight Python scheduler like APScheduler) deletes session data older than a set threshold (e.g., 15 minutes or after download). \item Each ingestion is isolated to its own session. Streamlit's session-based design supports this naturally, but in addition, image download requests are asynchronous using threads or background tasks to avoid freezing the Streamlit UI. \end{itemize}
-		\item \textbf{Preprocessing Queue Management}:
-		\begin{itemize}
-			\item \textbf{Process}: Once a \acrshort{sar} image is ingested, it is placed in a preprocessing queue. This queue serializes and throttles incoming processing requests, ensuring that system memory and CPU/GPU resources are not overloaded when many users access the site concurrently. \item \textbf{Details}: A simple in-memory First-In-First-Out (FIFO) job queue is implemented using Python. A dedicated background worker thread or asyncio task continuously monitors the queue and processes jobs one by one. While in the queue, users are shown an estimate of their position in the queue and approximate wait time. This is implemented with Streamlit's session state and periodic UI refresh (st.experimental rerun or st autorefresh). \end{itemize}
-		\item \textbf{\acrshort{sar} Image Preprocessing} (Subsystem):
-		\begin{itemize}
-			\item \textbf{Process}: The raw \acrshort{sar} images undergo a series of critical transformations to enhance features, reduce noise, and prepare them for machine learning inference. This stage is crucial for improving detection accuracy.
-			\item \textbf{Details}:
-			\begin{itemize}
-				\item \textbf{Polarimetric Band Selection}
-				
-				Technique: \acrshort{vv} Polarization Band Selection
-				
-				Description: The \acrshort{vv} band is chosen due to its sensitivity to sea  surface roughness and ship wake visibility, making it ideal for ship detection.
-				\item \textbf{Amplitude Scaling and Grayscale Conversion}
-				
-				Technique: Linear Intensity Amplification and RGB Channel Duplication
-				
-				Description: The \acrshort{vv} channel is amplified by a factor of 2 to improve contrast between ships and sea clutter, then converted to grayscale by copying it into all three RGB channels. \item \textbf{Noise Reduction and Edge Enhancement}
-				
-				Technique: Gamma Filtering and Alpha-Based Enhancement
-				
-				Description: A gamma correction ($\gamma = 0.6$) suppresses dim background noise while retaining ship features, followed by an enhancement filter ($\alpha = 10/7$) to increase the brightness of ships and suppress residual noise. \item \textbf{Land Masking}:
-				
-				Techniques: Lee Filter + CLAHE + Dual Thresholding + Morphological Processing + Flood-Fill + Contour Filtering + Iterative Refinement
-				
-				Descriptions:
-				
-				- Lee Filter: Adaptive speckle reduction filter preserves coastline boundaries while smoothing sea regions.
-				
-				- CLAHE: Enhances local contrast within the image while preventing over-amplification of noise. - Gaussian Blurring: Reduces high-frequency noise while preserving structure using a Gaussian convolution kernel. - Otsu's Thresholding: Global thresholding to segment land and sea by minimizing intra-class intensity variance. - Adaptive Gaussian Thresholding: Locally adaptive binarization to handle spatial variations in intensity. - Morphological Processing: Closing and opening operations correct segmentation defects (fill gaps, remove noise). - Flood-Filling: Segments water from land by propagating from known water regions (image corners), then inverts to isolate land. - Contour Filtering: Removes small false-positive land segments by filtering based on area threshold. - Iterative Refinement: Repeats segmentation and filtering until land coverage is within valid thresholds; terminates or refines further based on percentage rules (e.g., >85\% land coverage aborts detection). \item \textbf{Format Conversion and Standardization}:
-				
-				Technique: Conversion to \acrshort{numpy} Array and Normalization
-				
-				Description: The preprocessed grayscale image is converted into a normalized \acrshort{numpy} array with pixel values scaled between 0 and 1 for direct input to the deep learning model. \end{itemize}
+			\item Lee Filter: Adaptive speckle reduction filter preserves coastline boundaries while smoothing sea regions.
+			\item CLAHE: Enhances local contrast within the image while preventing over amplification of noise.
+			\item Gaussian Blurring: Reduces high-frequency noise while preserving structure using a Gaussian convolution kernel.
+			\item Dual Thresholding: Global thresholding to segment land and sea by minimizing intra-class intensity variance.
+			\item Adaptive Gaussian Thresholding: Locally adaptive binarization to handle spatial variations in intensity.
+			\item Morphological Processing: Closing and opening operations correct segmentation defects (fill gaps, remove noise).
+			\item Flood-Filling: Segments water from land by propagating from known water regions (image corners), then inverts to isolate land.
+			\item Contour Filtering: Removes small false-positive land segments by filtering based on area threshold.
+			\item Iterative Refinement: Repeats segmentation and filtering until land coverage is within valid thresholds; terminates or refines further based on percentage rules (e.g., $>$85\% land coverage aborts detection).
+			
+			
+			\item \textbf{Noise Reduction and Edge Enhancement} \\
+			\textit{Technique}: Gamma filtering and alpha-based enhancement. \\
+			\textit{Description}: A gamma correction ($\gamma = 0.6$) suppresses dim background noise while retaining ship features, followed by an enhancement filter ($\alpha = \tfrac{10}{7}$) to increase the brightness of ships and suppress residual noise.
+			
 		\end{itemize}
-		\item \textbf{Ship Detection Inference} (Machine Learning Model):
-		\begin{itemize}
-			\item \textbf{Process}: The preprocessed \acrshort{sar} image is fed into the trained ship detection deep learning model. This model analyzes the image to identify potential ship instances. The prediction returns the annotated image and JSON file containing information regarding the ship geographical coordinates and confidence etc.
-			\item \textbf{Details}: The preliminary trained model is the \acrshort{yolov11m} for its good balance of precision and latency. This model was used for preliminary analysis of the overall solution and for development of the end-to-end system. The models are trained via \acrshort{pytorch} with the respective datasets (preliminary vs final) and the weights are converted to \acrshort{onnx} format from which can be used for inference in any format, specifically \acrshort{tensorrt}, which is used for the Jetson Nano architecture. Predictions of ships are not classified into distinct ship types, the model is only trained to identify whether or not there is a ship within the data. The model is deployed on the Jetson Nano and locally on the demo website host. \end{itemize}
-		\item \textbf{Output Generation}:
-		\begin{itemize}
-			\item \textbf{Process}: The final results, including detected ship bounding boxes, confidence scores, and unique tracking IDs, are compiled and formatted for output. \item \textbf{Details}: This output can be presented in various forms depending on the user interface:
-			\begin{itemize}
-				\item \textbf{Structured Data Output}: Generation of machine-readable files (JSON) containing all relevant detection and tracking metadata (coordinates, timestamps, IDs). \item \textbf{Annotated Image}: Overlaying bounding boxes, labels, and tracking IDs directly onto the original or preprocessed \acrshort{sar} imagery for visual inspection. The annotated image can be downloaded as a whole, or individual identified ships can be downloaded separately can be downloaded individually. \item \textbf{Data Downlink/Transmission}: For edge deployments (Jetson Nano), relevant output data is prepared for transmission to ground stations or other connected systems. \end{itemize}
-		\end{itemize}
-		\item \textbf{User Interface / Visualization}:
-		\begin{itemize}
-			\item \textbf{Process}: The processed results are delivered to the user through one of the defined interfaces, allowing for interaction and visualization of the detected and tracked ships. The holistic interface will be made using Streamlit and hosted as a webpage containing three pages for each sub-interface type listed below. These are different ways users can request or view use of the solution and models depending on their desired input type. \item \textbf{Details}:
-			\begin{itemize}
-				\item \textbf{Jetson Nano Interface}: Processed data is “downlinked” and visualized on a local display or streamed to a ground control application, potentially integrating with on-ground \acrshort{ais} data. Statistical insights are also provided. The user cannot request specific data, the jetson nano will come pre-loaded with random \acrshort{sar} image files, its functionality may be expanded once integrated into a satellite. \item \textbf{Web-based Map Interface}: Users interact with a Google Earth-style map to select a region of interest. This region of interest will be limited to a maximum size and square shape, this is to reduce the load on host machine. An \acrshort{api} fetches the latest \acrshort{sar} data, processes it and sends it to the model for prediction. The result goes through the statistical insights to be displayed to the user. \item \textbf{Image Upload Interface}: Users upload their raw \acrshort{sar} images. the system processes the image and sends it to the model for prediction. The result goes through the statistical insights to be displayed to the user. \end{itemize}
-		\end{itemize}
+		
+		\item \textbf{Format Conversion and Standardization} \\
+		\textit{Technique}: Conversion to NumPy array and normalization. \\
+		\textit{Description}: The preprocessed grayscale image is converted into a normalized NumPy array with pixel values scaled between 0 and 1 for direct input to the deep learning model.
 	\end{itemize}
+\end{itemize}
+
+\paragraph{Ship Detection Inference (Machine Learning Model):}
+\begin{itemize}
+	\item \textbf{Process}: The preprocessed SAR image is fed into the trained ship detection deep learning model. This model analyzes the image to identify potential ship instances. The prediction returns the annotated image, various preprocessed images, and a JSON file containing information regarding ship geographical coordinates, confidence scores, etc.
 	
+	\item \textbf{Details}: The trained model is \texttt{YOLOv11m} for its balance of precision and latency. It was used for preliminary analysis of the overall solution and for development of the end-to-end system. The models are trained via PyTorch with respective datasets (preliminary vs. final), and the weights are converted to ONNX format. These weights can be used for inference in multiple formats, specifically TensorRT, which is deployed on the Jetson AGX Orin architecture. Predictions are limited to ship detection (not classification into ship types). The model is deployed both on the Jetson AGX Orin and on the demo website host.
+\end{itemize}
+
+\paragraph{Output Generation:}
+\begin{itemize}
+	\item \textbf{Process}: The final results, including detected ship bounding boxes, confidence scores, and unique tracking IDs, are compiled and formatted for output. Results are neatly organized into a folder or displayed directly in the web app depending on usage.
 	
+	\item \textbf{Details}: Output formats include:
+	\begin{itemize}
+		\item \textbf{Structured Data Output}: Machine-readable files (JSON) containing detection and tracking metadata (coordinates, timestamps, IDs).
+		\item \textbf{Annotated Image}: Bounding boxes, labels, and tracking IDs overlaid on the original or preprocessed SAR image. The annotated image can be downloaded as a whole, or individual identified ships can be downloaded separately.
+		\item \textbf{Data Downlink/Transmission}: For edge deployments (Jetson AGX Orin), output data is prepared for transmission to ground stations or connected systems. The data is stored in an \texttt{output/} folder once ready.
+	\end{itemize}
+\end{itemize}
+
+\paragraph{User Interface / Visualization:}
+\begin{itemize}
+	\item \textbf{Process}: The processed results are delivered to the user through defined interfaces, enabling interaction and visualization of detected and tracked ships. The holistic interface is implemented in Streamlit as a web application containing three sub-interfaces.
+	
+	\item \textbf{Details}:
+	\begin{itemize}
+		\item \textbf{Jetson AGX Orin Interface}: Processed data is downlinked and visualized on a local display or streamed to a ground control application, potentially integrating with on-ground AIS data. Statistical insights are also provided. Users cannot request specific data; the Jetson AGX Orin is preloaded with SAR data in the Input Folder. Functionality may be expanded once integrated into a satellite.
+		
+		\item \textbf{Web-based Map Interface}: Users interact with a Google Earth-style map to select a region of interest (ROI). The ROI is limited to a maximum size and square shape to reduce host machine load. An API fetches the latest SAR data, processes it, and sends it to the model for prediction. Results are then displayed with statistical insights.
+		
+		\item \textbf{Image Upload Interface}: Users upload raw SAR images through the web interface. The system processes the image, sends it to the model for prediction, and displays the results along with statistical insights.
+	\end{itemize}
+\end{itemize}
+
 	\newpage
 	\section{Implementation and Development}
 	This section details the software and hardware setup underpinning the SAR Ship Detection Project, highlighting the integration of high-performance edge devices (Jetson AGX Orin), cloud tools (Google Colab, Roboflow), collaborative coding environments (GitHub), and streamlined interfaces (Streamlit). Robust implementation leverages a modular pipeline for image acquisition, annotation, model training, and deployment, supported by efficient dependency management (Docker) and virtualization. Edge-specific algorithms (tile-based inference, advanced pre- and post-processing) are optimized for real-time maritime surveillance, ensuring high detection accuracy even in challenging environments. The section provides guidance for both local and edge deployments, tools for performance monitoring, and methodologies for converting model weights for accelerated inference. These elements collectively facilitate a scalable, reproducible, and operational ship and dark vessel detection system.
@@ -775,18 +812,30 @@
 	
 	
 	\subsubsection{Accessing the Jetson Nano}
-	To ssh to the Jetson Nano use:
+	To ssh to the Jetson AGX Orin use:
 	\begin{lstlisting}
-		ssh jetson@<nano_ip_address>
+		ssh jetson@<agx_ip_address>
 	\end{lstlisting}
 	\subsubsection{Essential Command Line Commands}
 	\begin{itemize}
-		\item \textbf{\lstinline|jtop|}: (After \lstinline|sudo pip3 install -U jetson-stats| and reboot) A fantastic utility to monitor CPU, GPU, memory, power, and temperatures on your Jetson Nano. Essential for optimizing performance. Type \lstinline|q| to quit \lstinline|jtop|.
+		\item \texttt{jtop}: (After \texttt{sudo pip3 install -U jetson-stats} and reboot)  
+		A fantastic utility to monitor CPU, GPU, memory, power, and temperatures on your Jetson.  
+		Essential for optimizing performance. Type \texttt{q} to quit \texttt{jtop}.
 		
-		\item \textbf{\lstinline|sudo jetson_clocks|}: Maximizes CPU/GPU/memory clocks for best performance. Useful before running demanding tasks. The \lstinline|jtop| tool can also do this.
+		\item \texttt{sudo jetson\_clocks}:  
+		Maximizes CPU/GPU/memory clocks for best performance.  
+		Useful before running demanding tasks. The \texttt{jtop} tool can also do this.
 		
-		\item \textbf{\lstinline|sudo reboot|}: Restarts the Nano. \item \textbf{\lstinline|sudo shutdown now|}: Powers off the Nano.
+		\item \texttt{sudo reboot}:  
+		Restarts the Jetson.
+		
+		\item \texttt{sudo shutdown now}:  
+		Powers off the Jetson.
+		
+		\item \texttt{yolo export model='your\_model.onnx' format='engine'}:  
+		Converts a YOLO model in ONNX format into TensorRT engine format.
 	\end{itemize}
+	
 	\subsubsection{RAW Data prediction algorithm ( Inference Slicer Method)}
 	The designed function (Fig. \ref{fig:raw_data_prediction_algorithm}) constitutes a modular inference framework for high-resolution remote sensing imagery, with a specific focus on maritime detection under noisy acquisition conditions. 
 	The algorithm integrates three principal stages: preprocessing, tiled inference, and post-processing with spatio-contextual filtering. In the preprocessing stage, the input image whether in raw TIFF or other formats is standardized through format conversion, grayscale transformation, and iterative denoising to suppress radar-induced artifacts and enhance object boundaries.\\
@@ -1006,7 +1055,7 @@
 		
 		\item Run the Training Command
 		\begin{lstlisting}
-			!yolo detect train --model \acrshort{yolov11m}.\acrshort{yaml} --data data/sar_ship.\acrshort{yaml} \
+			!yolo detect train --model yolov11m.yaml --data data/sar_ship.yaml \
 			--epochs 20 --img 640 \
 			--weights yolo11n.pt --device 0 \
 			--project runs/train --name yolov11m_sar_ship \
@@ -1063,12 +1112,12 @@
 		
 		On the Jetson Nano, use \acrshort{onnx}-\acrshort{tensorrt} or trtexec (included in NVIDIA JetPack) to convert the \acrshort{onnx} model to a \acrshort{tensorrt} engine:
 		\begin{lstlisting}
-			# Install \acrshort{onnx} and \acrshort{tensorrt} dependencies (if not already installed)
+			# Install onnx and tensorrt dependencies (if not already installed)
 			sudo apt install python3-pip
-			pip3 install \acrshort{onnx} onnxruntime
+			pip3 install onnx onnxruntime
 			
-			# Convert to \acrshort{tensorrt} engine (\acrshort{fp16})
-			trtexec --\acrshort{onnx}=best.\acrshort{onnx} --saveEngine=best_fp16.engine --\acrshort{fp16}
+			# Convert to tensorrt engine (fp16)
+			trtexec --onnx=best.onnx --saveEngine=best_fp16.engine --fp16
 		\end{lstlisting}
 		
 		
@@ -1077,11 +1126,11 @@
 		
 		Use a custom Python script or \acrshort{tensorrt}-compatible YOLO wrapper (like yolort or \acrshort{tensorrt}-yolov5) to perform inference. Example using \acrshort{onnx} Runtime:
 		\begin{lstlisting}
-			import onnxruntime as \acrshort{ort}
-			import \acrshort{cv2}
-			import \acrshort{numpy} as np
+			import onnxruntime as ort
+			import cv2
+			import numpy as np
 			
-			session = ort.InferenceSession("best.\acrshort{onnx}")
+			session = ort.InferenceSession("best.onnx")
 			image = cv2.imread("test.jpg")
 			input_tensor = preprocess(image)  # Resize, normalize, etc.
 			
@@ -1444,7 +1493,10 @@
 	
 	Within the project, Yan applied his programming expertise to collaborate with Anna on refining the preprocessing of SAR data. Their work focused on creating and optimizing the denoising and land segmentation, thereby reducing latency and enhancing the accuracy of the AI model. In addition, Yan contributed to streamlining AIS data flow in the program and supported the integration of the system’s script into the NVIDIA Jetson NANO.
 	
-	\paragraph{Chahine Med}
+	\paragraph{Chahine Med}  is an Engineer and PhD student specialized in computer science, with strong expertise in Artificial Intelligence (AI) and the Internet of Things (IoT). His research and work particularly focus on AI-based simulation and Digital Twin technologies, with skills spanning predictive AI models, computer vision and geospatial applications. \\
+	
+	Within the project, Chahine contributed as an AI and backend developer. He implemented inference functions based on the trained YOLO model. He also developed APIs and backend services to integrate different components. In addition, he optimized the deep learning model to enhance its performance and efficiency.
+	
 	
 	\paragraph{Anna Piccinini} is currently pursuing a Master’s degree in Artificial Intelligence for Science and Technology at Università Milano Bicocca, after having gained a solid foundation with a Bachelor’s in Mathematics from Università Statale di Milano. Anna specializes in abstract reasoning, formalisation, and modelling of complex, real-world problems-skills especially vital for developing effective algorithms in ship and dark vessel detection.\\
 	
@@ -1452,8 +1504,6 @@
 	
 	
 	
-	\newpage
-	\printglossaries
 	\newpage
 	\printbibliography
 	\newpage
