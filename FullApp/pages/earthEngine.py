@@ -106,18 +106,25 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
     ship_count = out.get("ship_count") if isinstance(out, dict) else None
     st.header(f"🚢 Total Ships Detected {ship_count}")
 
-    # Create columns for better layout
-    col1, col2 = st.columns([10, 1])
+        # Create columns for better layout - MODIFIÉ POUR AFFICHER LES 2 IMAGES
+    col_img1, col_img2, col_stats = st.columns([5, 5, 2])
 
-    with col1:
+    with col_img1:
+        # Show original image if present
+        if isinstance(out, dict) and out.get("original") and os.path.exists(out["original"]):
+            st.image(out["original"], caption="Original SAR Image", use_container_width=True)
+        else:
+            st.error("Original image not available")
+
+    with col_img2:
         # Show detection image if present
         if isinstance(out, dict) and out.get("detections") and os.path.exists(out["detections"]):
-            st.image(out["detections"], caption="SAR Ship Detections", use_container_width=False)
+            st.image(out["detections"], caption="SAR Ship Detections", use_container_width=True)
         else:
             st.error("No detection image found in the result.")
 
-    with col2:
-        # Show processing info if available
+    with col_stats:
+        # Show processing info if available (ancien contenu de col2)
         processing_info = out.get("processing_info", {})
         if processing_info:
             st.subheader("📊 Processing Details")

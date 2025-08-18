@@ -331,14 +331,14 @@ if process_clicked:
                 if has_geoloc and meta_tmp_path:
                     try:
                         ais_results = search_ais_for_metadata(
-                            metadata_path=meta_tmp_path,
-                            ais_csv_path=ais_csv_path,
-                            date_iso="2024-01-24T22:51:07.148377",
-                            output_path="AIS_search.json",
-                            time_window_s=300,
-                            search_radius_m=100,
-                            time_weight=0.5
-                        )
+    metadata_path="ship_metadata_ui.json",
+    ais_csv_path="pages/AIS_2024_07_06.csv",
+    date_iso="2024-07-06T04:30:22",
+    output_path="AIS_search.json",
+    time_window_s=300,
+    search_radius_m=100,
+    time_weight=0.5
+)
                         st.session_state.ais_results = ais_results
                     except Exception as e:
                         st.session_state.ais_results = None

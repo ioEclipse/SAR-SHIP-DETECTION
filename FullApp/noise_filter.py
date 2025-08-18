@@ -29,6 +29,3 @@ def apply_correction(image,image_path="Path_unknown"):
     
     
     return enhanced
-
-# Load an image (use a relative path or make sure the path exists)
-apply_correction(image=cv2.imread("images/sar_sentinel1_jpg/SAR_S1_sar_2023_06.jpg"))
