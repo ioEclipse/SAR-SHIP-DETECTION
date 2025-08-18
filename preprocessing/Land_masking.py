@@ -56,12 +56,12 @@ def compute_mask(image,combined_masks=0, invert_mask=False,bull=False,return_ste
     img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75) 
     img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75) 
     img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75)
-    if bull: step_1=img.copy()
+    if bull or return_steps: step_1=img
     # 2. Multi-stage denoising
     blurred = cv2.GaussianBlur(img, (7, 7), 0)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     enhanced = clahe.apply(blurred)
-    if bull: step_2=enhanced
+    if bull or return_steps: step_2=enhanced
 
     # 3. Combined thresholding
     
@@ -76,12 +76,12 @@ def compute_mask(image,combined_masks=0, invert_mask=False,bull=False,return_ste
     combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75)
     combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75)
     _, combined = cv2.threshold(combined, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    if bull: step_3=combined
+    if bull or return_steps: step_3=combined
     # 5. Advanced morphological processing
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
     morphed = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, kernel, iterations=3)
     morphed = cv2.morphologyEx(morphed, cv2.MORPH_OPEN, kernel, iterations=2)
-    if bull: step_4=morphed
+    if bull or return_steps: step_4=morphed
     # 6. Edge-aware flood filling
     h, w = img.shape[:2]
     # mask = np.zeros((h+2, w+2), np.uint8)
@@ -106,7 +106,7 @@ def compute_mask(image,combined_masks=0, invert_mask=False,bull=False,return_ste
 
     if invert_mask:
         land_mask = cv2.bitwise_not(land_mask)
-    if bull: step_5=land_mask
+    if bull or return_steps: step_5=land_mask
     
     
     if return_steps:
@@ -116,7 +116,7 @@ def compute_mask(image,combined_masks=0, invert_mask=False,bull=False,return_ste
 
 def calculate_land_percentage(mask):
     """Calculate the percentage of land in the mask"""
-    total_pixels = mask.size
+    total_pixels = mask.size 
     land_pixels = cv2.countNonZero(mask)
     return (land_pixels / total_pixels) * 100
 

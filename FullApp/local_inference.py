@@ -38,7 +38,7 @@ class LocalYOLOInference:
             if not os.path.exists(self.model_path):
                 raise FileNotFoundError(f"Model file not found: {self.model_path}")
             
-            print(f"Loading local YOLO model from: {self.model_path}")
+            print(f"Loading YOLO model")
             self.model = YOLO(self.model_path)
             print("✅ Local YOLO model loaded successfully")
             
@@ -47,7 +47,7 @@ class LocalYOLOInference:
             print("For now, using fallback detection method")
             self.model = None
         except Exception as e:
-            print(f"❌ Error loading model: {str(e)}")
+            #print(f"❌ Error loading model: {str(e)}")
             self.model = None
     
     def infer(self, image_path: str, confidence_threshold: float = 0.5) -> Dict:

@@ -17,6 +17,10 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
+# Load configuration
+with open('../config.json', 'r') as f:
+    config = json.load(f)
+
 
 
 # === Roboflow setup ===
@@ -446,10 +450,6 @@ def process_image_sequence(self, image_paths: List[str], session_id: str) -> Dic
 # Downloading AIS data from NOAA
 # =========================
 
-import requests
-from tqdm import tqdm  # pip install tqdm
-import sys
-import os
 def data_to_str(month,day):
     if(day < 10):
         day = "0"+str(day)
@@ -478,10 +478,10 @@ def get_storage_for_ais_used():
     for file in os.listdir("../Ais_data"):
         total_size +=os.path.getsize("../Ais_data/"+file)
     return total_size / (1024 ** 3)
-print("Gb", get_storage_for_ais_used())
+#print("GB", get_storage_for_ais_used())
 ####### \/ this somehow needs to be ran in the beginning of the program so that only the oldest files get deleted
 download_list=get_downloadlist()
-print(download_list)
+#print(download_list)
 ####### /\ without the print ofc
 def get_ais_data(month,day,bar_func=None):
     # Build URL from config
@@ -523,13 +523,32 @@ def check_for_Ais_and_create(month,day):
 # check_for_Ais_and_create(11,2)
 
 
+
 def delete_old_ais_files():
-    if get_storage_for_ais_used() > 4.5:
+    AIS_BUFFER = config['ais_data']['ais_storage_buffer']
+    if get_storage_for_ais_used() > AIS_BUFFER:
         os.remove("../Ais_data/"+data_to_str(download_list[0][0],download_list[0][1])+".zip")
         download_list.pop(0)
     return
 
+if __name__ == "__main__":
+    # identical call as before - if you pass a TIFF, geolocation will be added
 
+    # Test_image.jpg 
 
+    #annotated_img, crops, count, metadata = run_inference_with_crops("Test_image.png", tile_size=640, resolution_m=10)
 
+    # Test New_York.tiff
 
+    annotated_img, crops, count, metadata = run_inference_with_crops("../Ais_data/New_York.tiff", tile_size=640, resolution_m=10)
+
+    print("Detected ships:", count)
+    # display first metadata
+    for m in metadata[:1]:
+        print(m)
+
+        # Convertir PIL → NumPy (BGR pour OpenCV)
+    annotated_img_cv = cv2.cvtColor(np.array(annotated_img), cv2.COLOR_RGB2BGR)
+
+    # Sauvegarder en PNG
+    cv2.imwrite("annotated_image.png", annotated_img_cv)

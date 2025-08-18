@@ -56,6 +56,7 @@ RUN python3 -m pip install --upgrade pip uv && \
     uv pip install --system ultralytics[export] && \
     # Install CUDA-optimized packages for SAR processing
     uv pip install --system \
+    scipy \
     cupy-cuda12x \
     opencv-python-headless \
     Pillow \
