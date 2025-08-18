@@ -11,7 +11,7 @@ import re
 import glob
 
 # === Loading local model ===
-LOCAL_MODEL = YOLO("best1.onnx", task="detect")
+LOCAL_MODEL = YOLO("Jetson AGX Orin/best1.onnx", task="detect")
 
 
 def gamma_correction(image, gamma=1.0):
@@ -70,13 +70,13 @@ def refined_lee_filter(image, window_size=5, k=1.0):
 
     return filtered
 
-def compute_mask(image, invert_mask=False,bull=False,return_steps=False):
+def compute_mask(image,combined_masks=0, invert_mask=False,bull=False,return_steps=False):
     # 1. Load and preprocess
     img = image.copy()
     img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75) 
     img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75) 
     img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75)
-    if bull: step_1=img
+    if bull: step_1=img.copy()
     # 2. Multi-stage denoising
     blurred = cv2.GaussianBlur(img, (7, 7), 0)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
@@ -95,6 +95,7 @@ def compute_mask(image, invert_mask=False,bull=False,return_steps=False):
     combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75) 
     combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75)
     combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75)
+    _, combined = cv2.threshold(combined, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     if bull: step_3=combined
     # 5. Advanced morphological processing
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
@@ -103,23 +104,18 @@ def compute_mask(image, invert_mask=False,bull=False,return_steps=False):
     if bull: step_4=morphed
     # 6. Edge-aware flood filling
     h, w = img.shape[:2]
-    mask = np.zeros((h+2, w+2), np.uint8)
-    cv2.floodFill(morphed, mask, (0, 0), 255)  # Fill background
+    morphed = cv2.bitwise_or(morphed, combined_masks)
     morphed = cv2.bitwise_not(morphed)
-
-    cv2.floodFill(combined, mask, (0, 0), 255)  # Fill background
-    morphed = cv2.bitwise_not(combined)
-    
     # 7. Contour filtering (remove small islands)
     contours, _ = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    min_contour_area = h * w * 0.05  # 1% of image area
+    min_contour_area = 2000  # 1% of image area
     land_mask = np.zeros_like(img)
     for cnt in contours:
         if cv2.contourArea(cnt) > min_contour_area:
             cv2.drawContours(land_mask, [cnt], -1, 255, -1)
 
     # 8. Final refinement
-    land_mask = cv2.morphologyEx(land_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+   # land_mask = cv2.morphologyEx(land_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
 
     if invert_mask:
         land_mask = cv2.bitwise_not(land_mask)
@@ -162,7 +158,7 @@ def process_image(image, visualize=True,return_steps=False):
     current_image = filtered_image.copy()
     masked_image = original_image.copy()
     iteration = 0
-    max_iterations = 4
+    max_iterations = 2
 
     #create void mask
     mask_fin = np.zeros_like(original_image, dtype=np.uint8)
@@ -171,13 +167,14 @@ def process_image(image, visualize=True,return_steps=False):
         iteration += 1
         print(f"\nIteration {iteration}:")
         
-        if iteration == 1: bull=True
+        if iteration == 2: bull=True
         else: bull=False
 
         # Create land mask
-        if return_steps:
-            step_1, step_2, step_3, step_4,step_5,land_mask = compute_mask(current_image, invert_mask=True, bull=bull,return_steps=return_steps)
-        land_mask = compute_mask(current_image, invert_mask=True, bull=bull,return_steps=return_steps)
+        if return_steps and bull:
+            step_1, step_2, step_3, step_4,step_5,land_mask = compute_mask(current_image, mask_fin, invert_mask=True, bull=bull,return_steps=True)
+        else:
+            land_mask = compute_mask(current_image, mask_fin, invert_mask=True, bull=bull,return_steps=False)
         land_percentage = calculate_land_percentage(land_mask)
 
         print(f"Land percentage detected: {land_percentage:.2f}%")
@@ -195,10 +192,10 @@ def process_image(image, visualize=True,return_steps=False):
         
         masked_image = remove_land_areas(masked_image, land_mask)
         current_image = remove_land_areas(current_image, land_mask)
-        current_image= refined_lee_filter(current_image, window_size=15, k=35)
+        current_image = refined_lee_filter(current_image, window_size=35, k=15)
+        current_image = gamma_correction(current_image, gamma=0.9)
+        current_image = cv2.convertScaleAbs(current_image, alpha=10/9, beta=0)
         mask_fin = cv2.bitwise_or(mask_fin, land_mask)
-        if visualize:
-            compare_images(original_image, masked_image)
 
 
         # After first iteration, check if we need to continue
@@ -212,7 +209,7 @@ def process_image(image, visualize=True,return_steps=False):
         else:
             print(f"Land percentage acceptable ({land_percentage:.2f}%), stopping cleanup.")
             break
-    buffer_radius = 10  # pixels
+    buffer_radius = 16  # pixels
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (buffer_radius, buffer_radius))
     mask_fin = cv2.dilate(mask_fin, kernel, iterations=1)
     masked_image=remove_land_areas(masked_image, mask_fin)
