@@ -37,19 +37,6 @@ def apply_correction(image,times=1,return_allsteps=False):
         return enhanced, darkened, enlightened
     return enhanced
 
-# Load an image (use a relative path or make sure the path exists)
 
-#remove the comment below to test the function:
-import os
-
-
-
-path = "preprocessing/test.jpg"
-# print("Exists?", os.path.exists(path))
-# img = cv2.imread(path)
-# print("Loaded?", img is not None)
-image=cv2.imread(path)
-image=apply_correction(image, times=1)
-cv2.imwrite("enhanced_image.png", image)
 
 

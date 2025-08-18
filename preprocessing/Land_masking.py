@@ -207,16 +207,4 @@ def process_image(image, visualize=True,return_steps=False):
     
     return masked_image, mask_fin
 
-Original_image_path ="preprocessing/ts.png"
-Final_image_path = "/content/Final_image.png"
-Original_image_path = cv2.imread(Original_image_path, cv2.IMREAD_GRAYSCALE)
-step_1,step_2,step_3,step_4,step_5,Final_image,mask = process_image(Original_image_path, visualize=True,return_steps=True)
-compare_images(Original_image_path, mask)
-compare_images(step_1,step_2)
-compare_images(step_3,step_4)
-compare_images(step_4,step_5)
-if Final_image is not None:
-   # cv2.imwrite(Final_image_path, Final_image)
-    print(f"Final image saved to: {Final_image_path}")
 
-compare_images(cv2.imread(Original_image_path, cv2.IMREAD_GRAYSCALE), Final_image)
