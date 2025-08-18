@@ -167,7 +167,7 @@ def process_image(image, visualize=True,return_steps=False):
         iteration += 1
         print(f"\nIteration {iteration}:")
         
-        if iteration == 2: bull=True
+        if iteration == 3: bull=True
         else: bull=False
 
         # Create land mask
