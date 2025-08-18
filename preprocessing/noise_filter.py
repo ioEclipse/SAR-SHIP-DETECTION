@@ -16,24 +16,23 @@ def apply_correction(image,times=1,return_allsteps=False):
         return
     
     # Apply gamma correction (adjust gamma value as needed)
-    enhanced = image
+    enhanced = image.copy()
     for i in range(times):
         enhanced = gamma_correction(enhanced, gamma=0.5)  # More moderate gamma
         if i == 0 : darkened = enhanced.copy() 
         # Apply contrast adjustment (more moderate parameters)
         enhanced = cv2.convertScaleAbs(enhanced, alpha=10/7, beta=0)
         if i == 0 : enlightened = enhanced.copy() 
-        
+
+    # \/ STUFF that might be useful later to make the denoising better \/
+
+    # _, mask = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # buffer_radius = 2  # pixels
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (buffer_radius, buffer_radius))
+    # mask = cv2.dilate(mask, kernel, iterations=1)
+    # enhanced = cv2.bitwise_and(image, image, mask=mask)
+    # /\ STUFF that might be useful later to make the denoising better /\
     
-    # Apply Gaussian blur to reduce noise
-    
-    
-    # Save and show the result
-    
-    
-    # cv2.imshow('Enhanced Image', enhanced)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
     if return_allsteps:
         return enhanced, darkened, enlightened
     return enhanced
@@ -45,10 +44,12 @@ import os
 
 
 
-# path = "preprocessing/test.jpg"
+path = "preprocessing/test.jpg"
 # print("Exists?", os.path.exists(path))
 # img = cv2.imread(path)
 # print("Loaded?", img is not None)
-# image=cv2.imread(path)
-# apply_correction(image, times=3)
+image=cv2.imread(path)
+image=apply_correction(image, times=1)
+cv2.imwrite("enhanced_image.png", image)
+
 

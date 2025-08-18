@@ -1,37 +1,34 @@
-import os
-print(os.getcwd())
 import sys
-sys.path.append("preprocessing")
-from noise_filter import apply_correction
-from Land_masking import process_image, compare_images
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from preprocessing.noise_filter import apply_correction
+from preprocessing.Land_masking import process_image, compare_images
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-def preprocess(image):
+def preprocess(image,return_steps=False):
+    
+    if return_steps:
+        step_1, step_2, step_3, step_4,step_5,img, mask = process_image(image, visualize=False,return_steps=True)
+        return step_1, step_2, step_3, step_4, step_5,apply_correction(img,times=3,return_allsteps=True), mask
+
     img, mask = process_image(image, visualize=False)
     return apply_correction(img,times=3), mask
     
 
 
-image_path = "../FullApp\Test_image.png"
+image_path = "FullApp/Test_image.png"
 
 print("Starting preprocessing...")
-#      noise reduction and enhancement
-image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-# image_new = apply_correction(image, times=0)
-
-
-
-# #land masking
-# image_mask, mask = process_image(image_new, visualize=False)
-# compare_images(image_new, image_mask)
-
-
-# image_final = apply_correction(image_mask, times=3)
-
-# compare_images(image_final, image)
-# cv2.imwrite("final.jpg", image_final)
-# #visualize mask
-image, mask = preprocess(image)
-compare_images(image, mask)
+if __name__ == "__main__":
+    image= cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Could not load image at {image_path}")
+    else:
+        enhanced_image, mask = preprocess(image, return_steps=False)
+        print("Preprocessing completed.")
+        # Save or display the enhanced image
+        cv2.imwrite("enhanced_image.png", enhanced_image)
+        cv2.imwrite("mask.png", mask)
+        print("Enhanced image and mask saved.")
