@@ -117,8 +117,6 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
             st.error("No detection image found in the result.")
 
     with col2:
-        # Show summary statistics
-
         # Show processing info if available
         processing_info = out.get("processing_info", {})
         if processing_info:

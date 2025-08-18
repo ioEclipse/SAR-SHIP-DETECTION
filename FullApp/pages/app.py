@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from functions import *   
 from streamlit_option_menu import option_menu
 import json
+import time
 
 # === Fonction pour charger le logo ===
 def load_logo_base64(path="assets/logo.png"):
@@ -170,19 +171,32 @@ st.markdown(f"""
 }}
 
 /* Download button styling */
-.stDownloadButton > button {{
-    background-color: #1e90ff !important;
-    color: white !important;
-    font-weight: bold !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 6px !important;
-    font-size: 14px !important;
-}}
+    .stDownloadButton > button {{
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        color: white !important;
+        font-weight: bold !important;
+        border: none !important;
+        padding: 8px 14px !important;
+        border-radius: 8px !important;
+        font-size: 12px !important;
+        transition: all 0.3s ease !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }}
 
-.stDownloadButton > button:hover {{
-    background-color: #0066cc !important;
-}}
+    .stDownloadButton > button:hover {{
+        background: linear-gradient(135deg, #218838 0%, #1ea085 100%) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
+    }}
+
+    /* Fixed position for main download button */
+    .download-container {{
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+    }}
 
 /* Status message styling */
 .status-message {{
@@ -230,134 +244,129 @@ with st.sidebar:
         """,
         unsafe_allow_html=True
     )
-    
-    # Upload section
+    # SAR image uploader in sidebar
     st.markdown('<div class="upload-title">📤 Upload Image</div>', unsafe_allow_html=True)
-    
     uploaded_image = st.file_uploader(
         'Drag and drop your SAR image here',
         type=["jpg", "png", "jpeg", "tif", "tiff"],
         key="file_uploader",
         help="Supported formats: JPG, PNG, JPEG, TIFF (Max 200MB)"
     )
-    
-    # AIS uploader left in place (no change to UI); not required by the fix
-    ais_csv_uploader = st.file_uploader(
-        'Upload AIS CSV for the image date (optional)', type=["csv"], key="ais_uploader",
-        help="Optional: upload the AIS CSV of the corresponding day (ex: AIS_2024_01_24.csv)"
-    )
-    
     if uploaded_image:
         st.success(f"✅ File uploaded: {uploaded_image.name}")
         if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
             st.info("ℹ️ TIFF file detected - Automatic conversion will be applied")
-    
+    # AIS uploader in sidebar
+    st.markdown('<div class="upload-title">🛰️ Optional: Upload AIS CSV</div>', unsafe_allow_html=True)
+    ais_csv_uploader = st.file_uploader(
+        'Upload AIS CSV for the image date (optional)', type=["csv"], key="ais_uploader",
+        help="Optional: upload the AIS CSV of the corresponding day (ex: AIS_2024_01_24.csv)"
+    )
+    # Process button in sidebar
+    process_clicked = st.button("🚀 Process & Predict", key="predict_button")
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Process button
-    if st.button("🚀 Process & Predict", key="predict_button"):
-        if uploaded_image:
-            st.markdown('<div class="status-message">⏳ Running inference... Please wait</div>', unsafe_allow_html=True)
-            tmp_tif_path = None
-            tmp_ais_path = None
-            try:
-                # Gestion spécifique pour les fichiers TIFF
-                if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
-                    with NamedTemporaryFile(suffix=".tif", delete=False) as tmp_tif:
-                        tmp_tif.write(uploaded_image.getvalue())
-                        tmp_tif_path = tmp_tif.name
-                    
-                    annotated, crops, ship_counter, metadata = run_inference_with_crops(tmp_tif_path)
-                else:
-                    annotated, crops, ship_counter, metadata = run_inference_with_crops(uploaded_image)
-                
-                # Save session state (same names as before)
-                st.session_state.annotated_image = annotated
-                st.session_state.ship_crops = crops
-                st.session_state.ship_counter = ship_counter
-                st.session_state.metadata = metadata
-                st.success("✅ Processing complete!")
-                
-                # FIX: AIS — ensure the metadata on disk matches the in-memory metadata the UI shows
-                st.session_state.ais_results = None
-                if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
-                    # write the session metadata to a temp JSON that search_ais_for_metadata will read
-                    meta_tmp_path = "ship_metadata_ui.json"
-                    try:
-                        with open(meta_tmp_path, "w", encoding="utf-8") as mf:
-                            json.dump(metadata, mf, indent=2, ensure_ascii=False)
-                    except Exception as e:
-                        st.error(f"❌ Impossible d'écrire le fichier temporaire des métadonnées: {e}")
-                        meta_tmp_path = None
-
-                    # Determine ais_csv_path: use uploaded ais csv if provided, otherwise try common locations
-                    if ais_csv_uploader:
-                        with NamedTemporaryFile(suffix=".csv", delete=False) as tmp_ais:
-                            tmp_ais.write(ais_csv_uploader.getvalue())
-                            tmp_ais_path = tmp_ais.name
-                        ais_csv_path = tmp_ais_path
-                    else:
-                        # FIX: try several likely locations so the function finds the CSV without uploader
-                        candidates = [
-                            os.path.join(os.path.dirname(__file__), "AIS_2024_01_24.csv"),
-                            os.path.join(os.path.dirname(__file__), "pages", "AIS_2024_01_24.csv"),
-                            os.path.join(os.getcwd(), "AIS_2024_01_24.csv"),
-                            os.path.join(os.getcwd(), "pages", "AIS_2024_01_24.csv"),
-                            "AIS_2024_01_24.csv"
-                        ]
-                        ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_01_24.csv")
-                        if not os.path.exists(ais_csv_path):
-                            st.warning(f"Le fichier AIS n'a pas été trouvé automatiquement; ensure '{ais_csv_path}' exists or upload it via the sidebar (optional).")
-
-                    # Only call search_ais_for_metadata if at least one metadata item has geolocation (not None)
-                    has_geoloc = any((entry.get("geolocation") is not None) for entry in metadata)
-                    if has_geoloc and meta_tmp_path:
-                        try:
-                            ais_results = search_ais_for_metadata(
-                                metadata_path=meta_tmp_path,   # FIX: use the temporary metadata file we just wrote
-                                ais_csv_path=ais_csv_path,
-                                date_iso="2024-01-24T22:51:07.148377",
-                                output_path="AIS_search.json",
-                                time_window_s=300,
-                                search_radius_m=100,
-                                time_weight=0.5
-                            )
-                            st.session_state.ais_results = ais_results
-                        except Exception as e:
-                            st.session_state.ais_results = None
-                            st.error(f"❌ Error during AIS lookup: {e}")
-                    else:
-                        st.session_state.ais_results = None
-                        if not has_geoloc:
-                            st.info("No geolocation present in metadata; skipping AIS search.")
-                        else:
-                            st.error("Temporary metadata file not written; skipping AIS search.")
-                    
-                    # optional cleanup of temporary ais csv (leave tmp for debugging)
-                    if tmp_ais_path and os.path.exists(tmp_ais_path):
-                        try:
-                            os.unlink(tmp_ais_path)
-                        except Exception:
-                            pass
-
-                # cleanup tmp tif if created
-                if tmp_tif_path and os.path.exists(tmp_tif_path):
-                    try:
-                        os.unlink(tmp_tif_path)
-                    except Exception:
-                        pass
-
-            except Exception as e:
-                st.error(f"❌ Error during inference: {str(e)}")
-                if 'tmp_tif_path' in locals() and tmp_tif_path and os.path.exists(tmp_tif_path):
-                    os.unlink(tmp_tif_path)
-                if 'tmp_ais_path' in locals() and tmp_ais_path and os.path.exists(tmp_ais_path):
-                    os.unlink(tmp_ais_path)
-        else:
-            st.warning("⚠️ Please upload an image first")
 
 # === Main content ===
 st.markdown('<div class="main-content" style=height:0;width:0;>', unsafe_allow_html=True)
+
+# Use process_clicked to trigger processing in main area
+if process_clicked:
+    if uploaded_image:
+        tmp_tif_path = None
+        tmp_ais_path = None
+        progress_placeholder = st.empty()
+        percent_text_placeholder = st.empty()
+        progress_bar = progress_placeholder.progress(0, text="Starting processing...")
+        try:
+            # Simulate progress while processing
+            for percent_complete in range(0, 80, 5):
+                
+                time.sleep(0.03)
+                progress_bar.progress(percent_complete, text=f"Processing image... {percent_complete}%")
+            # Actual processing
+            if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
+                with NamedTemporaryFile(suffix=".tif", delete=False) as tmp_tif:
+                    tmp_tif.write(uploaded_image.getvalue())
+                    tmp_tif_path = tmp_tif.name
+                annotated, crops, ship_counter, metadata = run_inference_with_crops(tmp_tif_path)
+            else:
+                annotated, crops, ship_counter, metadata = run_inference_with_crops(uploaded_image)
+            progress_bar.progress(90, text="Finalizing results... 90%")
+            # Save session state (same names as before)
+            st.session_state.annotated_image = annotated
+            st.session_state.ship_crops = crops
+            st.session_state.ship_counter = ship_counter
+            st.session_state.metadata = metadata
+            progress_bar.progress(100, text="✅ Processing complete! 100%")
+            time.sleep(0.3)
+            percent_text_placeholder.empty()
+            progress_placeholder.empty()
+            # FIX: AIS — ensure the metadata on disk matches the in-memory metadata the UI shows
+            st.session_state.ais_results = None
+            if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
+                meta_tmp_path = "ship_metadata_ui.json"
+                try:
+                    with open(meta_tmp_path, "w", encoding="utf-8") as mf:
+                        json.dump(metadata, mf, indent=2, ensure_ascii=False)
+                except Exception as e:
+                    st.error(f"❌ Impossible d'écrire le fichier temporaire des métadonnées: {e}")
+                    meta_tmp_path = None
+                candidates = [
+                    os.path.join(os.path.dirname(__file__), "AIS_2024_01_24.csv"),
+                    os.path.join(os.path.dirname(__file__), "pages", "AIS_2024_01_24.csv"),
+                    os.path.join(os.getcwd(), "AIS_2024_01_24.csv"),
+                    os.path.join(os.getcwd(), "pages", "AIS_2024_01_24.csv"),
+                    "AIS_2024_01_24.csv"
+                ]
+                if ais_csv_uploader:
+                    with NamedTemporaryFile(suffix=".csv", delete=False) as tmp_ais:
+                        tmp_ais.write(ais_csv_uploader.getvalue())
+                        tmp_ais_path = tmp_ais.name
+                    ais_csv_path = tmp_ais_path
+                else:
+                    ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_01_24.csv")
+                    if not os.path.exists(ais_csv_path):
+                        st.warning(f"Le fichier AIS n'a pas été trouvé automatiquement; ensure '{ais_csv_path}' exists or upload it via the sidebar (optional).")
+                has_geoloc = any((entry.get("geolocation") is not None) for entry in metadata)
+                if has_geoloc and meta_tmp_path:
+                    try:
+                        ais_results = search_ais_for_metadata(
+                            metadata_path=meta_tmp_path,
+                            ais_csv_path=ais_csv_path,
+                            date_iso="2024-01-24T22:51:07.148377",
+                            output_path="AIS_search.json",
+                            time_window_s=300,
+                            search_radius_m=100,
+                            time_weight=0.5
+                        )
+                        st.session_state.ais_results = ais_results
+                    except Exception as e:
+                        st.session_state.ais_results = None
+                        st.error(f"❌ Error during AIS lookup: {e}")
+                else:
+                    st.session_state.ais_results = None
+                    if not has_geoloc:
+                        st.info("No geolocation present in metadata; skipping AIS search.")
+                    else:
+                        st.error("Temporary metadata file not written; skipping AIS search.")
+                if tmp_ais_path and os.path.exists(tmp_ais_path):
+                    try:
+                        os.unlink(tmp_ais_path)
+                    except Exception:
+                        pass
+            if tmp_tif_path and os.path.exists(tmp_tif_path):
+                try:
+                    os.unlink(tmp_tif_path)
+                except Exception:
+                    pass
+        except Exception as e:
+            st.error(f"❌ Error during inference: {str(e)}")
+            if 'tmp_tif_path' in locals() and tmp_tif_path and os.path.exists(tmp_tif_path):
+                os.unlink(tmp_tif_path)
+            if 'tmp_ais_path' in locals() and tmp_ais_path and os.path.exists(tmp_ais_path):
+                os.unlink(tmp_ais_path)
+    else:
+        st.warning("⚠️ Please upload an image first")
 
 if "annotated_image" not in st.session_state or st.session_state.annotated_image is None:
     # === Default presentation block ===
