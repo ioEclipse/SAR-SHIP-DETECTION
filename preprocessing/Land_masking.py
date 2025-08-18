@@ -129,82 +129,51 @@ def create_black_image_like(original_image):
     """Create a black image with the same shape and type as the original."""
     return np.zeros_like(original_image)
 
-def process_image(image, visualize=True,return_steps=False):
-    original_image=image.copy()
-    # Load image
-    #print(f"Loading image from: {image_path}")
-    #original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    #if original_image is None:
-    #    raise FileNotFoundError(f"Could not load image at {image_path}")
-
-    # Step 1: Apply Lee filter for noise reduction
+def process_image(image, visualize=True, return_steps=False):
+    original_image = image.copy()
+    
+    # Step 1: Apply Lee filter
     print("Applying Lee filter...")
     filtered_image = refined_lee_filter(original_image, window_size=35, k=15)
 
-    # Step 2: Process iteratively to remove land
-    current_image = filtered_image.copy()
+    # Initialize variables for all steps
+    step_1 = step_2 = step_3 = step_4 = step_5 = None
     masked_image = original_image.copy()
-    iteration = 0
-    max_iterations = 2
-
-    #create void mask
     mask_fin = np.zeros_like(original_image, dtype=np.uint8)
-
-    while iteration < max_iterations:
-        iteration += 1
-        print(f"\nIteration {iteration}:")
-        
-        if iteration == 2: bull=True
-        else: bull=False
-
-        # Create land mask
-        if return_steps and bull:
-            step_1, step_2, step_3, step_4,step_5,land_mask = compute_mask(current_image, mask_fin, invert_mask=True, bull=bull,return_steps=True)
-        else:
-            land_mask = compute_mask(current_image, mask_fin, invert_mask=True, bull=bull,return_steps=False)
-        land_percentage = calculate_land_percentage(land_mask)
-
-        print(f"Land percentage detected: {land_percentage:.2f}%")
-
-        # Check if image is mostly land
-        if land_percentage > 85:
-            print("⚠️  WARNING: Image is almost completely land (>90%)!")
-            print("   This image is not suitable for water body analysis.")
-            print("   Consider using a different image.")
-
-            black_img = create_black_image_like(original_image)
-            return black_img
-
-        # Remove land areas
-        
-        masked_image = remove_land_areas(masked_image, land_mask)
-        current_image = remove_land_areas(current_image, land_mask)
-        current_image = refined_lee_filter(current_image, window_size=35, k=15)
-        current_image = gamma_correction(current_image, gamma=0.9)
-        current_image = cv2.convertScaleAbs(current_image, alpha=10/9, beta=0)
-        mask_fin = cv2.bitwise_or(mask_fin, land_mask)
-        if visualize:
-            compare_images(original_image, masked_image)
-
-
-        # After first iteration, check if we need to continue
-        if land_percentage > 10:
-            print(f"Land percentage > 15% ({land_percentage:.2f}%), continuing cleanup...")
-            #print("Performing second iteration (minimum requirement)...")
-            continue
-        elif iteration <= max_iterations and land_percentage > 15:
-            print(f"Land percentage still > 15% ({land_percentage:.2f}%), continuing cleanup...")
-            continue
-        else:
-            print(f"Land percentage acceptable ({land_percentage:.2f}%), stopping cleanup.")
-            break
-    buffer_radius = 10  # pixels
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (buffer_radius, buffer_radius))
-    mask_fin = cv2.dilate(mask_fin, kernel, iterations=1)
-    masked_image=remove_land_areas(masked_image, mask_fin)
-    if return_steps:
-        return step_1, step_2, step_3, step_4,step_5, masked_image, mask_fin
     
-    return masked_image, mask_fin
+    try:
+        if return_steps:
+            step_1, step_2, step_3, step_4, step_5, land_mask = compute_mask(
+                filtered_image, invert_mask=True, bull=True, return_steps=True
+            )
+        else:
+            land_mask = compute_mask(filtered_image, invert_mask=True)
+            
+        # Calculate land percentage using the mask
+        land_percentage = calculate_land_percentage(land_mask)
+        
+        # Process the mask
+        masked_image = remove_land_areas(masked_image, land_mask)
+        mask_fin = cv2.bitwise_or(mask_fin, land_mask)
+        
+        if return_steps:
+            return (step_1, step_2, step_3, step_4, step_5, 
+                    masked_image, mask_fin)
+        return masked_image, mask_fin
+        
+    except Exception as e:
+        print(f"Error in process_image: {e}")
+        if return_steps:
+            return (None, None, None, None, None, 
+                    original_image, np.zeros_like(original_image))
+        return original_image, np.zeros_like(original_image)
+    
+'''Original_image_path="/content/fullPNG1.png"
+Final_image_path = "/content/Final_image.png"
 
+Final_image = process_image(Original_image_path, visualize=True)
+if Final_image is not None:
+    cv2.imwrite(Final_image_path, Final_image)
+    print(f"Final image saved to: {Final_image_path}")
 
+compare_images(cv2.imread(Original_image_path, cv2.IMREAD_GRAYSCALE), Final_image)'''

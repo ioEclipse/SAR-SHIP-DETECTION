@@ -16,10 +16,8 @@ from math import radians, sin, cos, sqrt, asin
 import pandas as pd
 import requests
 from tqdm import tqdm
-
-# Load configuration
-with open('../config.json', 'r') as f:
-    config = json.load(f)
+import cv2
+import os
 
 
 
@@ -531,24 +529,134 @@ def delete_old_ais_files():
         download_list.pop(0)
     return
 
-if __name__ == "__main__":
-    # identical call as before - if you pass a TIFF, geolocation will be added
-
-    # Test_image.jpg 
-
-    #annotated_img, crops, count, metadata = run_inference_with_crops("Test_image.png", tile_size=640, resolution_m=10)
-
-    # Test New_York.tiff
-
-    annotated_img, crops, count, metadata = run_inference_with_crops("../Ais_data/New_York.tiff", tile_size=640, resolution_m=10)
-
-    print("Detected ships:", count)
-    # display first metadata
-    for m in metadata[:1]:
-        print(m)
-
-        # Convertir PIL → NumPy (BGR pour OpenCV)
-    annotated_img_cv = cv2.cvtColor(np.array(annotated_img), cv2.COLOR_RGB2BGR)
-
-    # Sauvegarder en PNG
-    cv2.imwrite("annotated_image.png", annotated_img_cv)
+def preprocessing_pipeline(uploaded_image):
+   
+    # Ensure the temp folder exists
+    temp_folder = "assets/temp_folder"
+    os.makedirs(temp_folder, exist_ok=True)
+    
+    # Convert uploaded_image to numpy array
+    if hasattr(uploaded_image, 'read'):
+        # It's an UploadedFile object
+        uploaded_image.seek(0)  # Reset file pointer
+        file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
+        image_np = cv2.imdecode(file_bytes, cv2.IMREAD_GRAYSCALE)
+    elif isinstance(uploaded_image, str):
+        # It's a file path
+        image_np = cv2.imread(uploaded_image, cv2.IMREAD_GRAYSCALE)
+    elif isinstance(uploaded_image, np.ndarray):
+        # It's already a numpy array
+        image_np = uploaded_image
+    else:
+        raise ValueError(f"Unsupported image type: {type(uploaded_image)}")
+    
+    if image_np is None:
+        raise ValueError("Could not decode the uploaded image")
+    
+    # Save the initial image
+    initial_path = os.path.join(temp_folder, "Step0_Initial.png")
+    cv2.imwrite(initial_path, image_np)
+    
+    # Run the full preprocessing and save all steps
+    try:
+        result = process_image(image_np, visualize=False, return_steps=True)
+        
+        # Ensure we got all expected return values
+        if isinstance(result, tuple) and len(result) == 7:
+            step_1, step_2, step_3, step_4, step_5, masked_image, mask_fin = result
+            print("✅ process_image returned all steps successfully")
+        else:
+            print("⚠️ Unexpected return format from process_image")
+            step_1 = step_2 = step_3 = step_4 = step_5 = None
+            masked_image = image_np.copy()
+            mask_fin = np.zeros_like(image_np)
+            
+    except Exception as e:
+        print(f"❌ Error in process_image: {e}")
+        step_1 = step_2 = step_3 = step_4 = step_5 = None
+        masked_image = image_np.copy()
+        mask_fin = np.zeros_like(image_np)
+    
+    # Apply noise correction
+    try:
+        Img_for_inference = apply_correction(masked_image, times=3)
+        print("✅ apply_correction completed successfully")
+    except Exception as e:
+        print(f"❌ Error in apply_correction: {e}")
+        Img_for_inference = masked_image
+    
+    # Prepare images for saving - ensure all are numpy arrays
+    images_to_save = {
+        "Step0_Initial.png": image_np,
+        "Step1_Lee_filter.png": step_1 if step_1 is not None else image_np,
+        "Step2_Enhance.png": step_2 if step_2 is not None else image_np,
+        "Step3_Thresholding.png": step_3 if step_3 is not None else image_np,
+        "Step4_Morphing.png": step_4 if step_4 is not None else image_np,
+        "Step5_Apply_mask.png": step_5 if step_5 is not None else image_np,
+        "Step6_Masked_image.png": masked_image,
+        "Step7_Mask_fin.png": mask_fin,
+        "Step8_Final_image.png": Img_for_inference
+    }
+    
+    # Apply noise correction
+    try:
+        Img_for_inference = apply_correction(masked_image, times=3)
+        print("✅ apply_correction completed successfully")
+    except Exception as e:
+        print(f"❌ Error in apply_correction: {e}")
+        Img_for_inference = masked_image
+    
+    # Prepare all images for saving
+    images_to_save = {
+        "Step0_Initial.png": image_np,
+        "Step1_Lee_filter.png": step_1,
+        "Step2_Enhance.png": step_2,
+        "Step3_Thresholding.png": step_3,
+        "Step4_Morphing.png": step_4,
+        "Step5_Apply_mask.png": step_5,
+        "Step6_Masked_image.png": masked_image,
+        "Step7_Mask_fin.png": mask_fin,
+        "Step8_Final_image.png": Img_for_inference
+    }
+    
+    # Save each step and track successful saves
+    saved_paths = {}
+    for filename, image_data in images_to_save.items():
+        if image_data is not None:
+            full_path = os.path.join(temp_folder, filename)
+            try:
+                # Ensure image_data is in the right format
+                if isinstance(image_data, np.ndarray):
+                    # Make sure it's uint8
+                    if image_data.dtype != np.uint8:
+                        image_data = np.clip(image_data, 0, 255).astype(np.uint8)
+                    
+                    success = cv2.imwrite(full_path, image_data)
+                    if success:
+                        saved_paths[filename] = full_path
+                        print(f"✅ Successfully saved: {filename}")
+                    else:
+                        print(f"❌ Failed to save: {filename}")
+                else:
+                    print(f"⚠️ Skipping {filename}: not a numpy array ({type(image_data)})")
+            except Exception as e:
+                print(f"❌ Error saving {filename}: {e}")
+        else:
+            print(f"⚠️ Skipping {filename}: image_data is None")
+    
+    # Return paths with consistent naming
+    image_paths = {
+        "initial": saved_paths.get("Step0_Initial.png"),
+        "step1": saved_paths.get("Step1_Lee_filter.png"),
+        "step2": saved_paths.get("Step2_Enhance.png"), 
+        "step3": saved_paths.get("Step3_Thresholding.png"),
+        "step4": saved_paths.get("Step4_Morphing.png"),
+        "step5": saved_paths.get("Step5_Apply_mask.png"),
+        "masked_image": saved_paths.get("Step6_Masked_image.png"),
+        "mask_fin": saved_paths.get("Step7_Mask_fin.png"),
+        "final": saved_paths.get("Step8_Final_image.png"),
+    }
+    
+    print(f"📊 Preprocessing summary: {len([p for p in image_paths.values() if p is not None])}/{len(image_paths)} images saved successfully")
+    
+    return image_paths

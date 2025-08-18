@@ -10,6 +10,8 @@ from functions import *
 from streamlit_option_menu import option_menu
 import json
 import time
+import cv2
+import numpy as np
 
 # === Fonction pour charger le logo ===
 def load_logo_base64(path="assets/logo.png"):
@@ -280,7 +282,6 @@ if process_clicked:
         try:
             # Simulate progress while processing
             for percent_complete in range(0, 80, 5):
-                
                 time.sleep(0.03)
                 progress_bar.progress(percent_complete, text=f"Processing image... {percent_complete}%")
             # Actual processing
@@ -436,110 +437,189 @@ else:
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-    if st.session_state.ship_counter > 0:
-        st.markdown("---")
-        st.markdown("### 🔍 Ship Details")
+    # Replace the preprocessing pipeline section in your app.py with this:
+
+if uploaded_image is not None and "annotated_image" in st.session_state and st.session_state.annotated_image is not None:
+    try:
+        # Call preprocessing pipeline with the uploaded file object
+        image_paths = preprocessing_pipeline(uploaded_image)
+        st.session_state.preprocessing_paths = image_paths
         
-        ship_names = [name for name, _ in st.session_state.ship_crops]
-        selected_ship = st.selectbox("Choose a ship to view details", ship_names, key="ship_select")
+        # Debug info
+        available_steps = len([p for p in image_paths.values() if p is not None])
+        print(f"🔍 Debug: {available_steps}/{len(image_paths)} preprocessing steps available")
         
-        if selected_ship:
-            
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                crop_img = dict(st.session_state.ship_crops)[selected_ship]
+    except Exception as e:
+        st.error(f"❌ Error during preprocessing: {str(e)}")
+        st.session_state.preprocessing_paths = None
 
-                # Convert PIL image to Base64
-                buffer = io.BytesIO()
-                crop_img.save(buffer, format="PNG")
-                img_base64 = base64.b64encode(buffer.getvalue()).decode()
+# Safe image display in the expander
+with st.expander("Preprocessing pipeline (all steps)"):
+    col1, col2, col3, col4 = st.columns(4)
+    col5, col6, col7, col8 = st.columns(4)
 
-                # Display image with custom width using HTML & CSS
-                st.markdown(f"""
-                    <div style="text-align:center;">
-                        <img src="data:image/png;base64,{img_base64}" 
-                             style="width:350px; border-radius:10px; display:block; margin:auto;">
-                        <p style="text-align:center; color:#ffffff; font-size:16px;">📸 {selected_ship}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-            with col2:
-                # Ship metadata
-                for entry in st.session_state.metadata:
-                    if entry['ship_id'] == selected_ship:
-                        pixel_area = entry['pixel_area']
-                        surface_m2 = entry['surface_m2']
-                        geoloc = entry.get("geolocation", None)
-                        break
-                
-                st.markdown("### 📊 Ship Information")
-                st.markdown(f"""
-                - **Ship ID:** {selected_ship}
-                - **Pixel Area:** {pixel_area} px²
-                - **Surface:** {surface_m2} m²
-                """)
-                
-                if geoloc:
-                    st.markdown(f"- **Geolocation:** {geoloc.get('lat')}, {geoloc.get('lon')}")
-                else:
-                    st.markdown(f"- **Geolocation:** None")
-                
-                # Download button for individual ship
-                crop_buf = io.BytesIO()
-                crop_img.save(crop_buf, format="JPEG")
-                st.download_button("📥 Download Ship", data=crop_buf.getvalue(), file_name=f"{selected_ship}.jpg", key="download_crop")
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        # Metadata table
-        st.markdown("### 📋 Ship Characteristics Table")
-        df = pd.DataFrame(st.session_state.metadata)
-        
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            show_all = st.checkbox("Show full table", value=False, key="show_table")
-        with col2:
-            st.markdown('<div style="margin-top: 20px;"></div>', unsafe_allow_html=True)
-        
-        if show_all:
-            st.dataframe(df, use_container_width=True)
-        else:
-            st.dataframe(df.head(5), use_container_width=True)
-
-        # NEW: Display AIS search results table under the metadata table (only if present)
-        if st.session_state.get("ais_results") is not None:
-            st.markdown("### 🛰️ AIS Search Results (matched to metadata ships)")
-            # ais_results is a dict ship_id -> dict or None
-            ais_results = st.session_state.ais_results
-            # build a table aligning with metadata order
-            rows = []
-            for entry in st.session_state.metadata:
-                sid = entry.get("ship_id")
-                res = ais_results.get(sid) if isinstance(ais_results, dict) else None
-                if res is None:
-                    rows.append({"ship_id": sid, "AIS_found": False})
-                else:
-                    # flatten some common AIS fields if present
-                    row = {"ship_id": sid, "AIS_found": True}
-                    row["MMSI"] = res.get("MMSI")
-                    row["VesselName"] = res.get("VesselName")
-                    row["BaseDateTime"] = res.get("BaseDateTime")
-                    row["LAT"] = res.get("LAT")
-                    row["LON"] = res.get("LON")
-                    row["SOG"] = res.get("SOG")
-                    row["COG"] = res.get("COG")
-                    row["IMO"] = res.get("IMO")
-                    rows.append(row)
-            ais_df = pd.DataFrame(rows)
-            st.dataframe(ais_df, use_container_width=True)
-
-            # provide download of AIS_search.json if exists
-            if os.path.exists("AIS_search.json"):
-                with open("AIS_search.json", "rb") as f:
-                    st.download_button("Download AIS_search.json", data=f.read(), file_name="AIS_search.json", key="download_ais_json")
+    def safe_image_display(col, image_path, caption, fallback_text="Image not available"):
+        """Safely display an image with error handling"""
+        with col:
+            if image_path and os.path.exists(image_path):
+                try:
+                    st.image(image_path, caption=caption, use_container_width=True)
+                except Exception as e:
+                    st.error(f"{fallback_text}: {caption}")
+                    print(f"❌ Error displaying {caption}: {e}")
             else:
-                # fallback: offer to download the in-memory ais_results as JSON
-                ais_json_bytes = json.dumps(ais_results, indent=2, ensure_ascii=False).encode("utf-8")
-                st.download_button("Download AIS results (JSON)", data=ais_json_bytes, file_name="AIS_search.json", key="download_ais_json_mem")
+                st.error(f"{fallback_text}: {caption}")
+                if image_path:
+                    print(f"❌ Path exists but file missing: {image_path}")
+                else:
+                    print(f"❌ No path available for: {caption}")
+
+    # Check if preprocessing was successful
+    if hasattr(st.session_state, 'preprocessing_paths') and st.session_state.preprocessing_paths:
+        paths = st.session_state.preprocessing_paths
+        
+        # Display all steps
+        safe_image_display(col1, paths.get("initial"), "Initial Image")
+        safe_image_display(col2, paths.get("step1"), "Step 1: Lee Filter")
+        safe_image_display(col3, paths.get("step2"), "Step 2: Enhance") 
+        safe_image_display(col4, paths.get("step3"), "Step 3: Thresholding")
+        safe_image_display(col5, paths.get("step4"), "Step 4: Morphing")
+        safe_image_display(col6, paths.get("step5"), "Step 5: Apply Mask")
+        safe_image_display(col7, paths.get("masked_image"), "Step 6: Masked Image")
+        with col8:        
+        # Final image (for inference) - display separately below
+            if paths.get("final") and os.path.exists(paths.get("final")):
+                st.image(paths.get("final"), caption="Step 8: Final Image for Inference", use_container_width=True)
+            else:
+                st.error("❌ Final processed image not available")
+            
+
+    else:
+        # Show placeholder messages for all steps
+        safe_image_display(col1, None, "Initial Image")
+        for col, caption in zip([col2, col3, col4, col5, col6, col7, col8], 
+                               ["Step 1: Lee Filter", "Step 2: Enhance", "Step 3: Thresholding", 
+                                "Step 4: Morphing", "Step 5: Apply Mask", "Step 6: Masked Image", "Step 7: Final Mask"]):
+            safe_image_display(col, None, caption)
+        
+        st.error("❌ Preprocessing has not been completed yet. Please process an image first.")
+if st.session_state.ship_counter > 0:
+    st.markdown("---")
+    st.markdown("### 🔍 Ship Details")
+    
+    ship_names = [name for name, _ in st.session_state.ship_crops]
+    selected_ship = st.selectbox("Choose a ship to view details", ship_names, key="ship_select")
+    
+    if selected_ship:
+        
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            crop_img = dict(st.session_state.ship_crops)[selected_ship]
+
+            # Convert PIL image to Base64
+            buffer = io.BytesIO()
+            crop_img.save(buffer, format="PNG")
+            img_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+            # Display image with custom width using HTML & CSS
+            st.markdown(f"""
+                <div style="text-align:center;">
+                    <img src="data:image/png;base64,{img_base64}" 
+                            style="width:350px; border-radius:10px; display:block; margin:auto;">
+                    <p style="text-align:center; color:#ffffff; font-size:16px;">📸 {selected_ship}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with col2:
+            # Ship metadata
+            for entry in st.session_state.metadata:
+                if entry['ship_id'] == selected_ship:
+                    pixel_area = entry['pixel_area']
+                    surface_m2 = entry['surface_m2']
+                    geoloc = entry.get("geolocation", None)
+                    break
+            
+            st.markdown("### 📊 Ship Information")
+            st.markdown(f"""
+            - **Ship ID:** {selected_ship}
+            - **Pixel Area:** {pixel_area} px²
+            - **Surface:** {surface_m2} m²
+            """)
+            
+            if geoloc:
+                st.markdown(f"- **Geolocation:** {geoloc.get('lat')}, {geoloc.get('lon')}")
+            else:
+                st.markdown(f"- **Geolocation:** None")
+            
+            # Download button for individual ship
+            crop_buf = io.BytesIO()
+            crop_img.save(crop_buf, format="JPEG")
+            st.download_button("📥 Download Ship", data=crop_buf.getvalue(), file_name=f"{selected_ship}.jpg", key="download_crop")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Metadata table
+    st.markdown("### 📋 Ship Characteristics Table")
+    df = pd.DataFrame(st.session_state.metadata)
+    
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        show_all = st.checkbox("Show full table", value=False, key="show_table")
+    with col2:
+        st.markdown('<div style="margin-top: 20px;"></div>', unsafe_allow_html=True)
+    
+    if show_all:
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.dataframe(df.head(5), use_container_width=True)
+
+    # NEW: Display AIS search results table under the metadata table (only if present)
+    if st.session_state.get("ais_results") is not None:
+        st.markdown("### 🛰️ AIS Search Results (matched to metadata ships)")
+        # ais_results is a dict ship_id -> dict or None
+        ais_results = st.session_state.ais_results
+        # build a table aligning with metadata order
+        rows = []
+        for entry in st.session_state.metadata:
+            sid = entry.get("ship_id")
+            res = ais_results.get(sid) if isinstance(ais_results, dict) else None
+            if res is None:
+                rows.append({"ship_id": sid, "AIS_found": False})
+            else:
+                # flatten some common AIS fields if present
+                row = {"ship_id": sid, "AIS_found": True}
+                row["MMSI"] = res.get("MMSI")
+                row["VesselName"] = res.get("VesselName")
+                row["BaseDateTime"] = res.get("BaseDateTime")
+                row["LAT"] = res.get("LAT")
+                row["LON"] = res.get("LON")
+                row["SOG"] = res.get("SOG")
+                row["COG"] = res.get("COG")
+                row["IMO"] = res.get("IMO")
+                rows.append(row)
+        ais_df = pd.DataFrame(rows)
+        st.dataframe(ais_df, use_container_width=True)
+
+        # provide download of AIS_search.json if exists
+        if os.path.exists("AIS_search.json"):
+            with open("AIS_search.json", "rb") as f:
+                st.download_button("Download AIS_search.json", data=f.read(), file_name="AIS_search.json", key="download_ais_json")
+        else:
+            # fallback: offer to download the in-memory ais_results as JSON
+            ais_json_bytes = json.dumps(ais_results, indent=2, ensure_ascii=False).encode("utf-8")
+            st.download_button("Download AIS results (JSON)", data=ais_json_bytes, file_name="AIS_search.json", key="download_ais_json_mem")
 
 st.markdown('</div>', unsafe_allow_html=True)
+
+# === Wrapper for preprocessing_pipeline ===
+def preprocessing_pipeline(image_np, uploaded_image=None):
+    """
+    Wrapper for the preprocessing_pipeline from functions.py so it can be called from app.py.
+    Args:
+        image_np: numpy array of the image (grayscale)
+        uploaded_image: the uploaded file or its path (optional, for initial image reference)
+    Returns:
+        dict: paths to all intermediate and final images
+    """
+    # Call the imported function from functions.py
+    return globals()["preprocessing_pipeline"](image_np, uploaded_image)
