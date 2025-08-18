@@ -158,7 +158,7 @@ def process_image(image, visualize=True,return_steps=False):
     current_image = filtered_image.copy()
     masked_image = original_image.copy()
     iteration = 0
-    max_iterations = 2
+    max_iterations = 3
 
     #create void mask
     mask_fin = np.zeros_like(original_image, dtype=np.uint8)
@@ -167,7 +167,7 @@ def process_image(image, visualize=True,return_steps=False):
         iteration += 1
         print(f"\nIteration {iteration}:")
         
-        if iteration == 3: bull=True
+        if iteration == 1: bull=True
         else: bull=False
 
         # Create land mask
