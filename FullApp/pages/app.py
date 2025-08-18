@@ -26,7 +26,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
+if 'ship_counter' not in st.session_state:
+    st.session_state.ship_counter = 0
+    
 # === CSS Design Global ===
 st.markdown(f"""
 <style>
@@ -174,11 +176,11 @@ st.markdown(f"""
 
 /* Download button styling */
     .stDownloadButton > button {{
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        background: linear-gradient(135deg, #1e90ff, #0066cc) !important;
         color: white !important;
         font-weight: bold !important;
         border: none !important;
-        padding: 8px 14px !important;
+        padding: 8px 10px !important;
         border-radius: 8px !important;
         font-size: 12px !important;
         transition: all 0.3s ease !important;
@@ -187,10 +189,11 @@ st.markdown(f"""
     }}
 
     .stDownloadButton > button:hover {{
-        background: linear-gradient(135deg, #218838 0%, #1ea085 100%) !important;
+        background: linear-gradient(135deg, #0066cc, #1e90ff) !important;
         transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
+        box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3) !important;
     }}
+
 
     /* Fixed position for main download button */
     .download-container {{
@@ -422,6 +425,8 @@ if "annotated_image" not in st.session_state or st.session_state.annotated_image
         st.markdown('</div>', unsafe_allow_html=True)
 
 else:
+    if 'ship_counter' not in st.session_state:
+        st.session_state.ship_counter = 0
     # Ship counter
     st.markdown(f'<h1 style="color: #ffffff; font-size: 36px; font-weight: bold; margin-bottom: 20px;">🚢 Total Ships Detected: {st.session_state.ship_counter}</h1>', unsafe_allow_html=True)
     
@@ -479,56 +484,56 @@ if uploaded_image is not None and "annotated_image" in st.session_state and st.s
         st.error(f"❌ Error during preprocessing: {str(e)}")
         st.session_state.preprocessing_paths = None
 
-# Safe image display in the expander
-with st.expander("Preprocessing pipeline (all steps)"):
-    col1, col2, col3, col4 = st.columns(4)
-    col5, col6, col7, col8 = st.columns(4)
+    # Safe image display in the expander
+    with st.expander("Preprocessing pipeline (all steps)"):
+        col1, col2, col3, col4 = st.columns(4)
+        col5, col6, col7, col8 = st.columns(4)
 
-    def safe_image_display(col, image_path, caption, fallback_text="Image not available"):
-        """Safely display an image with error handling"""
-        with col:
-            if image_path and os.path.exists(image_path):
-                try:
-                    st.image(image_path, caption=caption, use_container_width=True)
-                except Exception as e:
-                    st.error(f"{fallback_text}: {caption}")
-                    print(f"❌ Error displaying {caption}: {e}")
-            else:
-                st.error(f"{fallback_text}: {caption}")
-                if image_path:
-                    print(f"❌ Path exists but file missing: {image_path}")
+        def safe_image_display(col, image_path, caption, fallback_text="Image not available"):
+            """Safely display an image with error handling"""
+            with col:
+                if image_path and os.path.exists(image_path):
+                    try:
+                        st.image(image_path, caption=caption, use_container_width=True)
+                    except Exception as e:
+                        st.error(f"{fallback_text}: {caption}")
+                        print(f"❌ Error displaying {caption}: {e}")
                 else:
-                    print(f"❌ No path available for: {caption}")
+                    st.error(f"{fallback_text}: {caption}")
+                    if image_path:
+                        print(f"❌ Path exists but file missing: {image_path}")
+                    else:
+                        print(f"❌ No path available for: {caption}")
 
-    # Check if preprocessing was successful
-    if hasattr(st.session_state, 'preprocessing_paths') and st.session_state.preprocessing_paths:
-        paths = st.session_state.preprocessing_paths
-        
-        # Display all steps
-        safe_image_display(col1, paths.get("initial"), "Initial Image")
-        safe_image_display(col2, paths.get("step1"), "Step 1: Lee Filter")
-        safe_image_display(col3, paths.get("step2"), "Step 2: Enhance") 
-        safe_image_display(col4, paths.get("step3"), "Step 3: Thresholding")
-        safe_image_display(col5, paths.get("step4"), "Step 4: Morphing")
-        safe_image_display(col6, paths.get("step5"), "Step 5: Apply Mask")
-        safe_image_display(col7, paths.get("masked_image"), "Step 6: Masked Image")
-        with col8:        
-        # Final image (for inference) - display separately below
-            if paths.get("final") and os.path.exists(paths.get("final")):
-                st.image(paths.get("final"), caption="Step 8: Final Image for Inference", use_container_width=True)
-            else:
-                st.error("❌ Final processed image not available")
+        # Check if preprocessing was successful
+        if hasattr(st.session_state, 'preprocessing_paths') and st.session_state.preprocessing_paths:
+            paths = st.session_state.preprocessing_paths
             
+            # Display all steps
+            safe_image_display(col1, paths.get("initial"), "Initial Image")
+            safe_image_display(col2, paths.get("step1"), "Step 1: Lee Filter")
+            safe_image_display(col3, paths.get("step2"), "Step 2: Enhance") 
+            safe_image_display(col4, paths.get("step3"), "Step 3: Thresholding")
+            safe_image_display(col5, paths.get("step4"), "Step 4: Morphing")
+            safe_image_display(col6, paths.get("step5"), "Step 5: Apply Mask")
+            safe_image_display(col7, paths.get("masked_image"), "Step 6: Masked Image")
+            with col8:        
+            # Final image (for inference) - display separately below
+                if paths.get("final") and os.path.exists(paths.get("final")):
+                    st.image(paths.get("final"), caption="Step 8: Final Image for Inference", use_container_width=True)
+                else:
+                    st.error("❌ Final processed image not available")
+                
 
-    else:
-        # Show placeholder messages for all steps
-        safe_image_display(col1, None, "Initial Image")
-        for col, caption in zip([col2, col3, col4, col5, col6, col7, col8], 
-                               ["Step 1: Lee Filter", "Step 2: Enhance", "Step 3: Thresholding", 
-                                "Step 4: Morphing", "Step 5: Apply Mask", "Step 6: Masked Image", "Step 7: Final Mask"]):
-            safe_image_display(col, None, caption)
-        
-        st.error("❌ Preprocessing has not been completed yet. Please process an image first.")
+        else:
+            # Show placeholder messages for all steps
+            safe_image_display(col1, None, "Initial Image")
+            for col, caption in zip([col2, col3, col4, col5, col6, col7, col8], 
+                                ["Step 1: Lee Filter", "Step 2: Enhance", "Step 3: Thresholding", 
+                                    "Step 4: Morphing", "Step 5: Apply Mask", "Step 6: Masked Image", "Step 7: Final Mask"]):
+                safe_image_display(col, None, caption)
+            
+            st.error("❌ Preprocessing has not been completed yet. Please process an image first.")
 if st.session_state.ship_counter > 0:
     st.markdown("---")
     st.markdown("### 🔍 Ship Details")
