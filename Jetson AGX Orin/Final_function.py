@@ -7,13 +7,14 @@ import numpy as np
 import rasterio
 import os
 from scipy.ndimage import uniform_filter
-
+import re 
+import glob
 
 # === Loading local model ===
 LOCAL_MODEL = YOLO("best1.onnx", task="detect")
 
 
-def gamma_correction(image, gamma=0.5):
+def gamma_correction(image, gamma=1.0):
     # Build lookup table
     invGamma = 1.0 / gamma
     table = np.array([(i / 255.0) ** invGamma * 255
@@ -30,7 +31,7 @@ def apply_correction(image,times=1,return_allsteps=False):
     # Apply gamma correction (adjust gamma value as needed)
     enhanced = image
     for i in range(times):
-        enhanced = gamma_correction(enhanced, gamma=1.0)  # More moderate gamma
+        enhanced = gamma_correction(enhanced, gamma=0.9)  # More moderate gamma
         if i == 0 : darkened = enhanced.copy() 
         # Apply contrast adjustment (more moderate parameters)
         enhanced = cv2.convertScaleAbs(enhanced, alpha=10/7, beta=0)
@@ -262,16 +263,9 @@ def is_on_land(mask, x1, y1, x2, y2, threshold=0.5):
     
     return land_ratio > threshold
 
+
 def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, filter_abnormal=True):
-    """
-    Execute inference with tile slicing
-    
-    Args:
-        uploaded_image: Chemin ou objet image
-        tile_size: Size of tiles for slicing
-        resolution_m: Spatial resolution in meters per pixel
-        filter_abnormal: If True, filter detections with pixel_area <= 110 or > 2000
-    """
+   
     # Keep path to original tif if provided (used later for geolocation)
     original_tif_path = None
 
@@ -293,7 +287,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
     denoised_image = apply_correction(gray_image, times=3)
     
     # Get land mask separately for filtering
-    _, land_mask = process_image(gray_image, visualize=False)
+    water_image, land_mask = process_image(gray_image, visualize=False)
     
     # Convert denoised image to RGB for model and final annotation
     denoised_rgb = cv2.cvtColor(denoised_image, cv2.COLOR_GRAY2RGB)
@@ -429,23 +423,82 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
     draw.text((10, 70), f"Filtered (abnormal): {filtered_abnormal}", fill="cyan", font=font)
     draw.text((10, 100), f"Resolution: {resolution_m}m/pixel", fill="cyan", font=font)
 
-    # Write metadata JSON
-    with open("ship_metadata.json", "w") as f:
-        json.dump(metadata, f, indent=4)
+    
+    
 
-    return annotated, crops, ship_counter, metadata
+    return annotated, crops, ship_counter, metadata,water_image
+
 
 if __name__ == "__main__":
-    # identical call as before - if you pass a TIFF, geolocation will be added
-    annotated_img, crops, count, metadata = run_inference_with_crops("Test_image.png", tile_size=640, resolution_m=10)
-    print("Detected ships:", count)
-    # display first metadata
-    for m in metadata[:1]:
-        print(m)
-
-        # Convertir PIL → NumPy (BGR pour OpenCV)
-    annotated_img_cv = cv2.cvtColor(np.array(annotated_img), cv2.COLOR_RGB2BGR)
-
-    # Sauvegarder en PNG
-    cv2.imwrite("annotated_image2.png", annotated_img_cv)
+    # Créer le dossier OUTPUTS s'il n'existe pas
+    output_dir = "OUTPUTS"
+    os.makedirs(output_dir, exist_ok=True)
     
+    # Vérifier que le dossier INPUT existe
+    input_dir = "INPUT"
+    if not os.path.exists(input_dir):
+        raise FileNotFoundError(f"Le dossier {input_dir} n'existe pas")
+    
+    # Lister toutes les images dans INPUT
+    image_extensions = ('*.tif', '*.tiff', '*.jpg', '*.jpeg', '*.png')
+    image_files = []
+    for ext in image_extensions:
+        image_files.extend(glob.glob(os.path.join(input_dir, ext)))
+    
+    if not image_files:
+        print(f"Aucune image trouvée dans {input_dir}")
+        exit()
+    
+    # Traiter chaque image
+    for img_path in image_files:
+        try:
+            print(f"\nTraitement de {os.path.basename(img_path)}...")
+            
+            # Exécuter l'inférence
+            annotated_img, crops, count, metadata, water_img = run_inference_with_crops(
+                img_path,
+                tile_size=640,
+                resolution_m=10
+            )
+            
+            # Créer un sous-dossier pour cette image
+            base_name = os.path.splitext(os.path.basename(img_path))[0]
+            img_output_dir = os.path.join(output_dir, base_name)
+            os.makedirs(img_output_dir, exist_ok=True)
+            
+            # 1. Sauvegarder l'image sans terre (water_img)
+            water_path = os.path.join(img_output_dir, f"{base_name}_water.png")
+            cv2.imwrite(water_path, water_img)
+            
+            # 2. Sauvegarder les métadonnées
+            metadata_path = os.path.join(img_output_dir, f"{base_name}_metadata.json")
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=4)
+            
+            # 3. Sauvegarder l'image annotée
+            annotated_path = os.path.join(img_output_dir, f"{base_name}_annotated.png")
+            annotated_img.save(annotated_path)
+            
+            # 4. Sauvegarder les crops des navires
+            ships_dir = os.path.join(img_output_dir, "ships")
+            os.makedirs(ships_dir, exist_ok=True)
+            
+            for ship_id, crop_img in crops:
+                # Nettoyer l'ID pour le nom de fichier
+                clean_id = re.sub(r'[^\w-]', '', ship_id.replace('#', ''))
+                ship_path = os.path.join(ships_dir, f"{base_name}_ship_{clean_id}.png")
+                crop_img.save(ship_path)
+            
+            print(f"► Résultats sauvegardés dans: {img_output_dir}")
+            print(f"  - Navires détectés: {count}")
+            print(f"  - Fichiers générés:")
+            print(f"    • {os.path.basename(water_path)} (image sans terre)")
+            print(f"    • {os.path.basename(metadata_path)} (métadonnées)")
+            print(f"    • {os.path.basename(annotated_path)} (image annotée)")
+            print(f"    • Dossier 'ships' avec {len(crops)} sous-images")
+            
+        except Exception as e:
+            print(f"⚠️ Erreur lors du traitement de {os.path.basename(img_path)}: {str(e)}")
+            continue
+    
+    print("\nTraitement terminé pour toutes les images valides.")

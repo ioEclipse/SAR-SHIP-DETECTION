@@ -29,7 +29,6 @@ MODEL_ID = "sar-ship-hbhns/1"
 
 
 
-
 def pixel_to_lonlat(tif_path, x_pixel, y_pixel):
         """Fallback si pixel_to_lonlat non fourni"""
         with rasterio.open(tif_path) as src:
@@ -364,8 +363,6 @@ def search_ais_for_metadata(metadata_path="ship_metadata.json",
 
     print(f"[DONE] Results saved to {output_path}")
     return results
-
-
 
 
 def get_Cords_of_ship(bounding_box, resolution_m_per_px,img_longitude,img_latitude):
