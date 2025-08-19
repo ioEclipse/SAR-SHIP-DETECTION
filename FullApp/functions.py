@@ -297,7 +297,7 @@ def _to_json_serializable(obj):
         return str(obj)
 
 def search_ais_for_metadata(metadata_path="ship_metadata.json",
-                            ais_csv_path="pages/AIS_2024_07_06.csv",
+                            ais_csv_path="AIS_2024_07_06.csv",
                             date_iso="2024-07-06T04:30:22",
                             output_path="AIS_search.json",
                             # below params forwarded to find_best_ship if you want to override:

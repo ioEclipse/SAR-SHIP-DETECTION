@@ -11,7 +11,7 @@ import re
 import glob
 
 # === Loading local model ===
-LOCAL_MODEL = YOLO("Jetson AGX Orin/best1.onnx", task="detect")
+LOCAL_MODEL = YOLO("best1.onnx", task="detect")
 
 
 def gamma_correction(image, gamma=1.0):
@@ -322,7 +322,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, fil
                     temp_path,
                     conf=0.25,
                     imgsz=tile_size,
-                    device="cpu",
+                    device="cuda",
                     verbose=False
                 )
                 
@@ -432,7 +432,7 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
     
     # Vérifier que le dossier INPUT existe
-    input_dir = "INPUT"
+    input_dir = "INPUT1"
     if not os.path.exists(input_dir):
         raise FileNotFoundError(f"Le dossier {input_dir} n'existe pas")
     

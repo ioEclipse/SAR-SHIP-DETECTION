@@ -336,7 +336,7 @@ if process_clicked:
                     try:
                         ais_results = search_ais_for_metadata(
     metadata_path="ship_metadata_ui.json",
-    ais_csv_path="pages/AIS_2024_07_06.csv",
+    ais_csv_path="AIS_2024_07_06.csv",
     date_iso="2024-07-06T04:30:22",
     output_path="AIS_search.json",
     time_window_s=300,
