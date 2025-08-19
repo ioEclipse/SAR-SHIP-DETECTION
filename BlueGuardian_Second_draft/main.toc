@@ -9,65 +9,65 @@
 \contentsline {subsection}{\numberline {2.1}Motivation}{8}{subsection.2.1}%
 \contentsline {subsection}{\numberline {2.2}Literature Review and Background}{9}{subsection.2.2}%
 \contentsline {paragraph}{Dark Vessel Detection and Maritime Surveillance Challenges}{10}{section*.5}%
-\contentsline {section}{\numberline {3}Requirements Specification}{12}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Non-Functional Requirements}{14}{subsection.3.1}%
-\contentsline {section}{\numberline {4}System Design}{17}{section.4}%
-\contentsline {subsection}{\numberline {4.1}High-Level System Architecture}{17}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Detailed Component Design}{17}{subsection.4.2}%
-\contentsline {subsubsection}{\numberline {4.2.1}Data Acquisition and Management}{17}{subsubsection.4.2.1}%
-\contentsline {subsubsection}{\numberline {4.2.2}Band Processing Subsystem}{19}{subsubsection.4.2.2}%
-\contentsline {paragraph}{Band selection}{19}{section*.10}%
-\contentsline {paragraph}{Thermal Filters}{19}{section*.11}%
-\contentsline {paragraph}{Radiometric correction}{20}{section*.12}%
-\contentsline {subsubsection}{\numberline {4.2.3}Preprocessing Subsystem}{20}{subsubsection.4.2.3}%
-\contentsline {paragraph}{Amplitude Scaling \& Grayscale Conversion}{20}{section*.14}%
-\contentsline {paragraph}{Land Masking}{21}{section*.15}%
-\contentsline {paragraph}{Noise Reduction and edge enhancing}{22}{section*.21}%
-\contentsline {subsubsection}{\numberline {4.2.4}Machine Learning Detection Model}{23}{subsubsection.4.2.4}%
-\contentsline {subsection}{\numberline {4.3}Data Flow and Workflow}{24}{subsection.4.3}%
-\contentsline {paragraph}{SAR Data Acquisition:}{24}{section*.24}%
-\contentsline {paragraph}{Preprocessing Queue Management:}{25}{section*.25}%
-\contentsline {paragraph}{Initial Data Ingestion and Storage:}{25}{section*.26}%
-\contentsline {paragraph}{SAR Image Preprocessing (Subsystem):}{25}{section*.27}%
-\contentsline {paragraph}{Ship Detection Inference (Machine Learning Model):}{26}{section*.28}%
-\contentsline {paragraph}{Output Generation:}{26}{section*.29}%
-\contentsline {paragraph}{User Interface / Visualization:}{27}{section*.30}%
-\contentsline {section}{\numberline {5}Implementation and Development}{28}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Software and Hardware Environment Setup}{28}{subsection.5.1}%
-\contentsline {subsubsection}{\numberline {5.1.1}Training Setup, Hardware + Software}{28}{subsubsection.5.1.1}%
-\contentsline {subsubsection}{\numberline {5.1.2}Implementation Hardware/Edge}{28}{subsubsection.5.1.2}%
-\contentsline {subsubsection}{\numberline {5.1.3}Operating System and Core Software Versions}{29}{subsubsection.5.1.3}%
-\contentsline {subsubsection}{\numberline {5.1.4}Dependency Management and Virtual Environment Setup}{29}{subsubsection.5.1.4}%
-\contentsline {subsubsection}{\numberline {5.1.5}Accessing the Jetson Nano}{29}{subsubsection.5.1.5}%
-\contentsline {subsubsection}{\numberline {5.1.6}Essential Command Line Commands}{29}{subsubsection.5.1.6}%
-\contentsline {subsubsection}{\numberline {5.1.7}RAW Data prediction algorithm ( Inference Slicer Method)}{30}{subsubsection.5.1.7}%
-\contentsline {subsubsection}{\numberline {5.1.8}Google Earth Engine Prediction \acrshort {api}}{30}{subsubsection.5.1.8}%
-\contentsline {subsubsection}{\numberline {5.1.9}AIS Integration}{31}{subsubsection.5.1.9}%
-\contentsline {paragraph}{Key operational steps (see Appendix \ref {appendix:ais})}{32}{section*.33}%
-\contentsline {subsection}{\numberline {5.2}Installation and Setup Guide}{32}{subsection.5.2}%
-\contentsline {paragraph}{Web App Setup}{32}{section*.35}%
-\contentsline {paragraph}{Jetson App Setup}{33}{section*.36}%
-\contentsline {subsection}{\numberline {5.3}Configuation}{34}{subsection.5.3}%
-\contentsline {section}{\numberline {6}Model Training and Optimization}{35}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Dataset Preparation Review}{35}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Training Process}{35}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Optimization techniques for Jetson AGX Orin}{36}{subsection.6.3}%
-\contentsline {paragraph}{Conversion to ONNX (Open Neural Network Exchange)}{37}{section*.37}%
-\contentsline {paragraph}{Simplification and Optimization of the ONNX Computational Graph}{37}{section*.38}%
-\contentsline {subsection}{\numberline {6.4}Model Deployment Pipeline}{37}{subsection.6.4}%
-\contentsline {section}{\numberline {7}Evaluation and Testing}{39}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Test Plan And Methodology}{39}{subsection.7.1}%
+\contentsline {section}{\numberline {3}Requirements Specification}{13}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Non-Functional Requirements}{15}{subsection.3.1}%
+\contentsline {section}{\numberline {4}System Design}{18}{section.4}%
+\contentsline {subsection}{\numberline {4.1}High-Level System Architecture}{18}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Detailed Component Design}{18}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Data Acquisition and Management}{18}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Band Processing Subsystem}{20}{subsubsection.4.2.2}%
+\contentsline {paragraph}{Band selection}{20}{section*.10}%
+\contentsline {paragraph}{Thermal Filters}{20}{section*.11}%
+\contentsline {paragraph}{Radiometric correction}{21}{section*.12}%
+\contentsline {subsubsection}{\numberline {4.2.3}Preprocessing Subsystem}{21}{subsubsection.4.2.3}%
+\contentsline {paragraph}{Amplitude Scaling \& Grayscale Conversion}{21}{section*.14}%
+\contentsline {paragraph}{Land Masking}{22}{section*.15}%
+\contentsline {paragraph}{Noise Reduction and edge enhancing}{23}{section*.21}%
+\contentsline {subsubsection}{\numberline {4.2.4}Machine Learning Detection Model}{24}{subsubsection.4.2.4}%
+\contentsline {subsection}{\numberline {4.3}Data Flow and Workflow}{25}{subsection.4.3}%
+\contentsline {paragraph}{SAR Data Acquisition:}{25}{section*.24}%
+\contentsline {paragraph}{Preprocessing Queue Management:}{26}{section*.25}%
+\contentsline {paragraph}{Initial Data Ingestion and Storage:}{26}{section*.26}%
+\contentsline {paragraph}{SAR Image Preprocessing (Subsystem):}{26}{section*.27}%
+\contentsline {paragraph}{Ship Detection Inference (Machine Learning Model):}{27}{section*.28}%
+\contentsline {paragraph}{Output Generation:}{27}{section*.29}%
+\contentsline {paragraph}{User Interface / Visualization:}{28}{section*.30}%
+\contentsline {section}{\numberline {5}Implementation and Development}{29}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Software and Hardware Environment Setup}{29}{subsection.5.1}%
+\contentsline {subsubsection}{\numberline {5.1.1}Training Setup, Hardware + Software}{29}{subsubsection.5.1.1}%
+\contentsline {subsubsection}{\numberline {5.1.2}Implementation Hardware/Edge}{29}{subsubsection.5.1.2}%
+\contentsline {subsubsection}{\numberline {5.1.3}Operating System and Core Software Versions}{30}{subsubsection.5.1.3}%
+\contentsline {subsubsection}{\numberline {5.1.4}Dependency Management and Virtual Environment Setup}{30}{subsubsection.5.1.4}%
+\contentsline {subsubsection}{\numberline {5.1.5}Accessing the Jetson AGX Orin}{30}{subsubsection.5.1.5}%
+\contentsline {subsubsection}{\numberline {5.1.6}Essential Command Line Commands}{30}{subsubsection.5.1.6}%
+\contentsline {subsubsection}{\numberline {5.1.7}RAW Data prediction algorithm ( Inference Slicer Method)}{31}{subsubsection.5.1.7}%
+\contentsline {subsubsection}{\numberline {5.1.8}Google Earth Engine Prediction \acrshort {api}}{31}{subsubsection.5.1.8}%
+\contentsline {subsubsection}{\numberline {5.1.9}AIS Integration}{32}{subsubsection.5.1.9}%
+\contentsline {paragraph}{Key operational steps (see Appendix \ref {appendix:ais})}{33}{section*.33}%
+\contentsline {subsection}{\numberline {5.2}Installation and Setup Guide}{33}{subsection.5.2}%
+\contentsline {paragraph}{Web App Setup}{33}{section*.35}%
+\contentsline {paragraph}{Jetson App Setup}{34}{section*.36}%
+\contentsline {subsection}{\numberline {5.3}Configuation}{35}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Model Training and Optimization}{36}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Dataset Preparation Review}{36}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Training Process}{36}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Optimization techniques for Jetson AGX Orin}{37}{subsection.6.3}%
+\contentsline {paragraph}{Conversion to ONNX (Open Neural Network Exchange)}{38}{section*.37}%
+\contentsline {paragraph}{Simplification and Optimization of the ONNX Computational Graph}{38}{section*.38}%
+\contentsline {subsection}{\numberline {6.4}Model Deployment Pipeline}{38}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Evaluation and Testing}{40}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Test Plan And Methodology}{40}{subsection.7.1}%
 \contentsline {subsection}{\numberline {7.2}Performance Metrics}{40}{subsection.7.2}%
 \contentsline {subsubsection}{\numberline {7.2.1}Detection Accuracy Metrics}{40}{subsubsection.7.2.1}%
-\contentsline {subsubsection}{\numberline {7.2.2}Inference Efficiency Metrics}{40}{subsubsection.7.2.2}%
+\contentsline {subsubsection}{\numberline {7.2.2}Inference Efficiency Metrics}{41}{subsubsection.7.2.2}%
 \contentsline {subsection}{\numberline {7.3}Experimental Setup}{41}{subsection.7.3}%
 \contentsline {paragraph}{Model Selection}{41}{section*.40}%
 \contentsline {paragraph}{Hardware Configuration}{41}{section*.41}%
 \contentsline {paragraph}{Core Framework}{41}{section*.42}%
 \contentsline {paragraph}{Training Infrastructure}{41}{section*.43}%
-\contentsline {paragraph}{Additional Tools}{41}{section*.44}%
-\contentsline {paragraph}{Dataset Considerations}{41}{section*.45}%
-\contentsline {paragraph}{Datasets}{41}{section*.46}%
+\contentsline {paragraph}{Additional Tools}{42}{section*.44}%
+\contentsline {paragraph}{Dataset Considerations}{42}{section*.45}%
+\contentsline {paragraph}{Datasets}{42}{section*.46}%
 \contentsline {paragraph}{Data Processing}{42}{section*.48}%
 \contentsline {paragraph}{Training Protocol}{42}{section*.49}%
 \contentsline {subsection}{\numberline {7.4}Evaluation Results and Analysis}{42}{subsection.7.4}%
@@ -77,36 +77,36 @@
 \contentsline {subsubsection}{\numberline {7.4.3}False Positive Analysis and Background Interference}{44}{subsubsection.7.4.3}%
 \contentsline {paragraph}{Primary Sources of False Alarms}{44}{section*.54}%
 \contentsline {paragraph}{Comparative False Alarm Performance}{44}{section*.55}%
-\contentsline {subsubsection}{\numberline {7.4.4}Operational Threshold Analysis}{44}{subsubsection.7.4.4}%
-\contentsline {paragraph}{Mission-Specific Threshold Optimization}{44}{section*.56}%
-\contentsline {subsubsection}{\numberline {7.4.5}Performance Benchmarking Against Industry Standards}{44}{subsubsection.7.4.5}%
+\contentsline {subsubsection}{\numberline {7.4.4}Operational Threshold Analysis}{45}{subsubsection.7.4.4}%
+\contentsline {paragraph}{Mission-Specific Threshold Optimization}{45}{section*.56}%
+\contentsline {subsubsection}{\numberline {7.4.5}Performance Benchmarking Against Industry Standards}{45}{subsubsection.7.4.5}%
 \contentsline {subsubsection}{\numberline {7.4.6}Detection Robustness and Sea State Performance}{45}{subsubsection.7.4.6}%
 \contentsline {paragraph}{Sea State Adaptability}{45}{section*.58}%
 \contentsline {paragraph}{All-Weather Capability}{45}{section*.59}%
 \contentsline {subsubsection}{\numberline {7.4.7}Computational Efficiency and Deployment Readiness}{45}{subsubsection.7.4.7}%
-\contentsline {subsubsection}{\numberline {7.4.8}Limitations and Areas for Improvement}{45}{subsubsection.7.4.8}%
-\contentsline {paragraph}{Technical Limitations}{45}{section*.60}%
-\contentsline {paragraph}{Operational Considerations}{45}{section*.61}%
-\contentsline {section}{\numberline {8}Future Work and Enhancements}{46}{section.8}%
-\contentsline {section}{\numberline {9}Conclusion}{47}{section.9}%
-\contentsline {section}{\numberline {10}Team Structure \& Expertise Required}{48}{section.10}%
-\contentsline {paragraph}{Steven Bojilov}{48}{section*.62}%
-\contentsline {paragraph}{Nadezhda Ivanova}{48}{section*.63}%
-\contentsline {paragraph}{Yan Genev}{48}{section*.64}%
-\contentsline {paragraph}{Chahine Med}{48}{section*.65}%
-\contentsline {paragraph}{Anna Piccinini}{48}{section*.66}%
-\contentsline {section}{\numberline {A}Pre-processing}{51}{appendix.A}%
-\contentsline {subsection}{\numberline {A.1}Linear Scaling}{51}{subsection.A.1}%
-\contentsline {subsection}{\numberline {A.2}Gamma Correction}{51}{subsection.A.2}%
-\contentsline {subsection}{\numberline {A.3}Land masking}{51}{subsection.A.3}%
-\contentsline {subsubsection}{\numberline {A.3.1}Lee Filter}{51}{subsubsection.A.3.1}%
-\contentsline {subsubsection}{\numberline {A.3.2}Multi-Stage Denoising}{52}{subsubsection.A.3.2}%
-\contentsline {subsubsection}{\numberline {A.3.3}Combined Thresholding}{52}{subsubsection.A.3.3}%
-\contentsline {subsubsection}{\numberline {A.3.4}Morphological Processing}{54}{subsubsection.A.3.4}%
-\contentsline {subsubsection}{\numberline {A.3.5}Flood Filling}{54}{subsubsection.A.3.5}%
-\contentsline {subsubsection}{\numberline {A.3.6}Contour Filtering}{55}{subsubsection.A.3.6}%
-\contentsline {subsubsection}{\numberline {A.3.7}Iterative Refinement \& Final Output}{55}{subsubsection.A.3.7}%
-\contentsline {section}{\numberline {B}RAW Data prediction algorithm ( Inference Slicer Method)}{56}{appendix.B}%
-\contentsline {section}{\numberline {C}Google Earth Engine Prediction \acrshort {api}}{57}{appendix.C}%
-\contentsline {section}{\numberline {D}AIS key operational steps}{58}{appendix.D}%
-\contentsline {section}{\numberline {E}Configuration Template}{59}{appendix.E}%
+\contentsline {subsubsection}{\numberline {7.4.8}Limitations and Areas for Improvement}{46}{subsubsection.7.4.8}%
+\contentsline {paragraph}{Technical Limitations}{46}{section*.60}%
+\contentsline {paragraph}{Operational Considerations}{46}{section*.61}%
+\contentsline {section}{\numberline {8}Future Work and Enhancements}{47}{section.8}%
+\contentsline {section}{\numberline {9}Conclusion}{48}{section.9}%
+\contentsline {section}{\numberline {10}Team Structure \& Expertise Required}{49}{section.10}%
+\contentsline {paragraph}{Steven Bojilov}{49}{section*.62}%
+\contentsline {paragraph}{Nadezhda Ivanova}{49}{section*.63}%
+\contentsline {paragraph}{Yan Genev}{49}{section*.64}%
+\contentsline {paragraph}{Chahine Med}{49}{section*.65}%
+\contentsline {paragraph}{Anna Piccinini}{49}{section*.66}%
+\contentsline {section}{\numberline {A}Pre-processing}{52}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}Linear Scaling}{52}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}Gamma Correction}{52}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}Land masking}{52}{subsection.A.3}%
+\contentsline {subsubsection}{\numberline {A.3.1}Lee Filter}{52}{subsubsection.A.3.1}%
+\contentsline {subsubsection}{\numberline {A.3.2}Multi-Stage Denoising}{53}{subsubsection.A.3.2}%
+\contentsline {subsubsection}{\numberline {A.3.3}Combined Thresholding}{53}{subsubsection.A.3.3}%
+\contentsline {subsubsection}{\numberline {A.3.4}Morphological Processing}{55}{subsubsection.A.3.4}%
+\contentsline {subsubsection}{\numberline {A.3.5}Flood Filling}{55}{subsubsection.A.3.5}%
+\contentsline {subsubsection}{\numberline {A.3.6}Contour Filtering}{56}{subsubsection.A.3.6}%
+\contentsline {subsubsection}{\numberline {A.3.7}Iterative Refinement \& Final Output}{56}{subsubsection.A.3.7}%
+\contentsline {section}{\numberline {B}RAW Data prediction algorithm ( Inference Slicer Method)}{57}{appendix.B}%
+\contentsline {section}{\numberline {C}Google Earth Engine Prediction \acrshort {api}}{58}{appendix.C}%
+\contentsline {section}{\numberline {D}AIS key operational steps}{59}{appendix.D}%
+\contentsline {section}{\numberline {E}Configuration Template}{60}{appendix.E}%
