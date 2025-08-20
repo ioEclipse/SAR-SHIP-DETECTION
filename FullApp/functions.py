@@ -19,9 +19,10 @@ from tqdm import tqdm
 import cv2
 import os
 import zipfile
-# Load configuration
-with open('../config.json', 'r') as f:
-    config = json.load(f)
+
+# # Load configuration
+# with open('../config.json', 'r') as f:
+#     config = json.load(f)
 
 
 # === Roboflow setup ===

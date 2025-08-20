@@ -32,10 +32,49 @@ st.set_page_config(
 )
 if 'ship_counter' not in st.session_state:
     st.session_state.ship_counter = 0
-    
+
+
+hide_streamlit_style = """
+<style>
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    [data-testid="stHeader"] {
+        display: none;
+    }
+    [data-testid="stToolbar"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+    .stDeployButton {
+        display: none;
+    }
+    footer {
+        display: none;
+    }
+    #MainMenu {
+        display: none;
+    }
+    /* Hide sidebar button */
+        [data-testid="collapsedControl"] {
+            display: none;
+    }
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 # === CSS Design Global ===
 st.markdown(f"""
 <style>
+.st-emotion-cache-595tnf{{
+    height: 0;
+    width: 0;
+}}
+.stMainBlockContainer{{
+    padding-top: 0px;
+}}
+
 /* Global dark theme */
 .stApp {{
     background-color: #0f0f0f !important;
@@ -363,6 +402,10 @@ with st.sidebar:
     
     # Process button in sidebar
     process_clicked = st.button("🚀 Process & Predict", key="predict_button")
+
+    
+    if st.sidebar.button("Back to main", key="back_main"):
+        st.switch_page("pages/main.py")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # === Main content ===
@@ -422,7 +465,7 @@ if process_clicked:
                         tmp_ais_path = tmp_ais.name
                     ais_csv_path = tmp_ais_path
                 else:
-                    ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_01_24.csv")
+                    ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_07_06.csv")
                     if not os.path.exists(ais_csv_path):
                         st.warning(f"Le fichier AIS n'a pas été trouvé automatiquement; ensure '{ais_csv_path}' exists or upload it via the sidebar (optional).")
                 has_geoloc = any((entry.get("geolocation") is not None) for entry in metadata)

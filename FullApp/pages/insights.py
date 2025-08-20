@@ -16,10 +16,45 @@ try:
 except Exception:
     hero_bg_b64 = None
 
+hide_streamlit_style = """
+<style>
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    [data-testid="stHeader"] {
+        display: none;
+    }
+    [data-testid="stToolbar"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+    .stDeployButton {
+        display: none;
+    }
+    footer {
+        display: none;
+    }
+    #MainMenu {
+        display: none;
+    }
+    /* Hide sidebar button */
+        [data-testid="collapsedControl"] {
+            display: none;
+    }
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 # Styles
 st.markdown(
     f"""
     <style>
+        .stMainBlockContainer{{
+        padding-top: 30px;
+        }}
+
         .stApp {{
             background-color: #0f0f0f !important;
             color: #ffffff !important;
@@ -222,7 +257,7 @@ st.markdown(
 _, col_link, _ = st.columns([5, 2, 4])
 with col_link:
     st.markdown('<div class="back-home-btn">', unsafe_allow_html=True)
-    st.page_link("home.py", label="Back to home")
+    st.page_link("pages/main.py", label="Back to main")
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="page-container">', unsafe_allow_html=True)

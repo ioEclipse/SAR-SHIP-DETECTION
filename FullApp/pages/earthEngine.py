@@ -8,13 +8,52 @@ import os
 import pandas as pd
 import time
 from engineAPI1 import get_sentinel1_jpg_from_geojson
+import base64
 
 # --- Page config ---
-st.set_page_config(page_title="SAR Map Viewer", layout="wide")
+st.set_page_config(page_title="SAR Map Viewer", layout="wide", initial_sidebar_state="expanded")
+
+hide_streamlit_style = """
+<style>
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    [data-testid="stHeader"] {
+        display: none;
+    }
+    [data-testid="stToolbar"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+    .stDeployButton {
+        display: none;
+    }
+    footer {
+        display: none;
+    }
+    #MainMenu {
+        display: none;
+    }
+    /* Hide sidebar button */
+        [data-testid="collapsedControl"] {
+            display: none;
+    }
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Add custom CSS for larger metric text
 st.markdown("""
 <style>
+    .st-emotion-cache-595tnf{
+            height: 0;
+            width: 0;
+    }
+    .stMainBlockContainer{
+        padding-top: 20px;
+    }
     /* Make the ships detected metric text bigger */
     div[data-testid="metric-container"] {
         padding: 1rem;
@@ -67,6 +106,40 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+
+def load_logo_base64(path="assets/logo.png"):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+logo_data = load_logo_base64()
+
+with st.sidebar:
+    st.markdown(
+        f"""
+        <div style="
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            flex-wrap: nowrap;
+        ">
+            <img src="data:image/png;base64,{logo_data}" style="
+                height: 40px; 
+                width: auto;
+                flex-shrink: 0;
+            ">
+            <h1 style="
+                color: #1e90ff;
+                margin: 0;
+                font-size: 24px;
+                font-weight: bold;
+                white-space: nowrap;
+            ">BlueGuard</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 # --- Sidebar: Filters + Predict + Reset ---
 st.sidebar.title("Filters")
 
@@ -97,6 +170,8 @@ if st.sidebar.button("🔄 Reset Analysis", type="secondary"):
                 pass
             st.session_state.pop(k, None)
     st.rerun()
+if st.sidebar.button("Back to main", key="back_main"):
+        st.switch_page("pages/main.py")
 
 # --- Main area ---
 # If we already have a result saved in session_state, show the result UI.
@@ -107,7 +182,7 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
     st.header(f"🚢 Total Ships Detected {ship_count}")
 
         # Create columns for better layout - MODIFIÉ POUR AFFICHER LES 2 IMAGES
-    col_img1, col_img2, col_stats = st.columns([5, 5, 2])
+    col_img1, col_img2 = st.columns([5, 5])
 
     with col_img1:
         # Show original image if present
@@ -122,16 +197,6 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
             st.image(out["detections"], caption="SAR Ship Detections", use_container_width=True)
         else:
             st.error("No detection image found in the result.")
-
-    with col_stats:
-        # Show processing info if available (ancien contenu de col2)
-        processing_info = out.get("processing_info", {})
-        if processing_info:
-            st.subheader("📊 Processing Details")
-            for key, value in processing_info.items():
-                formatted_key = key.replace("_", " ").title()
-                st.write(f"**{formatted_key}:** {value}")
-
     st.markdown("---")
 
     # Load and show metadata table
@@ -230,11 +295,6 @@ else:
     geo = None
     if map_data["all_drawings"]:
         geo = map_data["all_drawings"][-1]  # Get the last drawn shape
-
-    if geo:
-        st.success("✅ Area selected! Use the sidebar to configure detection parameters and start processing.")
-        with st.expander("View Selected Area GeoJSON"):
-            st.json(geo)
 
     # If Predict button clicked in the sidebar, process now
     if predict_clicked:

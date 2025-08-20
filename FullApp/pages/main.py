@@ -20,6 +20,38 @@ stats_img = resize_height(Image.open("assets/stats4.png"), fixed_height)
 # Hide sidebar
 st.set_page_config(page_title="Main", layout="wide", initial_sidebar_state="collapsed")
 
+hide_streamlit_style = """
+<style>
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    [data-testid="stHeader"] {
+        display: none;
+    }
+    [data-testid="stToolbar"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+    .stDeployButton {
+        display: none;
+    }
+    footer {
+        display: none;
+    }
+    #MainMenu {
+        display: none;
+    }
+    /* Hide sidebar button */
+        [data-testid="collapsedControl"] {
+            display: none;
+    }
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+
 # CSS to set everything to black background
 custom_css = """
     <style>
