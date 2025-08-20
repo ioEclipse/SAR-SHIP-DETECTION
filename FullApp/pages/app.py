@@ -422,7 +422,7 @@ if process_clicked:
                         tmp_ais_path = tmp_ais.name
                     ais_csv_path = tmp_ais_path
                 else:
-                    ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_07_06.csv")
+                    ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_01_24.csv")
                     if not os.path.exists(ais_csv_path):
                         st.warning(f"Le fichier AIS n'a pas été trouvé automatiquement; ensure '{ais_csv_path}' exists or upload it via the sidebar (optional).")
                 has_geoloc = any((entry.get("geolocation") is not None) for entry in metadata)
