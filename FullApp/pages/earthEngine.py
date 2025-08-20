@@ -44,7 +44,7 @@ hide_streamlit_style = """
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-# Add custom CSS for larger metric text
+# Add custom CSS for larger metric text and loading components
 st.markdown("""
 <style>
     .st-emotion-cache-595tnf{
@@ -103,6 +103,57 @@ st.markdown("""
     .stButton > button:not([kind="primary"]):hover {
         background: linear-gradient(135deg, #5a6268 0%, #3d4449 100%) !important;
     }
+
+    /* Loading spinner styling */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0;
+        padding: 30px;
+        background: transparent;
+        border-radius: 15px;
+        border: none;
+        box-shadow: none;
+    }
+
+    .custom-spinner {
+        border: 4px solid #333333;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        color: #667eea;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    /* Progress bar custom styling */
+    .stProgress > div > div > div > div {
+        background-color: #667eea !important;
+    }
+
+    /* Custom progress container styling */
+    .progress-container {
+        background: transparent;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 10px 0;
+        box-shadow: none;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -140,6 +191,7 @@ with st.sidebar:
         """,
         unsafe_allow_html=True
     )
+
 # --- Sidebar: Filters + Predict + Reset ---
 st.sidebar.title("Filters")
 
@@ -170,6 +222,7 @@ if st.sidebar.button("🔄 Reset Analysis", type="secondary"):
                 pass
             st.session_state.pop(k, None)
     st.rerun()
+
 if st.sidebar.button("Back to main", key="back_main"):
         st.switch_page("pages/main.py")
 
@@ -181,7 +234,7 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
     ship_count = out.get("ship_count") if isinstance(out, dict) else None
     st.header(f"🚢 Total Ships Detected {ship_count}")
 
-        # Create columns for better layout - MODIFIÉ POUR AFFICHER LES 2 IMAGES
+    # Create columns for better layout - MODIFIÉ POUR AFFICHER LES 2 IMAGES
     col_img1, col_img2 = st.columns([5, 5])
 
     with col_img1:
@@ -197,6 +250,7 @@ if "result_out" in st.session_state and st.session_state["result_out"]:
             st.image(out["detections"], caption="SAR Ship Detections", use_container_width=True)
         else:
             st.error("No detection image found in the result.")
+    
     st.markdown("---")
 
     # Load and show metadata table
@@ -252,8 +306,12 @@ else:
         unsafe_allow_html=True,
     )
 
+    # Create containers for loading UI - MOVED ABOVE THE MAP
+    loading_container = st.empty()
+    progress_container = st.empty()
+
     # Create Folium map with basic tile layer
-    center = [31.2, 32.3]  # Mediterranean Sea area
+    center = [40.5, -73]  # Mediterranean Sea area
     m = folium.Map(location=center, zoom_start=6)
 
     # Add satellite imagery option if available
@@ -296,6 +354,9 @@ else:
     if map_data["all_drawings"]:
         geo = map_data["all_drawings"][-1]  # Get the last drawn shape
 
+    if geo:
+        st.success("✅ Area selected! Use the sidebar to configure detection parameters and start processing.")
+
     # If Predict button clicked in the sidebar, process now
     if predict_clicked:
         if not geo:
@@ -317,42 +378,65 @@ else:
             tmp_geo_path = tmp_geo.name
             st.session_state["tmp_geojson_path"] = tmp_geo_path
 
-            # Show processing steps with progress
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-
-            status_text.text("🛰️ Fetching Sentinel-1 SAR imagery...")
-            progress_bar.progress(25)
-            time.sleep(0.5)
-
-            status_text.text("🔄 Preprocessing SAR data...")
-            progress_bar.progress(50)
-            time.sleep(0.5)
-
-            status_text.text("🤖 Running ship detection model...")
-            progress_bar.progress(75)
-            time.sleep(0.5)
-
-            status_text.text("📊 Generating results...")
-            progress_bar.progress(100)
-
             try:
+                # Show initial loading state with spinner
+                with loading_container.container():
+                    st.markdown("""
+                    <div class="loading-container">
+                        <div class="custom-spinner"></div>
+                        <div class="loading-text">🛰️ Initializing SAR processing...</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                # Initialize progress bar in the progress container
+                with progress_container.container():
+                    progress_bar = st.progress(0, text="Starting processing...")
+
+                # Step 1: Fetching imagery
+                time.sleep(0.03)
+                progress_bar.progress(10, text="🛰️ Fetching Sentinel-1 SAR imagery... 10%")
+                time.sleep(0.5)
+
+                # Simulate progress while processing
+                for percent_complete in range(15, 60, 5):
+                    time.sleep(0.03)
+                    progress_bar.progress(percent_complete, text=f"🔄 Preprocessing SAR data... {percent_complete}%")
+
+                # Step 2: Model processing
+                progress_bar.progress(70, text="🤖 Running ship detection model... 70%")
+                time.sleep(0.5)
+
+                # Actual processing
                 out = get_sentinel1_jpg_from_geojson(
                     geojson_path=tmp_geo_path,
                     year=year,
                     month=month
                 )
-                # store output in session
+
+                # Final steps
+                progress_bar.progress(90, text="📊 Generating results... 90%")
+                time.sleep(0.2)
+
+                # Store output in session
                 st.session_state["result_out"] = out
-                # Clear progress indicators
-                progress_bar.empty()
-                status_text.empty()
+
+                progress_bar.progress(100, text="✅ Processing complete! 100%")
+                time.sleep(0.3)
+
+                # Clear loading UI
+                loading_container.empty()
+                progress_container.empty()
+
                 # Rerun so UI switches to result display
                 st.rerun()
+
             except Exception as e:
+                # Clear loading UI on error
+                loading_container.empty()
+                progress_container.empty()
+                
                 st.sidebar.error(f"❌ Processing failed: {str(e)}")
-                progress_bar.empty()
-                status_text.empty()
+                
                 # cleanup temp file on failure
                 if os.path.exists(tmp_geo_path):
                     try:

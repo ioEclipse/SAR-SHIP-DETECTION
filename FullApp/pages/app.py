@@ -257,6 +257,38 @@ st.markdown(f"""
     font-weight: bold;
 }}
 
+/* Loading spinner styling */
+.loading-container {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+}}
+
+.custom-spinner {{
+    border: 4px solid #333333;
+    border-top: 4px solid #1e90ff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}}
+
+@keyframes spin {{
+    0% {{ transform: rotate(0deg); }}
+    100% {{ transform: rotate(360deg); }}
+}}
+
+.loading-text {{
+    color: #1e90ff;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 10px;
+}}
+
 /* Table styling */
 .dataframe {{
     background-color: #1a1a1a !important;
@@ -283,6 +315,10 @@ header {{visibility: hidden;}}
     border: 1px solid #1e90ff !important;
 }}
 
+/* Progress bar custom styling */
+.stProgress > div > div > div > div {{
+    background-color: #1e90ff !important;
+}}
    
 </style>
 """, unsafe_allow_html=True)
@@ -416,10 +452,25 @@ if process_clicked:
     if uploaded_image:
         tmp_tif_path = None
         tmp_ais_path = None
-        progress_placeholder = st.empty()
-        percent_text_placeholder = st.empty()
-        progress_bar = progress_placeholder.progress(0, text="Starting processing...")
+        
+        # Create containers for loading UI
+        loading_container = st.empty()
+        progress_container = st.empty()
+        status_container = st.empty()
+        
         try:
+            # Show initial loading state with spinner
+            with loading_container.container():
+                st.markdown("""
+                <div class="loading-container">
+                    <div class="custom-spinner"></div>
+                    <div class="loading-text">🚀 Initializing SAR ship detection...</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Initialize progress bar
+            progress_bar = progress_container.progress(0, text="Starting processing...")
+            
             # Simulate progress while processing
             for percent_complete in range(0, 80, 5):
                 time.sleep(0.03)
@@ -440,8 +491,8 @@ if process_clicked:
             st.session_state.metadata = metadata
             progress_bar.progress(100, text="✅ Processing complete! 100%")
             time.sleep(0.3)
-            percent_text_placeholder.empty()
-            progress_placeholder.empty()
+            loading_container.empty()
+            progress_container.empty()
             # FIX: AIS — ensure the metadata on disk matches the in-memory metadata the UI shows
             st.session_state.ais_results = None
             if uploaded_image.name.lower().endswith(('.tif', '.tiff')):
@@ -502,6 +553,10 @@ if process_clicked:
                 except Exception:
                     pass
         except Exception as e:
+            # Clear loading UI on error
+            loading_container.empty()
+            progress_container.empty()
+            
             st.error(f"❌ Error during inference: {str(e)}")
             if 'tmp_tif_path' in locals() and tmp_tif_path and os.path.exists(tmp_tif_path):
                 os.unlink(tmp_tif_path)
