@@ -428,7 +428,7 @@ if process_clicked:
                 has_geoloc = any((entry.get("geolocation") is not None) for entry in metadata)
                 if has_geoloc and meta_tmp_path:
                     try:
-                        print(f"COOOOOOOOOOOOOOOOOOOOOOOOOLEEEEE BEEEAAANNNSSS")
+                       
                         ais_results = search_ais_for_metadata(
     metadata_path="ship_metadata_ui.json",
     ais_csv_path=ais_csv_path,
