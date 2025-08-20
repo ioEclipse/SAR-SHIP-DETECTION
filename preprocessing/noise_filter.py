@@ -18,10 +18,10 @@ def apply_correction(image,times=1,return_allsteps=False):
     # Apply gamma correction (adjust gamma value as needed)
     enhanced = image.copy()
     for i in range(times):
-        enhanced = gamma_correction(enhanced, gamma=0.5)  # More moderate gamma
+        enhanced = gamma_correction(enhanced, gamma=0.7)  # More moderate gamma
         if i == 0 : darkened = enhanced.copy() 
         # Apply contrast adjustment (more moderate parameters)
-        enhanced = cv2.convertScaleAbs(enhanced, alpha=10/7, beta=0)
+        enhanced = cv2.convertScaleAbs(enhanced, alpha=10/8, beta=0)
         if i == 0 : enlightened = enhanced.copy() 
 
     # \/ STUFF that might be useful later to make the denoising better \/
@@ -32,7 +32,7 @@ def apply_correction(image,times=1,return_allsteps=False):
     # mask = cv2.dilate(mask, kernel, iterations=1)
     # enhanced = cv2.bitwise_and(image, image, mask=mask)
     # /\ STUFF that might be useful later to make the denoising better /\
-    
+
     if return_allsteps:
         return enhanced, darkened, enlightened
     return enhanced

@@ -54,6 +54,28 @@ def convert_radar_tif_to_jpg(tif_path, jpg_path):
     Image.fromarray(img_normalized, mode='L').convert("RGB").save(jpg_path, 'JPEG', quality=100)
     return jpg_path
 
+
+
+def is_on_land(mask, x1, y1, x2, y2, threshold=0.5):
+    """Checks if a bounding box is mainly on land"""
+    # Ensure coordinates are within image bounds
+    x1, y1, x2, y2 = int(max(0, x1)), int(max(0, y1)), int(min(mask.shape[1], x2)), int(min(mask.shape[0], y2))
+    
+    if x2 <= x1 or y2 <= y1:
+        return False
+    
+    # Extract region corresponding to bounding box
+    region = mask[y1:y2, x1:x2]
+    
+    if region.size == 0:
+        return False
+    # Calculate ratio of land pixels in region
+    land_pixels = np.sum(region)
+    total_pixels = region.size
+    land_ratio = land_pixels / total_pixels
+    
+    return land_ratio > threshold
+
 def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     
     # Keep path to original tif if provided (used later for geolocation)
@@ -70,6 +92,10 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
         image = Image.open(uploaded_image).convert("RGB")
     
     w, h = image.size
+    gray_image = np.array(image)
+    gray_image = cv2.cvtColor(gray_image, cv2.COLOR_RGB2GRAY)
+    water_image, land_mask = process_image(gray_image)
+
     annotated = image.copy()
     draw = ImageDraw.Draw(annotated)
 
@@ -81,6 +107,7 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     crops = []
     metadata = []
     ship_counter = 0
+    filtered_land = 0
 
     # Slice into tiles and process
     for y in range(0, h, tile_size):
@@ -116,6 +143,9 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
 
                     # Calculate surface area (pixel area) BEFORE drawing
                     pixel_area = (x2 - x1) * (y2 - y1)
+                    if is_on_land(land_mask, x1, y1, x2, y2):
+                        filtered_land += 1
+                        continue
 
                     # FILTER: if pixel area is strictly greater than 2000, skip this detection
                     if pixel_area > 2000:
