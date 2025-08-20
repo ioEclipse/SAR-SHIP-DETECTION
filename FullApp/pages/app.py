@@ -13,6 +13,10 @@ import time
 import cv2
 import numpy as np
 
+date_iso="2024-07-06T04:30:22"
+ais_csv_path="pages/AIS_2024_07_06.csv"
+
+
 # === Fonction pour charger le logo ===
 def load_logo_base64(path="assets/logo.png"):
     with open(path, "rb") as f:
@@ -234,6 +238,13 @@ st.markdown(f"""
 #MainMenu {{visibility: hidden;}}
 footer {{visibility: hidden;}}
 header {{visibility: hidden;}}
+
+/* Border dropdown color */
+.stSelectbox>div>div {{
+    border: 1px solid #1e90ff !important;
+}}
+
+   
 </style>
 """, unsafe_allow_html=True)
 
@@ -263,10 +274,93 @@ with st.sidebar:
             st.info("ℹ️ TIFF file detected - Automatic conversion will be applied")
     # AIS uploader in sidebar
     st.markdown('<div class="upload-title">🛰️ Optional: Upload AIS CSV</div>', unsafe_allow_html=True)
-    ais_csv_uploader = st.file_uploader(
+    ais_toggle = st.toggle("AIS Uploader", value=False, key="ais_uploader_visible")
+    
+    if not ais_toggle:
+        ais_csv_uploader = st.file_uploader(
         'Upload AIS CSV for the image date (optional)', type=["csv"], key="ais_uploader",
         help="Optional: upload the AIS CSV of the corresponding day (ex: AIS_2024_01_24.csv)"
-    )
+        )
+        
+       
+    if ais_toggle:
+        ais_csv_uploader=False
+        st.markdown(f"""
+<style>
+/* Change the color of check box */
+    .st-key-ais_uploader_visible > div[data-testid=stCheckbox] > label > div:has(div:not(:has(div))){{
+        background: linear-gradient(135deg, #1e90ff, #006fcc) !important;
+    }}
+                    
+</style>
+""", unsafe_allow_html=True)
+        #2024-07-06T04:30:22
+        Ais_month = st.selectbox(
+        "Choose month",
+        [1,2,3,4,5,6,7,8,9,10,11,12],
+        index=6,  # default selected option
+        key="ais_month"
+        )
+        if Ais_month==2 :
+            day_list= [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28]
+        elif Ais_month in [4, 6, 9, 11]:
+            day_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
+        else:
+            day_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
+        Ais_Day = st.selectbox(
+        "Choose Day",
+        day_list,
+        index=5,  # default selected option
+        key="ais_day"
+        )
+        Ais_hour = st.selectbox(
+        "Choose hour",
+        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23],
+        index=4,  # default selected option
+        key="ais_hour"
+        )
+        Ais_minute = st.selectbox(
+        "Choose minute",
+        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59],
+        index=30,  # default selected option
+        key="ais_minute"
+        )
+        Ais_second = st.selectbox(
+        "Choose second",
+        [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59],
+        index=22,  # default selected option
+        key="ais_second"
+        )
+        if(Ais_Day < 10):
+            day = "0"+str(Ais_Day)
+        else: day = str(Ais_Day)
+        if(Ais_month < 10):
+            month = "0"+str(Ais_month)
+        else: month = str(Ais_month)
+        
+        if(Ais_hour < 10):
+            hour = "0"+str(Ais_hour)
+        else: hour = str(Ais_hour)
+        if(Ais_minute < 10):
+            minute = "0"+str(Ais_minute)
+        else: minute = str(Ais_minute)
+        if(Ais_second < 10):
+            second = "0"+str(Ais_second)
+        else: second = str(Ais_second)
+
+        date_iso="2024-"+month+"-"+day+"T"+hour+":"+minute+":"+second+""
+        ais_csv_path="pages/AIS_2024_"+month+"_"+day+".csv"
+
+        if st.button("download Ais data"):
+            
+            def Ais_Dbar(procent,cache={"counter": 0},downloading_bar = st.empty()):
+                cache["counter"] += procent
+                downloading_bar.progress(cache["counter"], text="Downloading AIS data...")
+            check_for_Ais_and_create(Ais_month,Ais_Day,progress_bar=Ais_Dbar)
+            
+
+    
+    
     # Process button in sidebar
     process_clicked = st.button("🚀 Process & Predict", key="predict_button")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -328,16 +422,17 @@ if process_clicked:
                         tmp_ais_path = tmp_ais.name
                     ais_csv_path = tmp_ais_path
                 else:
-                    ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_01_24.csv")
+                    ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_07_06.csv")
                     if not os.path.exists(ais_csv_path):
                         st.warning(f"Le fichier AIS n'a pas été trouvé automatiquement; ensure '{ais_csv_path}' exists or upload it via the sidebar (optional).")
                 has_geoloc = any((entry.get("geolocation") is not None) for entry in metadata)
                 if has_geoloc and meta_tmp_path:
                     try:
+                        print(f"COOOOOOOOOOOOOOOOOOOOOOOOOLEEEEE BEEEAAANNNSSS")
                         ais_results = search_ais_for_metadata(
     metadata_path="ship_metadata_ui.json",
-    ais_csv_path="AIS_2024_07_06.csv",
-    date_iso="2024-07-06T04:30:22",
+    ais_csv_path=ais_csv_path,
+    date_iso=date_iso,
     output_path="AIS_search.json",
     time_window_s=300,
     search_radius_m=100,

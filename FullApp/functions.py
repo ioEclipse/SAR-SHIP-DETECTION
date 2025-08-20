@@ -18,7 +18,10 @@ import requests
 from tqdm import tqdm
 import cv2
 import os
-
+import zipfile
+# Load configuration
+with open('../config.json', 'r') as f:
+    config = json.load(f)
 
 
 # === Roboflow setup ===
@@ -458,13 +461,13 @@ def data_to_str(month,day):
 
 
 def get_downloadlist():
-    folder_path = "../Ais_data"
+    folder_path = "pages"
     files = os.listdir(folder_path)
     dl=[]
     print(files)
     for file in files:
-        if file.endswith(".zip"):
-            month,day = file.split("_")
+        if file.endswith(".csv"):
+            useles1,useles2,month,day = file.split("_")
             day = day.split(".")[0]
             month = int(month)
             day = int(day)
@@ -473,12 +476,13 @@ def get_downloadlist():
             
 def get_storage_for_ais_used():
     total_size = 0
-    for file in os.listdir("../Ais_data"):
-        total_size +=os.path.getsize("../Ais_data/"+file)
+    for file in os.listdir("pages"):
+        total_size +=os.path.getsize("pages/"+file)
     return total_size / (1024 ** 3)
 #print("GB", get_storage_for_ais_used())
 ####### \/ this somehow needs to be ran in the beginning of the program so that only the oldest files get deleted
 download_list=get_downloadlist()
+print("Download list:", download_list)
 #print(download_list)
 ####### /\ without the print ofc
 def get_ais_data(month,day,bar_func=None):
@@ -488,7 +492,7 @@ def get_ais_data(month,day,bar_func=None):
     date_str = data_to_str(month,day)
     filename = url_pattern.format(date=date_str)
     url = base_url + filename
-    local_filename = "../Ais_data/"+str(month)+ "_" +str(day)+".zip"
+    local_filename = "pages/"+date_str+".zip"
 
     # Send request with streaming enabled
     with requests.get(url, stream=True) as r:
@@ -506,28 +510,42 @@ def get_ais_data(month,day,bar_func=None):
                 if bar_func is None: 
                     bar.update(len(data))
                 else:
-                    bar_func(len(data))
+                    bar_func(len(data)/int(total_size))
     
     print("Download complete!")
-
-def check_for_Ais_and_create(month,day):
-    delete_old_ais_files()
-    if os.path.exists("../Ais_data/"+data_to_str(month,day)+".zip"):
-        print("File already exists, skipping download.")
-    else:
-        get_ais_data(month,day)
-    download_list.append((month,day))
-
-# check_for_Ais_and_create(11,2)
-
-
-
 def delete_old_ais_files():
+
     AIS_BUFFER = config['ais_data']['ais_storage_buffer']
     if get_storage_for_ais_used() > AIS_BUFFER:
-        os.remove("../Ais_data/"+data_to_str(download_list[0][0],download_list[0][1])+".zip")
+        os.remove("pages/AIS_2024_"+data_to_str(download_list[0][0],download_list[0][1])+".csv")
         download_list.pop(0)
     return
+
+def extract_zip_file(zip_path, extract_to):
+    # Path to your zip file
+    zip_path
+
+# Get the directory where the zip file is located
+    zip_dir = extract_to
+    
+
+# Open the zip file
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+    # Extract all files to the same directory as the zip
+        zip_ref.extractall(zip_dir)
+    os.remove(zip_path)
+    print(f"All files extracted to: {zip_dir}")
+
+def check_for_Ais_and_create(month,day,progress_bar=None):
+    delete_old_ais_files()
+    if os.path.exists("pages/AIS_2024_"+data_to_str(month,day)+".csv"):
+        print("File already exists, skipping download.")
+    else:
+        get_ais_data(month,day,progress_bar)
+        extract_zip_file("pages/"+data_to_str(month,day)+".zip", "pages/")
+    download_list.append((month,day))
+
+check_for_Ais_and_create(7,6)
 
 def preprocessing_pipeline(uploaded_image):
    
