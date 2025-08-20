@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 
 date_iso="2024-07-06T04:30:22"
-ais_csv_path="pages/AIS_2024_07_06.csv"
+ais_path_to_csv="pages/AIS_2024_07_06.csv"
 
 
 # === Fonction pour charger le logo ===
@@ -349,7 +349,7 @@ with st.sidebar:
         else: second = str(Ais_second)
 
         date_iso="2024-"+month+"-"+day+"T"+hour+":"+minute+":"+second+""
-        ais_csv_path="pages/AIS_2024_"+month+"_"+day+".csv"
+        ais_path_to_csv="pages/AIS_2024_"+month+"_"+day+".csv"
 
         if st.button("download Ais data"):
             
@@ -431,7 +431,7 @@ if process_clicked:
                        
                         ais_results = search_ais_for_metadata(
     metadata_path="ship_metadata_ui.json",
-    ais_csv_path=ais_csv_path,
+    ais_csv_path=ais_path_to_csv,
     date_iso=date_iso,
     output_path="AIS_search.json",
     time_window_s=300,
