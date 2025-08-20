@@ -545,8 +545,6 @@ def check_for_Ais_and_create(month,day,progress_bar=None):
         extract_zip_file("pages/"+data_to_str(month,day)+".zip", "pages/")
     download_list.append((month,day))
 
-check_for_Ais_and_create(7,6)
-
 def preprocessing_pipeline(uploaded_image):
    
     # Ensure the temp folder exists
