@@ -50,6 +50,19 @@ def compare_images(original, filtered):
 
     plt.show()
 
+
+def average_mask_intensity(image, mask):
+    """
+    Returns the average pixel intensity inside the mask region.
+    image: Grayscale image (numpy array)
+    mask: Binary mask (numpy array, same shape as image, 0 and 255)
+    """
+    # Only consider pixels where mask is nonzero
+    masked_pixels = image[mask > 0]
+    if masked_pixels.size == 0:
+        return 0  # Avoid division by zero
+    return float(masked_pixels.mean())
+
 def compute_mask(image,combined_masks=0, invert_mask=False,bull=False,return_steps=False):
     # 1. Load and preprocess
     img = image.copy()
@@ -142,6 +155,7 @@ def process_image(image, visualize=True,return_steps=False):
     filtered_image = refined_lee_filter(original_image, window_size=35, k=15)
 
     # Step 2: Process iteratively to remove land
+    filtered_image = gamma_correction(filtered_image, gamma=0.7)
     current_image = filtered_image.copy()
     masked_image = original_image.copy()
     iteration = 0
@@ -163,6 +177,16 @@ def process_image(image, visualize=True,return_steps=False):
         else:
             land_mask = compute_mask(current_image, mask_fin, invert_mask=True, bull=bull,return_steps=False)
         land_percentage = calculate_land_percentage(land_mask)
+        if iteration == 1:
+            average_thresh= average_mask_intensity(original_image, land_mask)
+            if average_thresh < 50:
+                print("⚠️  WARNING: Average mask intensity is too low, indicating potential issues with the image.")
+                print("   Consider using a different image or adjusting preprocessing parameters.")
+                land_mask= create_black_image_like(original_image)
+                if return_steps:
+                    return step_1, step_2, step_3, step_4,step_5, original_image, land_mask
+    
+                return original_image, land_mask
 
         print(f"Land percentage detected: {land_percentage:.2f}%")
 
