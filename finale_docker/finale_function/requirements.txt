@@ -1,0 +1,7 @@
+ultralytics==8.2.94
+Pillow==10.4.0
+opencv-python==4.10.0.84
+rasterio==1.4.2
+scipy==1.14.1
+numpy==2.0.1
+onnxruntime-gpu==1.17.1
