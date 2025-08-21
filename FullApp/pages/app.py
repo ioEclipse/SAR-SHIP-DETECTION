@@ -516,16 +516,15 @@ if process_clicked:
                     ais_csv_path = tmp_ais_path
                 else:
                     ais_csv_path = next((p for p in candidates if os.path.exists(p)), "AIS_2024_07_06.csv")
-                    if not os.path.exists(ais_csv_path):
-                        st.warning(f"Le fichier AIS n'a pas été trouvé automatiquement; ensure '{ais_csv_path}' exists or upload it via the sidebar (optional).")
+                    
                 has_geoloc = any((entry.get("geolocation") is not None) for entry in metadata)
                 if has_geoloc and meta_tmp_path:
                     try:
                        
                         ais_results = search_ais_for_metadata(
     metadata_path="ship_metadata_ui.json",
+    ais_csv_path="pages/AIS_2024_07_06.csv",
     date_iso="2024-07-06T04:30:22",
-    ais_path_to_csv="pages/AIS_2024_07_06.csv",
     output_path="AIS_search.json",
     time_window_s=300,
     search_radius_m=100,
