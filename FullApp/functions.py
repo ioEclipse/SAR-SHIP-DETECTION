@@ -16,14 +16,14 @@ from math import radians, sin, cos, sqrt, asin
 import pandas as pd
 import requests
 from tqdm import tqdm
+import cv2
+import os
+import zipfile
 
-# === LOAD CONFIGURATION ===
-def load_config():
-    config_path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
-    with open(config_path, 'r') as f:
-        return json.load(f)
+# # Load configuration
+# with open('../config.json', 'r') as f:
+#     config = json.load(f)
 
-config = load_config()
 
 # === Roboflow setup ===
 CLIENT = InferenceHTTPClient(
@@ -32,7 +32,6 @@ CLIENT = InferenceHTTPClient(
 )
 
 MODEL_ID = "sar-ship-hbhns/1"
-
 
 
 
@@ -51,19 +50,41 @@ def convert_radar_tif_to_jpg(tif_path, jpg_path):
     p2, p98 = np.percentile(img_array, (2, 98))
     img_normalized = np.clip((img_array - p2) / (p98 - p2) * 255, 0, 255).astype(np.uint8)
     
-    # Conversion en JPEG avec qualité maximale
+    # Convert to JPEG with maximum quality
     Image.fromarray(img_normalized, mode='L').convert("RGB").save(jpg_path, 'JPEG', quality=100)
     return jpg_path
+
+
+
+def is_on_land(mask, x1, y1, x2, y2, threshold=0.5):
+    """Checks if a bounding box is mainly on land"""
+    # Ensure coordinates are within image bounds
+    x1, y1, x2, y2 = int(max(0, x1)), int(max(0, y1)), int(min(mask.shape[1], x2)), int(min(mask.shape[0], y2))
+    
+    if x2 <= x1 or y2 <= y1:
+        return False
+    
+    # Extract region corresponding to bounding box
+    region = mask[y1:y2, x1:x2]
+    
+    if region.size == 0:
+        return False
+    # Calculate ratio of land pixels in region
+    land_pixels = np.sum(region)
+    total_pixels = region.size
+    land_ratio = land_pixels / total_pixels
+    
+    return land_ratio > threshold
 
 def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     
     # Keep path to original tif if provided (used later for geolocation)
     original_tif_path = None
 
-    # Conversion et sauvegarde si l'image est un TIFF
+    # Convert and save if the image is a TIFF
     if isinstance(uploaded_image, str) and uploaded_image.lower().endswith('.tif'):
         # preserve original tif path for pixel->lonlat mapping
-        original_tif_path = uploaded_image  # CHANGE: conserve le TIF pour géolocalisation
+        original_tif_path = uploaded_image  # CHANGE: preserve TIF for geolocation
         converted_path = "converted_from_tif.jpg"
         convert_radar_tif_to_jpg(uploaded_image, converted_path)
         image = Image.open(converted_path).convert("RGB")
@@ -71,6 +92,10 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
         image = Image.open(uploaded_image).convert("RGB")
     
     w, h = image.size
+    gray_image = np.array(image)
+    gray_image = cv2.cvtColor(gray_image, cv2.COLOR_RGB2GRAY)
+    water_image, land_mask = process_image(gray_image)
+
     annotated = image.copy()
     draw = ImageDraw.Draw(annotated)
 
@@ -82,13 +107,14 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
     crops = []
     metadata = []
     ship_counter = 0
+    filtered_land = 0
 
-    # Découpage en tuiles et traitement
+    # Slice into tiles and process
     for y in range(0, h, tile_size):
         for x in range(0, w, tile_size):
             tile = image.crop((x, y, min(x+tile_size, w), min(y+tile_size, h)))
             with NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
-                tile.save(temp_file.name, quality=95)  # Qualité légèrement réduite pour les tuiles
+                tile.save(temp_file.name, quality=95)  # Slightly reduced quality for tiles
                 temp_path = temp_file.name
 
             try:
@@ -97,31 +123,44 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                 if not result or "predictions" not in result:
                     print(f"Warning: Invalid result from Roboflow API for tile at {x},{y}")
                     continue
-                    
+                        
                 predictions = result.get("predictions", [])
                 if not predictions:
                     continue  # No ships detected in this tile
                 
                 for pred in predictions:
-                    ship_counter += 1
                     x_center_tile, y_center_tile = pred["x"], pred["y"]
                     w_box, h_box = pred["width"], pred["height"]
 
-                    # Conversion des coordonnées relatives en absolues (par rapport à l'image complète)
-                    x_center_abs = int(x + x_center_tile)   # CHANGE: pixel_x centre absolu
-                    y_center_abs = int(y + y_center_tile)   # CHANGE: pixel_y centre absolu
+                    # Convert relative coordinates to absolute (relative to full image)
+                    x_center_abs = int(x + x_center_tile)   # CHANGE: absolute center pixel_x
+                    y_center_abs = int(y + y_center_tile)   # CHANGE: absolute center pixel_y
 
                     x1 = int(x + x_center_tile - w_box / 2)
                     y1 = int(y + y_center_tile - h_box / 2)
                     x2 = int(x + x_center_tile + w_box / 2)
                     y2 = int(y + y_center_tile + h_box / 2)
 
-                    # Annotation (garde comme avant)
+                    # Calculate surface area (pixel area) BEFORE drawing
+                    pixel_area = (x2 - x1) * (y2 - y1)
+                    if is_on_land(land_mask, x1, y1, x2, y2):
+                        filtered_land += 1
+                        continue
+
+                    # FILTER: if pixel area is strictly greater than 2000, skip this detection
+                    if pixel_area > 2000:
+                        print(f"Info: Skipping detection at tile {x},{y} with pixel_area {pixel_area} (>2000)")
+                        continue  # do not draw, do not add to crops or metadata
+
+                    # Only increment and annotate for accepted ships
+                    ship_counter += 1
+
+                    # Annotation (keep as before)
                     draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
                     draw.text((x1 + 5, y1 + 5), f"Ship #{ship_counter}", fill="yellow", font=font)
 
-                    # Extraction de la zone détectée (crop)
-                    margin = int(max(w_box, h_box) * 0.3)  # Marge proportionnelle
+                    # Extract detected area (crop)
+                    margin = int(max(w_box, h_box) * 0.3)  # Proportional margin
                     crop_x1 = max(x1 - margin, 0)
                     crop_y1 = max(y1 - margin, 0)
                     crop_x2 = min(x2 + margin, w)
@@ -129,27 +168,26 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     crop_img = image.crop((crop_x1, crop_y1, crop_x2, crop_y2))
                     crops.append((f"Ship #{ship_counter}", crop_img))
 
-                    # Calcul de la surface
-                    pixel_area = (x2 - x1) * (y2 - y1)
+                    # Calculate surface area in m^2
                     area_m2 = pixel_area * (resolution_m ** 2)
 
                     # --- GEOMETRY / PIXEL COORDS CHANGE ---
-                    # CHANGE: remplacer la clé 'bounding_box' par les coordonnées pixel du centre
-                    # on garde le nom 'bounding_box' pour compatibilité UI mais on met les pixels.
+                    # CHANGE: replace 'bounding_box' key with pixel center coordinates
+                    # keep 'bounding_box' name for UI compatibility but put pixels.
                     pixel_coord = {"pixel_x": x_center_abs, "pixel_y": y_center_abs}
 
-                    # CHANGE: si image d'origine est un TIF, calculer la géolocalisation (lon/lat)
+                    # CHANGE: if original image is TIF, calculate geolocation (lon/lat)
                     geoloc = None
                     if original_tif_path:
                         try:
                             lon, lat = pixel_to_lonlat(original_tif_path, x_center_abs, y_center_abs)
                             geoloc = {"lon": float(lon), "lat": float(lat)}
                         except Exception as e:
-                            # ne pas planter l'UI, simplement stocker None en cas d'erreur
+                            # don't crash UI, simply store None in case of error
                             geoloc = None
-                            print(f"[WARN] pixel_to_lonlat failed for ship {ship_counter}: {e}")
+                            print(f"[WARN] pixel_to_lonlat failed for a ship: {e}")
 
-                    # Metadata (modifié)
+                    # Metadata (modified)
                     metadata.append({
                         "ship_id": f"Ship #{ship_counter}",
                         "pixel_area": pixel_area,
@@ -160,23 +198,25 @@ def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10):
                     })
 
             except Exception as e:
-                print(f"Erreur sur la tuile {x},{y}: {str(e)}")
+                print(f"Error on tile {x},{y}: {str(e)}")
                 continue
             finally:
                 try:
-                    os.unlink(temp_path)  # Nettoyage obligatoire
+                    os.unlink(temp_path)  # Mandatory cleanup
                 except Exception:
                     pass
 
-    # Annotation finale
+    # Final annotation
     draw.text((10, 10), f"Total Ships Detected: {ship_counter}", fill="cyan", font=font)
-    draw.text((10, 40), f"Résolution: {resolution_m}m/pixel", fill="cyan", font=font)
+    draw.text((10, 40), f"Resolution: {resolution_m}m/pixel", fill="cyan", font=font)
 
     # Write metadata JSON
     with open("ship_metadata.json", "w") as f:
         json.dump(metadata, f, indent=4)
 
     return annotated, crops, ship_counter, metadata
+
+
 
 def find_best_ship(lon, lat, date_iso, ais_csv_path,
                    time_window_s=300, search_radius_m=100,
@@ -201,16 +241,16 @@ def find_best_ship(lon, lat, date_iso, ais_csv_path,
 
     best_per_mmsi = {}  # MMSI -> (score, row_dict)
 
-    # lecture par chunks pour gros fichier
+    # read by chunks for large file
     for chunk in pd.read_csv(ais_csv_path, parse_dates=["BaseDateTime"],
                              infer_datetime_format=True, chunksize=chunksize, low_memory=True):
-        # garder seulement la fenêtre temporelle
+        # keep only the time window
         chunk = chunk[(chunk["BaseDateTime"] >= tmin) & (chunk["BaseDateTime"] <= tmax)]
         if chunk.empty:
             continue
 
-        # calculer distance et delta temps
-        # assure conversion float pour lat/lon
+        # calculate distance and time delta
+        # ensure float conversion for lat/lon
         chunk = chunk.copy()
         chunk["LAT"] = pd.to_numeric(chunk["LAT"], errors="coerce")
         chunk["LON"] = pd.to_numeric(chunk["LON"], errors="coerce")
@@ -218,43 +258,43 @@ def find_best_ship(lon, lat, date_iso, ais_csv_path,
         if chunk.empty:
             continue
 
-        # vecteur distances (appliqué ligne à ligne)
+        # distance vector (applied row by row)
         chunk["distance_m"] = chunk.apply(
             lambda r: haversine_m(lat, lon, float(r["LAT"]), float(r["LON"])), axis=1
         )
-        # delta temps en secondes absolu
+        # absolute time delta in seconds
         chunk["time_diff_s"] = chunk["BaseDateTime"].apply(lambda t: abs((t - sentinel_time).total_seconds()))
 
-        # on peut restreindre aux points dans le rayon (sinon garder pour nearest fallback)
+        # can restrict to points within radius (otherwise keep for nearest fallback)
         in_radius = chunk[chunk["distance_m"] <= search_radius_m]
         consider = in_radius if not in_radius.empty else chunk
 
-        # mettre à jour meilleur par MMSI
+        # update best per MMSI
         for _, row in consider.iterrows():
             mmsi = row.get("MMSI", None)
             if pd.isna(mmsi):
                 continue
             score = float(row["distance_m"]) + time_weight * float(row["time_diff_s"])
-            # si nouveau MMSI ou meilleur score, remplacer
+            # if new MMSI or better score, replace
             prev = best_per_mmsi.get(mmsi)
             if (prev is None) or (score < prev[0]):
-                # stocker score et la ligne entière (convertie en dict pour économie memoire)
+                # store score and entire row (converted to dict for memory efficiency)
                 best_per_mmsi[mmsi] = (score, row.to_dict())
 
-    # si aucun candidat trouvé dans toute la fenêtre
+    # if no candidate found in entire window
     if not best_per_mmsi:
         return None
 
-    # choisir le MMSI avec le meilleur score
+    # choose MMSI with best score
     best_mmsi = min(best_per_mmsi.items(), key=lambda kv: kv[1][0])[0]
     best_score, best_row = best_per_mmsi[best_mmsi]
 
-    # enrichir la ligne avec des champs distance_m/time_diff_s/score (si absent)
+    # enrich row with distance_m/time_diff_s/score fields (if missing)
     best_row["distance_m"] = best_row.get("distance_m", None)
     best_row["time_diff_s"] = best_row.get("time_diff_s", None)
     best_row["score"] = best_score
 
-    # retourner la ligne meilleure sous forme de dict (ou pd.Series si tu préfères)
+    # return best row as dict (or pd.Series if you prefer)
     return best_row
 
 def _to_json_serializable(obj):
@@ -291,12 +331,12 @@ def _to_json_serializable(obj):
         return str(obj)
 
 def search_ais_for_metadata(metadata_path="ship_metadata.json",
-                            ais_csv_path="AIS_2024_01_24.csv",
-                            date_iso="2024-01-24T22:51:07.148377",
+                            ais_csv_path="AIS_2024_07_06.csv",
+                            date_iso="2024-07-06T04:30:22",
                             output_path="AIS_search.json",
                             # below params forwarded to find_best_ship if you want to override:
                             time_window_s=300, search_radius_m=100, time_weight=0.5):
-        # Chargement metadata
+        # Load metadata
     metadata_path = Path(metadata_path)
     if not metadata_path.exists():
         raise FileNotFoundError(f"{metadata_path} not found")
@@ -328,7 +368,7 @@ def search_ais_for_metadata(metadata_path="ship_metadata.json",
             results[ship_id] = None
             continue
 
-        # Appel de la fonction existante (assume définie)
+        # Call existing function (assume defined)
         try:
             best = find_best_ship(lon, lat, date_iso, ais_csv_path,
                                   time_window_s=time_window_s,
@@ -343,9 +383,9 @@ def search_ais_for_metadata(metadata_path="ship_metadata.json",
             print("no AIS match")
             results[ship_id] = None
         else:
-            # s'assurer que tout est JSON serializable
+            # ensure everything is JSON serializable
             serial = _to_json_serializable(best)
-            # ajouter le ship_id et l'origine de la recherche pour traçabilité
+            # add ship_id and search origin for traceability
             if isinstance(serial, dict):
                 serial["_queried_ship_id"] = ship_id
                 serial["_queried_geolocation"] = {"lon": lon, "lat": lat}
@@ -353,14 +393,12 @@ def search_ais_for_metadata(metadata_path="ship_metadata.json",
             results[ship_id] = serial
             print("found")
 
-    # Ecrire le résultat
+    # Write result
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
     print(f"[DONE] Results saved to {output_path}")
     return results
-
-
 
 
 def get_Cords_of_ship(bounding_box, resolution_m_per_px,img_longitude,img_latitude):
@@ -444,10 +482,6 @@ def process_image_sequence(self, image_paths: List[str], session_id: str) -> Dic
 # Downloading AIS data from NOAA
 # =========================
 
-import requests
-from tqdm import tqdm  # pip install tqdm
-import sys
-import os
 def data_to_str(month,day):
     if(day < 10):
         day = "0"+str(day)
@@ -458,13 +492,13 @@ def data_to_str(month,day):
 
 
 def get_downloadlist():
-    folder_path = "../Ais_data"
+    folder_path = "pages"
     files = os.listdir(folder_path)
     dl=[]
     print(files)
     for file in files:
-        if file.endswith(".zip"):
-            month,day = file.split("_")
+        if file.endswith(".csv"):
+            useles1,useles2,month,day = file.split("_")
             day = day.split(".")[0]
             month = int(month)
             day = int(day)
@@ -473,13 +507,14 @@ def get_downloadlist():
             
 def get_storage_for_ais_used():
     total_size = 0
-    for file in os.listdir("../Ais_data"):
-        total_size +=os.path.getsize("../Ais_data/"+file)
+    for file in os.listdir("pages"):
+        total_size +=os.path.getsize("pages/"+file)
     return total_size / (1024 ** 3)
-print("Gb", get_storage_for_ais_used())
+#print("GB", get_storage_for_ais_used())
 ####### \/ this somehow needs to be ran in the beginning of the program so that only the oldest files get deleted
 download_list=get_downloadlist()
-print(download_list)
+print("Download list:", download_list)
+#print(download_list)
 ####### /\ without the print ofc
 def get_ais_data(month,day,bar_func=None):
     # Build URL from config
@@ -488,7 +523,7 @@ def get_ais_data(month,day,bar_func=None):
     date_str = data_to_str(month,day)
     filename = url_pattern.format(date=date_str)
     url = base_url + filename
-    local_filename = "../Ais_data/"+str(month)+ "_" +str(day)+".zip"
+    local_filename = "pages/"+date_str+".zip"
 
     # Send request with streaming enabled
     with requests.get(url, stream=True) as r:
@@ -506,28 +541,169 @@ def get_ais_data(month,day,bar_func=None):
                 if bar_func is None: 
                     bar.update(len(data))
                 else:
-                    bar_func(len(data))
+                    bar_func(len(data)/int(total_size))
     
     print("Download complete!")
-
-def check_for_Ais_and_create(month,day):
-    delete_old_ais_files()
-    if os.path.exists("../Ais_data/"+data_to_str(month,day)+".zip"):
-        print("File already exists, skipping download.")
-    else:
-        get_ais_data(month,day)
-    download_list.append((month,day))
-
-# check_for_Ais_and_create(11,2)
-
-
 def delete_old_ais_files():
-    if get_storage_for_ais_used() > 4.5:
-        os.remove("../Ais_data/"+data_to_str(download_list[0][0],download_list[0][1])+".zip")
+
+    AIS_BUFFER = config['ais_data']['ais_storage_buffer']
+    if get_storage_for_ais_used() > AIS_BUFFER:
+        os.remove("pages/AIS_2024_"+data_to_str(download_list[0][0],download_list[0][1])+".csv")
         download_list.pop(0)
     return
 
+def extract_zip_file(zip_path, extract_to):
+    # Path to your zip file
+    zip_path
 
+# Get the directory where the zip file is located
+    zip_dir = extract_to
+    
 
+# Open the zip file
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+    # Extract all files to the same directory as the zip
+        zip_ref.extractall(zip_dir)
+    os.remove(zip_path)
+    print(f"All files extracted to: {zip_dir}")
 
+def check_for_Ais_and_create(month,day,progress_bar=None):
+    delete_old_ais_files()
+    if os.path.exists("pages/AIS_2024_"+data_to_str(month,day)+".csv"):
+        print("File already exists, skipping download.")
+    else:
+        get_ais_data(month,day,progress_bar)
+        extract_zip_file("pages/"+data_to_str(month,day)+".zip", "pages/")
+    download_list.append((month,day))
 
+def preprocessing_pipeline(uploaded_image):
+   
+    # Ensure the temp folder exists
+    temp_folder = "assets/temp_folder"
+    os.makedirs(temp_folder, exist_ok=True)
+    
+    # Convert uploaded_image to numpy array
+    if hasattr(uploaded_image, 'read'):
+        # It's an UploadedFile object
+        uploaded_image.seek(0)  # Reset file pointer
+        file_bytes = np.asarray(bytearray(uploaded_image.read()), dtype=np.uint8)
+        image_np = cv2.imdecode(file_bytes, cv2.IMREAD_GRAYSCALE)
+    elif isinstance(uploaded_image, str):
+        # It's a file path
+        image_np = cv2.imread(uploaded_image, cv2.IMREAD_GRAYSCALE)
+    elif isinstance(uploaded_image, np.ndarray):
+        # It's already a numpy array
+        image_np = uploaded_image
+    else:
+        raise ValueError(f"Unsupported image type: {type(uploaded_image)}")
+    
+    if image_np is None:
+        raise ValueError("Could not decode the uploaded image")
+    
+    # Save the initial image
+    initial_path = os.path.join(temp_folder, "Step0_Initial.png")
+    cv2.imwrite(initial_path, image_np)
+    
+    # Run the full preprocessing and save all steps
+    try:
+        result = process_image(image_np, visualize=False, return_steps=True)
+        
+        # Ensure we got all expected return values
+        if isinstance(result, tuple) and len(result) == 7:
+            step_1, step_2, step_3, step_4, step_5, masked_image, mask_fin = result
+            print("✅ process_image returned all steps successfully")
+        else:
+            print("⚠️ Unexpected return format from process_image")
+            step_1 = step_2 = step_3 = step_4 = step_5 = None
+            masked_image = image_np.copy()
+            mask_fin = np.zeros_like(image_np)
+            
+    except Exception as e:
+        print(f"❌ Error in process_image: {e}")
+        step_1 = step_2 = step_3 = step_4 = step_5 = None
+        masked_image = image_np.copy()
+        mask_fin = np.zeros_like(image_np)
+    
+    # Apply noise correction
+    try:
+        Img_for_inference = apply_correction(masked_image, times=3)
+        print("✅ apply_correction completed successfully")
+    except Exception as e:
+        print(f"❌ Error in apply_correction: {e}")
+        Img_for_inference = masked_image
+    
+    # Prepare images for saving - ensure all are numpy arrays
+    images_to_save = {
+        "Step0_Initial.png": image_np,
+        "Step1_Lee_filter.png": step_1 if step_1 is not None else image_np,
+        "Step2_Enhance.png": step_2 if step_2 is not None else image_np,
+        "Step3_Thresholding.png": step_3 if step_3 is not None else image_np,
+        "Step4_Morphing.png": step_4 if step_4 is not None else image_np,
+        "Step5_Apply_mask.png": step_5 if step_5 is not None else image_np,
+        "Step6_Masked_image.png": masked_image,
+        "Step7_Mask_fin.png": mask_fin,
+        "Step8_Final_image.png": Img_for_inference
+    }
+    
+    # Apply noise correction
+    try:
+        Img_for_inference = apply_correction(masked_image, times=3)
+        print("✅ apply_correction completed successfully")
+    except Exception as e:
+        print(f"❌ Error in apply_correction: {e}")
+        Img_for_inference = masked_image
+    
+    # Prepare all images for saving
+    images_to_save = {
+        "Step0_Initial.png": image_np,
+        "Step1_Lee_filter.png": step_1,
+        "Step2_Enhance.png": step_2,
+        "Step3_Thresholding.png": step_3,
+        "Step4_Morphing.png": step_4,
+        "Step5_Apply_mask.png": step_5,
+        "Step6_Masked_image.png": masked_image,
+        "Step7_Mask_fin.png": mask_fin,
+        "Step8_Final_image.png": Img_for_inference
+    }
+    
+    # Save each step and track successful saves
+    saved_paths = {}
+    for filename, image_data in images_to_save.items():
+        if image_data is not None:
+            full_path = os.path.join(temp_folder, filename)
+            try:
+                # Ensure image_data is in the right format
+                if isinstance(image_data, np.ndarray):
+                    # Make sure it's uint8
+                    if image_data.dtype != np.uint8:
+                        image_data = np.clip(image_data, 0, 255).astype(np.uint8)
+                    
+                    success = cv2.imwrite(full_path, image_data)
+                    if success:
+                        saved_paths[filename] = full_path
+                        print(f"✅ Successfully saved: {filename}")
+                    else:
+                        print(f"❌ Failed to save: {filename}")
+                else:
+                    print(f"⚠️ Skipping {filename}: not a numpy array ({type(image_data)})")
+            except Exception as e:
+                print(f"❌ Error saving {filename}: {e}")
+        else:
+            print(f"⚠️ Skipping {filename}: image_data is None")
+    
+    # Return paths with consistent naming
+    image_paths = {
+        "initial": saved_paths.get("Step0_Initial.png"),
+        "step1": saved_paths.get("Step1_Lee_filter.png"),
+        "step2": saved_paths.get("Step2_Enhance.png"), 
+        "step3": saved_paths.get("Step3_Thresholding.png"),
+        "step4": saved_paths.get("Step4_Morphing.png"),
+        "step5": saved_paths.get("Step5_Apply_mask.png"),
+        "masked_image": saved_paths.get("Step6_Masked_image.png"),
+        "mask_fin": saved_paths.get("Step7_Mask_fin.png"),
+        "final": saved_paths.get("Step8_Final_image.png"),
+    }
+    
+    print(f"📊 Preprocessing summary: {len([p for p in image_paths.values() if p is not None])}/{len(image_paths)} images saved successfully")
+    
+    return image_paths

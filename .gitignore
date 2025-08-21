@@ -82,6 +82,7 @@ debug_images/
 utilities/temp/
 utilities/*.png
 utilities/*.jpg
+FullApp/*.jpg
 
 # OS generated files
 .DS_Store

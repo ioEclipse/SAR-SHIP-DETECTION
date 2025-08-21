@@ -1,0 +1,982 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global}
+    \entry{8124934}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=9159134df298bc620af3ac1ce822be16}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Jianwei},
+           giveni={J\bibinitperiod}}}%
+        {{hash=ea61afac64b6dc0c6ed3599f04eaa49d}{%
+           family={Qu},
+           familyi={Q\bibinitperiod},
+           given={Changwen},
+           giveni={C\bibinitperiod}}}%
+        {{hash=861dbcb52a3f297d1a90c32b3d455e03}{%
+           family={Shao},
+           familyi={S\bibinitperiod},
+           given={Jiaqi},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{ab373c88e6e63dcf9ac35aefdff163b6}
+      \strng{fullhash}{e316ea32a9eb298e7ea82aaf43797195}
+      \strng{bibnamehash}{e316ea32a9eb298e7ea82aaf43797195}
+      \strng{authorbibnamehash}{e316ea32a9eb298e7ea82aaf43797195}
+      \strng{authornamehash}{ab373c88e6e63dcf9ac35aefdff163b6}
+      \strng{authorfullhash}{e316ea32a9eb298e7ea82aaf43797195}
+      \field{extraname}{1}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{2017 SAR in Big Data Era: Models, Methods and Applications (BIGSARDATA)}
+      \field{title}{Ship detection in SAR images based on an improved faster R-CNN}
+      \field{year}{2017}
+      \field{pages}{1\bibrangedash 6}
+      \range{pages}{6}
+      \verb{doi}
+      \verb 10.1109/BIGSARDATA.2017.8124934
+      \endverb
+      \keyw{Marine vehicles; Feature extraction; Synthetic aperture radar; Proposals; Detectors; Image resolution; Deep learning; SAR; ship detection; Faster R-CNN}
+    \endentry
+    \entry{8067489}{article}{}
+      \name{author}{7}{}{%
+        {{hash=2c6b6cfbf94d5e53f008d88b3fdd16e0}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Lanqing},
+           giveni={L\bibinitperiod}}}%
+        {{hash=97396b63631c7b5155fe9e624a564950}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Bin},
+           giveni={B\bibinitperiod}}}%
+        {{hash=a82074434bd35d5e2b69d1414a6e6c7b}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Boying},
+           giveni={B\bibinitperiod}}}%
+        {{hash=f490b29a2d848802aa5b6fc3f2bada80}{%
+           family={Guo},
+           familyi={G\bibinitperiod},
+           given={Weiwei},
+           giveni={W\bibinitperiod}}}%
+        {{hash=4106141d002345c5f77e0e562f203b64}{%
+           family={Yu},
+           familyi={Y\bibinitperiod},
+           given={Wenhao},
+           giveni={W\bibinitperiod}}}%
+        {{hash=7107a2f4fd823d2f8b21da2d33374d65}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Zenghui},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=75087dda4a3fdbd20040aee7cd920319}{%
+           family={Yu},
+           familyi={Y\bibinitperiod},
+           given={Wenxian},
+           giveni={W\bibinitperiod}}}%
+      }
+      \strng{namehash}{d6a5094f23682a3080ed6d797900e91b}
+      \strng{fullhash}{9827d2c8af6b30ee4aa7eee83dbed727}
+      \strng{bibnamehash}{d6a5094f23682a3080ed6d797900e91b}
+      \strng{authorbibnamehash}{d6a5094f23682a3080ed6d797900e91b}
+      \strng{authornamehash}{d6a5094f23682a3080ed6d797900e91b}
+      \strng{authorfullhash}{9827d2c8af6b30ee4aa7eee83dbed727}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing}
+      \field{number}{1}
+      \field{title}{OpenSARShip: A Dataset Dedicated to Sentinel-1 Ship Interpretation}
+      \field{volume}{11}
+      \field{year}{2018}
+      \field{pages}{195\bibrangedash 208}
+      \range{pages}{14}
+      \verb{doi}
+      \verb 10.1109/JSTARS.2017.2755672
+      \endverb
+      \keyw{OpenSARShip dataset; ship interpretation; Sentinel-1; synthetic aperture radar (SAR)}
+    \endentry
+    \entry{8124929}{inproceedings}{}
+      \name{author}{6}{}{%
+        {{hash=a82074434bd35d5e2b69d1414a6e6c7b}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Boying},
+           giveni={B\bibinitperiod}}}%
+        {{hash=97396b63631c7b5155fe9e624a564950}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Bin},
+           giveni={B\bibinitperiod}}}%
+        {{hash=2c6b6cfbf94d5e53f008d88b3fdd16e0}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Lanqing},
+           giveni={L\bibinitperiod}}}%
+        {{hash=f490b29a2d848802aa5b6fc3f2bada80}{%
+           family={Guo},
+           familyi={G\bibinitperiod},
+           given={Weiwei},
+           giveni={W\bibinitperiod}}}%
+        {{hash=7107a2f4fd823d2f8b21da2d33374d65}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Zenghui},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=75087dda4a3fdbd20040aee7cd920319}{%
+           family={Yu},
+           familyi={Y\bibinitperiod},
+           given={Wenxian},
+           giveni={W\bibinitperiod}}}%
+      }
+      \strng{namehash}{ea59a0ea95a27361e1bbcb450ac49c33}
+      \strng{fullhash}{aa982276c0fd637dac62970db3bef724}
+      \strng{bibnamehash}{aa982276c0fd637dac62970db3bef724}
+      \strng{authorbibnamehash}{aa982276c0fd637dac62970db3bef724}
+      \strng{authornamehash}{ea59a0ea95a27361e1bbcb450ac49c33}
+      \strng{authorfullhash}{aa982276c0fd637dac62970db3bef724}
+      \field{extraname}{2}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{2017 SAR in Big Data Era: Models, Methods and Applications (BIGSARDATA)}
+      \field{title}{OpenSARShip 2.0: A large-volume dataset for deeper interpretation of ship targets in Sentinel-1 imagery}
+      \field{year}{2017}
+      \field{pages}{1\bibrangedash 5}
+      \range{pages}{5}
+      \verb{doi}
+      \verb 10.1109/BIGSARDATA.2017.8124929
+      \endverb
+      \keyw{synthetic aperture radar (SAR); Sentinel-1; ship interpretation; OpenSARShip 2.0; big data}
+    \endentry
+    \entry{rs11070765}{article}{}
+      \name{author}{5}{}{%
+        {{hash=54b7c4ed61349e4284b747fb40ad5fdd}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Yuanyuan},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=3ad93e4c675a68a22a9c2c52b38e2751}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Chao},
+           giveni={C\bibinitperiod}}}%
+        {{hash=5c197210ea3c3cd10b35ad3c6922e157}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Hong},
+           giveni={H\bibinitperiod}}}%
+        {{hash=54bbcb0e376e6252367bfe58c3c06ad5}{%
+           family={Dong},
+           familyi={D\bibinitperiod},
+           given={Yingbo},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=e053f756bfbebd7c919891a1acef531d}{%
+           family={Wei},
+           familyi={W\bibinitperiod},
+           given={Sisi},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{65f111350fa131e097ab7cd3046c825f}
+      \strng{fullhash}{79028dae31dda68832283d7bc23bdeb8}
+      \strng{bibnamehash}{79028dae31dda68832283d7bc23bdeb8}
+      \strng{authorbibnamehash}{79028dae31dda68832283d7bc23bdeb8}
+      \strng{authornamehash}{65f111350fa131e097ab7cd3046c825f}
+      \strng{authorfullhash}{79028dae31dda68832283d7bc23bdeb8}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Remote Sensing}
+      \field{number}{7}
+      \field{title}{A SAR Dataset of Ship Detection for Deep Learning under Complex Backgrounds}
+      \field{volume}{11}
+      \field{year}{2019}
+      \field{pages}{765}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/rs11070765
+      \endverb
+      \verb{urlraw}
+      \verb https://www.mdpi.com/2072-4292/11/7/765
+      \endverb
+      \verb{url}
+      \verb https://www.mdpi.com/2072-4292/11/7/765
+      \endverb
+    \endentry
+    \entry{R19097}{articleinfo}{}
+      \name{author}{6}{}{%
+        {{hash=3276d0af6441f85c450b81a92190d0a5}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Xian},
+           giveni={X\bibinitperiod}}}%
+        {{hash=4cf97762676b485f26cc54b00975115e}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Zhirui},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=baf305304df22f50a0eb8b38cb565469}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Yuanrui},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=b869c70347c3cfd0314a23a463b68ecd}{%
+           family={Diao},
+           familyi={D\bibinitperiod},
+           given={Wenhui},
+           giveni={W\bibinitperiod}}}%
+        {{hash=b8238061b3c805be2a30dd55bb11fb21}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Yue},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=1ced2e596745819d327151f61f410bce}{%
+           family={Fu},
+           familyi={F\bibinitperiod},
+           given={Kun},
+           giveni={K\bibinitperiod}}}%
+      }
+      \strng{namehash}{74cfb2f99c48d08ca6c56f34517275b5}
+      \strng{fullhash}{5efcef9b71a228b636e967d93f629755}
+      \strng{bibnamehash}{5efcef9b71a228b636e967d93f629755}
+      \strng{authorbibnamehash}{5efcef9b71a228b636e967d93f629755}
+      \strng{authornamehash}{74cfb2f99c48d08ca6c56f34517275b5}
+      \strng{authorfullhash}{5efcef9b71a228b636e967d93f629755}
+      \field{extraname}{1}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Radars}
+      \field{number}{R19097}
+      \field{title}{AIR-SARShip-1.0: High-resolution SAR Ship Detection Dataset (in English)}
+      \field{volume}{8}
+      \field{year}{2019}
+      \field{pages}{852}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.12000/JR19097
+      \endverb
+      \verb{urlraw}
+      \verb https://radars.ac.cn/en/article/doi/10.12000/JR19097
+      \endverb
+      \verb{url}
+      \verb https://radars.ac.cn/en/article/doi/10.12000/JR19097
+      \endverb
+      \keyw{SAR ship detection,Public dataset,Deep learning}
+    \endentry
+    \entry{rs12182997}{article}{}
+      \name{author}{11}{}{%
+        {{hash=46b39ee04c40fe1ef31d1ffbf9d370e1}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Tianwen},
+           giveni={T\bibinitperiod}}}%
+        {{hash=e02de7f036a8e1092ca48b72e162bcc5}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Xiaoling},
+           giveni={X\bibinitperiod}}}%
+        {{hash=c1c521edd7a97e75244a34e72b0c2a28}{%
+           family={Ke},
+           familyi={K\bibinitperiod},
+           given={Xiao},
+           giveni={X\bibinitperiod}}}%
+        {{hash=1ca524a80c4d7607f9709d3ee34e4f18}{%
+           family={Zhan},
+           familyi={Z\bibinitperiod},
+           given={Xu},
+           giveni={X\bibinitperiod}}}%
+        {{hash=9e5f2cf7c6d97590ca2d10fa6484be09}{%
+           family={Shi},
+           familyi={S\bibinitperiod},
+           given={Jun},
+           giveni={J\bibinitperiod}}}%
+        {{hash=8b7c480b1e2b40ae7ee938eb7b1c710c}{%
+           family={Wei},
+           familyi={W\bibinitperiod},
+           given={Shunjun},
+           giveni={S\bibinitperiod}}}%
+        {{hash=6127698d1170862053d9e3a25b77014c}{%
+           family={Pan},
+           familyi={P\bibinitperiod},
+           given={Dece},
+           giveni={D\bibinitperiod}}}%
+        {{hash=9159134df298bc620af3ac1ce822be16}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Jianwei},
+           giveni={J\bibinitperiod}}}%
+        {{hash=18c26ddba8b9dd77f278213fd4e93ce4}{%
+           family={Su},
+           familyi={S\bibinitperiod},
+           given={Hao},
+           giveni={H\bibinitperiod}}}%
+        {{hash=d28cb9bb97e2d212e63c4ffa7ad4e552}{%
+           family={Zhou},
+           familyi={Z\bibinitperiod},
+           given={Yue},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=72170db54fd0ce4656d0d06c113201e0}{%
+           family={Kumar},
+           familyi={K\bibinitperiod},
+           given={Durga},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{2ea594a61f2afe913e39165679131d86}
+      \strng{fullhash}{e56cf0e7a4d2b7277fcc93c2c0491f2f}
+      \strng{bibnamehash}{2ea594a61f2afe913e39165679131d86}
+      \strng{authorbibnamehash}{2ea594a61f2afe913e39165679131d86}
+      \strng{authornamehash}{2ea594a61f2afe913e39165679131d86}
+      \strng{authorfullhash}{e56cf0e7a4d2b7277fcc93c2c0491f2f}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Remote Sensing}
+      \field{number}{18}
+      \field{title}{LS-SSDD-v1.0: A Deep Learning Dataset Dedicated to Small Ship Detection from Large-Scale Sentinel-1 SAR Images}
+      \field{volume}{12}
+      \field{year}{2020}
+      \field{pages}{2997}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/rs12182997
+      \endverb
+      \verb{urlraw}
+      \verb https://www.mdpi.com/2072-4292/12/18/2997
+      \endverb
+      \verb{url}
+      \verb https://www.mdpi.com/2072-4292/12/18/2997
+      \endverb
+    \endentry
+    \entry{rs13245104}{article}{}
+      \name{author}{4}{}{%
+        {{hash=1df535ffd353e6051cb021fcd58d2d80}{%
+           family={Lei},
+           familyi={L\bibinitperiod},
+           given={Songlin},
+           giveni={S\bibinitperiod}}}%
+        {{hash=945506e3118ff9d317b3ac2bca11fb3e}{%
+           family={Lu},
+           familyi={L\bibinitperiod},
+           given={Dongdong},
+           giveni={D\bibinitperiod}}}%
+        {{hash=36fad48331a35fcb5d7c260053d88df6}{%
+           family={Qiu},
+           familyi={Q\bibinitperiod},
+           given={Xiaolan},
+           giveni={X\bibinitperiod}}}%
+        {{hash=d3db324dbf19391358d5fbff92c03348}{%
+           family={Ding},
+           familyi={D\bibinitperiod},
+           given={Chibiao},
+           giveni={C\bibinitperiod}}}%
+      }
+      \strng{namehash}{33fe14c3a637dc8682c1e2e59e8c9a28}
+      \strng{fullhash}{936330c1d465a9df180f13a26f65e1f3}
+      \strng{bibnamehash}{936330c1d465a9df180f13a26f65e1f3}
+      \strng{authorbibnamehash}{936330c1d465a9df180f13a26f65e1f3}
+      \strng{authornamehash}{33fe14c3a637dc8682c1e2e59e8c9a28}
+      \strng{authorfullhash}{936330c1d465a9df180f13a26f65e1f3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Remote Sensing}
+      \field{number}{24}
+      \field{title}{SRSDD-v1.0: A High-Resolution SAR Rotation Ship Detection Dataset}
+      \field{volume}{13}
+      \field{year}{2021}
+      \field{pages}{5104}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/rs13245104
+      \endverb
+      \verb{urlraw}
+      \verb https://www.mdpi.com/2072-4292/13/24/5104
+      \endverb
+      \verb{url}
+      \verb https://www.mdpi.com/2072-4292/13/24/5104
+      \endverb
+    \endentry
+    \entry{s21248478}{article}{}
+      \name{author}{3}{}{%
+        {{hash=2f2c1611c820e81cbdbdc01fc99ccdc4}{%
+           family={Hu},
+           familyi={H\bibinitperiod},
+           given={Yuxin},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=9ae5dc91fa2b33dfa25f804f117b653a}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Yini},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=54bf4df6c79216f968ee4241834fbba3}{%
+           family={Pan},
+           familyi={P\bibinitperiod},
+           given={Zongxu},
+           giveni={Z\bibinitperiod}}}%
+      }
+      \strng{namehash}{2a43263e6cbbba77be54440b2a8664a5}
+      \strng{fullhash}{1de68608d80031c08ed6670787bfb4a5}
+      \strng{bibnamehash}{1de68608d80031c08ed6670787bfb4a5}
+      \strng{authorbibnamehash}{1de68608d80031c08ed6670787bfb4a5}
+      \strng{authornamehash}{2a43263e6cbbba77be54440b2a8664a5}
+      \strng{authorfullhash}{1de68608d80031c08ed6670787bfb4a5}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Sensors}
+      \field{number}{24}
+      \field{title}{A Dual-Polarimetric SAR Ship Detection Dataset and a Memory-Augmented Autoencoder-Based Detection Method}
+      \field{volume}{21}
+      \field{year}{2021}
+      \field{pages}{8478}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/s21248478
+      \endverb
+      \verb{urlraw}
+      \verb https://www.mdpi.com/1424-8220/21/24/8478
+      \endverb
+      \verb{url}
+      \verb https://www.mdpi.com/1424-8220/21/24/8478
+      \endverb
+    \endentry
+    \entry{tan2024yolo}{article}{}
+      \name{author}{6}{}{%
+        {{hash=aa28a293e30621b8710f23c87a73d7de}{%
+           family={Tan},
+           familyi={T\bibinitperiod},
+           given={Xiangdong},
+           giveni={X\bibinitperiod}}}%
+        {{hash=02584792ebb3189f3499bcae0e69d504}{%
+           family={Leng},
+           familyi={L\bibinitperiod},
+           given={Xiangguang},
+           giveni={X\bibinitperiod}}}%
+        {{hash=ae496dce6ba47af2c0d00f3b4cd504f5}{%
+           family={Luo},
+           familyi={L\bibinitperiod},
+           given={Ru},
+           giveni={R\bibinitperiod}}}%
+        {{hash=548d5f1c4153b3fd36ca55ab4161d70b}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Zhongzhen},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=c2eaac2e68d78fa23b0aaf967f27c460}{%
+           family={Ji},
+           familyi={J\bibinitperiod},
+           given={Kefeng},
+           giveni={K\bibinitperiod}}}%
+        {{hash=91a992eb45b67dbf4701bf392c40786b}{%
+           family={Kuang},
+           familyi={K\bibinitperiod},
+           given={Gangyao},
+           giveni={G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{d5af37c5ab00a57b5c1a808c06c03784}
+      \strng{fullhash}{e147b7b6dd0f2817629b0278db1de993}
+      \strng{bibnamehash}{e147b7b6dd0f2817629b0278db1de993}
+      \strng{authorbibnamehash}{e147b7b6dd0f2817629b0278db1de993}
+      \strng{authornamehash}{d5af37c5ab00a57b5c1a808c06c03784}
+      \strng{authorfullhash}{e147b7b6dd0f2817629b0278db1de993}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing}
+      \field{title}{YOLO-RC: SAR ship detection guided by characteristics of range-compressed domain}
+      \field{year}{2024}
+    \endentry
+    \entry{sun2025arbitrary}{article}{}
+      \name{author}{7}{}{%
+        {{hash=548d5f1c4153b3fd36ca55ab4161d70b}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Zhongzhen},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=02584792ebb3189f3499bcae0e69d504}{%
+           family={Leng},
+           familyi={L\bibinitperiod},
+           given={Xiangguang},
+           giveni={X\bibinitperiod}}}%
+        {{hash=84fe8648d138673f953eecbcf3fb0ce1}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Xianghui},
+           giveni={X\bibinitperiod}}}%
+        {{hash=46930edbb33ee2116902be65d227f63a}{%
+           family={Zhou},
+           familyi={Z\bibinitperiod},
+           given={Zheng},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=91f9c373e85e133adaee141afcfaf588}{%
+           family={Xiong},
+           familyi={X\bibinitperiod},
+           given={Boli},
+           giveni={B\bibinitperiod}}}%
+        {{hash=c2eaac2e68d78fa23b0aaf967f27c460}{%
+           family={Ji},
+           familyi={J\bibinitperiod},
+           given={Kefeng},
+           giveni={K\bibinitperiod}}}%
+        {{hash=91a992eb45b67dbf4701bf392c40786b}{%
+           family={Kuang},
+           familyi={K\bibinitperiod},
+           given={Gangyao},
+           giveni={G\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{7c6bd15deb12571850f7d52809dfd821}
+      \strng{fullhash}{6b704a43af597a6e9450662325a11df9}
+      \strng{bibnamehash}{7c6bd15deb12571850f7d52809dfd821}
+      \strng{authorbibnamehash}{7c6bd15deb12571850f7d52809dfd821}
+      \strng{authornamehash}{7c6bd15deb12571850f7d52809dfd821}
+      \strng{authorfullhash}{6b704a43af597a6e9450662325a11df9}
+      \field{extraname}{2}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Geoscience and Remote Sensing}
+      \field{title}{Arbitrary-direction SAR ship detection method for multi-scale imbalance}
+      \field{year}{2025}
+    \endentry
+    \entry{9127939}{article}{}
+      \name{author}{6}{}{%
+        {{hash=8b7c480b1e2b40ae7ee938eb7b1c710c}{%
+           family={Wei},
+           familyi={W\bibinitperiod},
+           given={Shunjun},
+           giveni={S\bibinitperiod}}}%
+        {{hash=0785f84a9e08497120bcc434586a10a1}{%
+           family={Zeng},
+           familyi={Z\bibinitperiod},
+           given={Xiangfeng},
+           giveni={X\bibinitperiod}}}%
+        {{hash=cd0b4007ebcd6482360264897aaea05d}{%
+           family={Qu},
+           familyi={Q\bibinitperiod},
+           given={Qizhe},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=ef1be83da2d6b08ec16bacb09858e76f}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Mou},
+           giveni={M\bibinitperiod}}}%
+        {{hash=18c26ddba8b9dd77f278213fd4e93ce4}{%
+           family={Su},
+           familyi={S\bibinitperiod},
+           given={Hao},
+           giveni={H\bibinitperiod}}}%
+        {{hash=9e5f2cf7c6d97590ca2d10fa6484be09}{%
+           family={Shi},
+           familyi={S\bibinitperiod},
+           given={Jun},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{6a06c9abbaf5a155ca2a925396a568df}
+      \strng{fullhash}{b52506f24818ee3b7e87731a27ba5434}
+      \strng{bibnamehash}{b52506f24818ee3b7e87731a27ba5434}
+      \strng{authorbibnamehash}{b52506f24818ee3b7e87731a27ba5434}
+      \strng{authornamehash}{6a06c9abbaf5a155ca2a925396a568df}
+      \strng{authorfullhash}{b52506f24818ee3b7e87731a27ba5434}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Access}
+      \field{title}{HRSID: A High-Resolution SAR Images Dataset for Ship Detection and Instance Segmentation}
+      \field{volume}{8}
+      \field{year}{2020}
+      \field{pages}{120234\bibrangedash 120254}
+      \range{pages}{21}
+      \verb{doi}
+      \verb 10.1109/ACCESS.2020.3005861
+      \endverb
+    \endentry
+    \entry{tang2024dbw}{article}{}
+      \name{author}{4}{}{%
+        {{hash=d0bb3bcbc287d2d02322475fc1badc5b}{%
+           family={Tang},
+           familyi={T\bibinitperiod},
+           given={Xiao},
+           giveni={X\bibinitperiod}}}%
+        {{hash=88486296241f48c0098665a08a348253}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Jiufeng},
+           giveni={J\bibinitperiod}}}%
+        {{hash=248b1a5127898dc2a22105c4eaaa95e3}{%
+           family={Xia},
+           familyi={X\bibinitperiod},
+           given={Yunzhi},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=571c872bf69acbf06e794171d1de5d02}{%
+           family={Xiao},
+           familyi={X\bibinitperiod},
+           given={Huanlin},
+           giveni={H\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{b345d3a0255730f71626edd613471afc}
+      \strng{fullhash}{7b203f6b13b6bd862ebf486ebcdb40bc}
+      \strng{bibnamehash}{7b203f6b13b6bd862ebf486ebcdb40bc}
+      \strng{authorbibnamehash}{7b203f6b13b6bd862ebf486ebcdb40bc}
+      \strng{authornamehash}{b345d3a0255730f71626edd613471afc}
+      \strng{authorfullhash}{7b203f6b13b6bd862ebf486ebcdb40bc}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing}
+      \field{title}{DBW-YOLO: A high-precision SAR ship detection method for complex environments}
+      \field{volume}{17}
+      \field{year}{2024}
+      \field{pages}{7029\bibrangedash 7039}
+      \range{pages}{11}
+    \endentry
+    \entry{guan2025sar}{article}{}
+      \name{author}{4}{}{%
+        {{hash=178773966fcbd08e26fd22f9a4e43548}{%
+           family={Guan},
+           familyi={G\bibinitperiod},
+           given={Tianyue},
+           giveni={T\bibinitperiod}}}%
+        {{hash=18d4da0f3d26c48c3dbde624c70f6270}{%
+           family={Chang},
+           familyi={C\bibinitperiod},
+           given={Sheng},
+           giveni={S\bibinitperiod}}}%
+        {{hash=1b93a7a6a3a633b34e8a5b5bb561e5e2}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Chunle},
+           giveni={C\bibinitperiod}}}%
+        {{hash=ae377585cb85c35daad6ebcbb1729c76}{%
+           family={Jia},
+           familyi={J\bibinitperiod},
+           given={Xiaoxue},
+           giveni={X\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {MDPI}%
+      }
+      \strng{namehash}{010dfc61d14e2e866f825ff81d415a67}
+      \strng{fullhash}{32e30fffdd3bf26b500671d5b373f2a2}
+      \strng{bibnamehash}{32e30fffdd3bf26b500671d5b373f2a2}
+      \strng{authorbibnamehash}{32e30fffdd3bf26b500671d5b373f2a2}
+      \strng{authornamehash}{010dfc61d14e2e866f825ff81d415a67}
+      \strng{authorfullhash}{32e30fffdd3bf26b500671d5b373f2a2}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Remote Sensing}
+      \field{number}{5}
+      \field{title}{SAR Small Ship Detection Based on Enhanced YOLO Network}
+      \field{volume}{17}
+      \field{year}{2025}
+      \field{pages}{839}
+      \range{pages}{1}
+    \endentry
+    \entry{ICEYE_MaritimeDomainAwareness}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=8ef73731d4c40751c3369c00b996fdcd}{%
+           family={{ICEYE}},
+           familyi={I\bibinitperiod}}}%
+      }
+      \strng{namehash}{8ef73731d4c40751c3369c00b996fdcd}
+      \strng{fullhash}{8ef73731d4c40751c3369c00b996fdcd}
+      \strng{bibnamehash}{8ef73731d4c40751c3369c00b996fdcd}
+      \strng{authorbibnamehash}{8ef73731d4c40751c3369c00b996fdcd}
+      \strng{authornamehash}{8ef73731d4c40751c3369c00b996fdcd}
+      \strng{authorfullhash}{8ef73731d4c40751c3369c00b996fdcd}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://www.iceye.com/sar-data/use-cases/maritime-domain-awareness}}
+      \field{note}{Accessed: 2025-08-14}
+      \field{title}{Maritime domain awareness | SAR data | ICEYE}
+      \field{year}{n.d.}
+    \endentry
+    \entry{MongabayNews}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=bf989cc733d3411fe96a6f8db957aac1}{%
+           family={{Mongabay}},
+           familyi={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{bf989cc733d3411fe96a6f8db957aac1}
+      \strng{fullhash}{bf989cc733d3411fe96a6f8db957aac1}
+      \strng{bibnamehash}{bf989cc733d3411fe96a6f8db957aac1}
+      \strng{authorbibnamehash}{bf989cc733d3411fe96a6f8db957aac1}
+      \strng{authornamehash}{bf989cc733d3411fe96a6f8db957aac1}
+      \strng{authorfullhash}{bf989cc733d3411fe96a6f8db957aac1}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{\url{https://news.mongabay.com/}}
+      \field{note}{Accessed: 2025-08-14}
+      \field{title}{{Mongabay: Conservation and Environmental Science News}}
+      \field{year}{n.d.}
+    \endentry
+    \entry{GablerKoch_DetectionNonCooperativeVessels_2025}{report}{}
+      \name{author}{2}{}{%
+        {{hash=d7a70722afe90930ffd28f3f16ff4c9b}{%
+           family={Gabler},
+           familyi={G\bibinitperiod},
+           given={Richard},
+           giveni={R\bibinitperiod}}}%
+        {{hash=5cdcd2c86b66f7a7183175b16bfacdc8}{%
+           family={Koch},
+           familyi={K\bibinitperiod},
+           given={Wolfgang},
+           giveni={W\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Fraunhofer Institute}%
+      }
+      \list{location}{1}{%
+        {Ettlingen / Wachtberg, Germany}%
+      }
+      \strng{namehash}{9d67882650e486f475ef7b86c989260e}
+      \strng{fullhash}{9d67882650e486f475ef7b86c989260e}
+      \strng{bibnamehash}{9d67882650e486f475ef7b86c989260e}
+      \strng{authorbibnamehash}{9d67882650e486f475ef7b86c989260e}
+      \strng{authornamehash}{9d67882650e486f475ef7b86c989260e}
+      \strng{authorfullhash}{9d67882650e486f475ef7b86c989260e}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{\url{https://publica.fraunhofer.de/bitstreams/14036e82-c3cf-407b-8b03-ad80419b4a4b/download} (Accessed: 2025-08-14)}
+      \field{title}{Detection and Tracking of Non-Cooperative Vessels}
+      \field{type}{Technical Report (NATO RTO-MP-SCI-247)}
+      \field{year}{2025}
+    \endentry
+    \entry{Author_2024_DarkShipToShip}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=7079c72c21415131774625ba1d64f4b0}{%
+           family={{Anonymous}},
+           familyi={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{7079c72c21415131774625ba1d64f4b0}
+      \strng{fullhash}{7079c72c21415131774625ba1d64f4b0}
+      \strng{bibnamehash}{7079c72c21415131774625ba1d64f4b0}
+      \strng{authorbibnamehash}{7079c72c21415131774625ba1d64f4b0}
+      \strng{authornamehash}{7079c72c21415131774625ba1d64f4b0}
+      \strng{authorfullhash}{7079c72c21415131774625ba1d64f4b0}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{arXiv preprint arXiv:2404.07607v1}
+      \field{note}{Accessed: 2025-08-14; under CC BY-NC-SA 4.0 license}
+      \field{title}{Automatic Detection of Dark Ship-to-Ship Transfers using Deep Learning and Satellite Imagery}
+      \field{year}{2024}
+      \verb{urlraw}
+      \verb https://arxiv.org/html/2404.07607v1
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/html/2404.07607v1
+      \endverb
+    \endentry
+    \entry{PERIVALLON_DarkVesselDetection_2025}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=f5b2b8e050bb808eedf16f8bdc26ce57}{%
+           family={{PERIVALLON Project}},
+           familyi={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{f5b2b8e050bb808eedf16f8bdc26ce57}
+      \strng{fullhash}{f5b2b8e050bb808eedf16f8bdc26ce57}
+      \strng{bibnamehash}{f5b2b8e050bb808eedf16f8bdc26ce57}
+      \strng{authorbibnamehash}{f5b2b8e050bb808eedf16f8bdc26ce57}
+      \strng{authornamehash}{f5b2b8e050bb808eedf16f8bdc26ce57}
+      \strng{authorfullhash}{f5b2b8e050bb808eedf16f8bdc26ce57}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{Blog post, PERIVALLON project website}
+      \field{month}{2}
+      \field{note}{\url{https://perivallon-he.eu/multi-temporal-dark-vessel-detection} (Accessed: 2025-08-14)}
+      \field{title}{Multi-temporal “dark vessel” detection with Sentinel 1 and AIS data}
+      \field{year}{2025}
+    \endentry
+    \entry{MDASpace_DarkVesselDetection}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=03663e4a3933184f51aeec9f5c2bffb6}{%
+           family={{MDA Space}},
+           familyi={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{03663e4a3933184f51aeec9f5c2bffb6}
+      \strng{fullhash}{03663e4a3933184f51aeec9f5c2bffb6}
+      \strng{bibnamehash}{03663e4a3933184f51aeec9f5c2bffb6}
+      \strng{authorbibnamehash}{03663e4a3933184f51aeec9f5c2bffb6}
+      \strng{authornamehash}{03663e4a3933184f51aeec9f5c2bffb6}
+      \strng{authorfullhash}{03663e4a3933184f51aeec9f5c2bffb6}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{howpublished}{Webpage, MDA Space website}
+      \field{note}{\url{https://mda.space/dark-vessel?utm_source=perplexity} (Accessed: 2025-08-14)}
+      \field{title}{Dark Vessel Detection}
+      \field{year}{n.d.}
+    \endentry
+    \entry{rasheed2025yolov11}{article}{}
+      \name{author}{2}{}{%
+        {{hash=c5cda48c435963eeeb5dfa5f2859eaf1}{%
+           family={Rasheed},
+           familyi={R\bibinitperiod},
+           given={Areeg\bibnamedelima Fahad},
+           giveni={A\bibinitperiod\bibinitdelim F\bibinitperiod}}}%
+        {{hash=ad772a840729b842d94e25f1dc0cf34d}{%
+           family={Zarkoosh},
+           familyi={Z\bibinitperiod},
+           given={Mahdi},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Springer}%
+      }
+      \strng{namehash}{0e609ae1502e041afde8b27c840bbc6d}
+      \strng{fullhash}{0e609ae1502e041afde8b27c840bbc6d}
+      \strng{bibnamehash}{0e609ae1502e041afde8b27c840bbc6d}
+      \strng{authorbibnamehash}{0e609ae1502e041afde8b27c840bbc6d}
+      \strng{authornamehash}{0e609ae1502e041afde8b27c840bbc6d}
+      \strng{authorfullhash}{0e609ae1502e041afde8b27c840bbc6d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Journal of Supercomputing}
+      \field{number}{9}
+      \field{title}{YOLOv11 Optimization for Efficient Resource Utilization}
+      \field{volume}{81}
+      \field{year}{2025}
+      \field{pages}{1\bibrangedash 21}
+      \range{pages}{21}
+    \endentry
+    \entry{en15238816}{article}{}
+      \name{author}{4}{}{%
+        {{hash=7e899ba67631332262b2d571d0f7871f}{%
+           family={Gomes},
+           familyi={G\bibinitperiod},
+           given={Hugo},
+           giveni={H\bibinitperiod}}}%
+        {{hash=c00b0aa72c488f7461d8329921988b76}{%
+           family={Redinha},
+           familyi={R\bibinitperiod},
+           given={Nuno},
+           giveni={N\bibinitperiod}}}%
+        {{hash=a8669a14d7f699aecadf995509cf0f6d}{%
+           family={Lavado},
+           familyi={L\bibinitperiod},
+           given={Nuno},
+           giveni={N\bibinitperiod}}}%
+        {{hash=089832fac3053be29e2cc9cfa29cd770}{%
+           family={Mendes},
+           familyi={M\bibinitperiod},
+           given={Mateus},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{0222425a4e258dbf70399748ce0674eb}
+      \strng{fullhash}{254c6c1bceb4e73e25ad1bdb1f8d28cc}
+      \strng{bibnamehash}{254c6c1bceb4e73e25ad1bdb1f8d28cc}
+      \strng{authorbibnamehash}{254c6c1bceb4e73e25ad1bdb1f8d28cc}
+      \strng{authornamehash}{0222425a4e258dbf70399748ce0674eb}
+      \strng{authorfullhash}{254c6c1bceb4e73e25ad1bdb1f8d28cc}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{1996-1073}
+      \field{journaltitle}{Energies}
+      \field{number}{23}
+      \field{title}{Counting People and Bicycles in Real Time Using YOLO on Jetson Nano}
+      \field{volume}{15}
+      \field{year}{2022}
+      \field{pages}{8816}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/en15238816
+      \endverb
+      \verb{urlraw}
+      \verb https://www.mdpi.com/1996-1073/15/23/8816
+      \endverb
+      \verb{url}
+      \verb https://www.mdpi.com/1996-1073/15/23/8816
+      \endverb
+    \endentry
+    \entry{4310076}{article}{}
+      \name{author}{1}{}{%
+        {{hash=4c9490b4888796e772e507d10bb89b3f}{%
+           family={Otsu},
+           familyi={O\bibinitperiod},
+           given={Nobuyuki},
+           giveni={N\bibinitperiod}}}%
+      }
+      \strng{namehash}{4c9490b4888796e772e507d10bb89b3f}
+      \strng{fullhash}{4c9490b4888796e772e507d10bb89b3f}
+      \strng{bibnamehash}{4c9490b4888796e772e507d10bb89b3f}
+      \strng{authorbibnamehash}{4c9490b4888796e772e507d10bb89b3f}
+      \strng{authornamehash}{4c9490b4888796e772e507d10bb89b3f}
+      \strng{authorfullhash}{4c9490b4888796e772e507d10bb89b3f}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Systems, Man, and Cybernetics}
+      \field{number}{1}
+      \field{title}{A Threshold Selection Method from Gray-Level Histograms}
+      \field{volume}{9}
+      \field{year}{1979}
+      \field{pages}{62\bibrangedash 66}
+      \range{pages}{5}
+      \verb{doi}
+      \verb 10.1109/TSMC.1979.4310076
+      \endverb
+      \keyw{Histograms; Marine vehicles; Radar tracking; Least squares approximation; Surveillance; Target tracking; Gaussian distribution; Displays; Q measurement; Sea measurements}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

@@ -1,6 +1,6 @@
 from ultralytics import YOLO
 
-# 1. Charger le modèle PyTorch
+# 1. Load PyTorch model
 model = YOLO("best1.pt")
 
 # Export the model to ONNX format

@@ -22,7 +22,7 @@ matplotlib>=3.5.0
 # Geospatial and mapping
 folium>=0.15.0
 streamlit_folium>=0.20.0
-earthengine-api>=0.1.400s
+earthengine-api>=0.1.400
 rasterio>=1.3.0
 geemap>=0.32.0
 

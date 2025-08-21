@@ -7,16 +7,53 @@ import json
 import os
 import pandas as pd
 import time
-import io
-import base64
 from engineAPI1 import get_sentinel1_jpg_from_geojson
+import base64
 
 # --- Page config ---
-st.set_page_config(page_title="SAR Map Viewer", layout="wide")
+st.set_page_config(page_title="SAR Map Viewer", layout="wide", initial_sidebar_state="expanded")
 
-# Add custom CSS for styling
+hide_streamlit_style = """
+<style>
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    [data-testid="stHeader"] {
+        display: none;
+    }
+    [data-testid="stToolbar"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+    .stDeployButton {
+        display: none;
+    }
+    footer {
+        display: none;
+    }
+    #MainMenu {
+        display: none;
+    }
+    /* Hide sidebar button */
+        [data-testid="collapsedControl"] {
+            display: none;
+    }
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# Add custom CSS for larger metric text and loading components
 st.markdown("""
 <style>
+    .st-emotion-cache-595tnf{
+            height: 0;
+            width: 0;
+    }
+    .stMainBlockContainer{
+        padding-top: 20px;
+    }
     /* Make the ships detected metric text bigger */
     div[data-testid="metric-container"] {
         padding: 1rem;
@@ -29,6 +66,7 @@ st.markdown("""
         font-size: 2.5rem !important;
         font-weight: bold !important;
     }
+
     /* Custom styling for the predict button */
     .stButton > button[kind="primary"] {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
@@ -66,40 +104,98 @@ st.markdown("""
         background: linear-gradient(135deg, #5a6268 0%, #3d4449 100%) !important;
     }
 
-    /* Download button styling */
-    .stDownloadButton > button {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
-        color: white !important;
-        font-weight: bold !important;
-        border: none !important;
-        padding: 8px 16px !important;
-        border-radius: 8px !important;
-        font-size: 12px !important;
-        transition: all 0.3s ease !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
+    /* Loading spinner styling */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0;
+        padding: 30px;
+        background: transparent;
+        border-radius: 15px;
+        border: none;
+        box-shadow: none;
     }
 
-    .stDownloadButton > button:hover {
-        background: linear-gradient(135deg, #218838 0%, #1ea085 100%) !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3) !important;
+    .custom-spinner {
+        border: 4px solid #333333;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
     }
 
-    /* Fixed position for main download button */
-    .download-container {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 9999;
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        color: #667eea;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    /* Progress bar custom styling */
+    .stProgress > div > div > div > div {
+        background-color: #667eea !important;
+    }
+
+    /* Custom progress container styling */
+    .progress-container {
+        background: transparent;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 10px 0;
+        box-shadow: none;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Sidebar ---
+
+def load_logo_base64(path="assets/logo.png"):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+logo_data = load_logo_base64()
+
+with st.sidebar:
+    st.markdown(
+        f"""
+        <div style="
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            padding: 10px 0;
+            flex-wrap: nowrap;
+        ">
+            <img src="data:image/png;base64,{logo_data}" style="
+                height: 40px; 
+                width: auto;
+                flex-shrink: 0;
+            ">
+            <h1 style="
+                color: #1e90ff;
+                margin: 0;
+                font-size: 24px;
+                font-weight: bold;
+                white-space: nowrap;
+            ">BlueGuard</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# --- Sidebar: Filters + Predict + Reset ---
 st.sidebar.title("Filters")
 
-year = st.sidebar.selectbox("Select Year", [2022, 2023, 2024, 2025], index=2)
+year = st.sidebar.selectbox("Select Year", [2022, 2023, 2024, 2025])
 month = st.sidebar.selectbox(
     "Select Month",
     list(range(1, 13)),
@@ -109,12 +205,16 @@ month = st.sidebar.selectbox(
     ][m - 1]
 )
 
+# Predict button in sidebar (under the selectors)
 predict_clicked = st.sidebar.button("Predict SAR & Detect Ships", type="primary")
 
+# Reset button (to return to map)
 if st.sidebar.button("🔄 Reset Analysis", type="secondary"):
+    # Clear stored result if exists
     for k in ("result_out", "tmp_geojson_path"):
         if k in st.session_state:
             try:
+                # try to remove tempfile if it exists
                 if k == "tmp_geojson_path" and st.session_state.get(k):
                     if os.path.exists(st.session_state[k]):
                         os.remove(st.session_state[k])
@@ -123,81 +223,65 @@ if st.sidebar.button("🔄 Reset Analysis", type="secondary"):
             st.session_state.pop(k, None)
     st.rerun()
 
-# --- Main ---
+if st.sidebar.button("Back to main", key="back_main"):
+        st.switch_page("pages/main.py")
+
+# --- Main area ---
+# If we already have a result saved in session_state, show the result UI.
 if "result_out" in st.session_state and st.session_state["result_out"]:
     out = st.session_state["result_out"]
 
     ship_count = out.get("ship_count") if isinstance(out, dict) else None
-    if ship_count is not None:
-        st.header(f"🚢 Total Ships Detected: {ship_count}")
-    else:
-        st.header("📈 SAR Detection Result")
+    st.header(f"🚢 Total Ships Detected {ship_count}")
 
+    # Create columns for better layout - MODIFIÉ POUR AFFICHER LES 2 IMAGES
+    col_img1, col_img2 = st.columns([5, 5])
+
+    with col_img1:
+        # Show original image if present
+        if isinstance(out, dict) and out.get("original") and os.path.exists(out["original"]):
+            st.image(out["original"], caption="Original SAR Image", use_container_width=True)
+        else:
+            st.error("Original image not available")
+
+    with col_img2:
+        # Show detection image if present
+        if isinstance(out, dict) and out.get("detections") and os.path.exists(out["detections"]):
+            st.image(out["detections"], caption="SAR Ship Detections", use_container_width=True)
+        else:
+            st.error("No detection image found in the result.")
+    
     st.markdown("---")
 
-    # Show detection image
-    if isinstance(out, dict) and out.get("detections") and os.path.exists(out["detections"]):
-        col1, col2, col3 = st.columns([2, 3, 1])
-        with col2:
-            st.image(out["detections"], caption="SAR Ship Detections", width=400)
-
-        # Floating download button
-        with open(out["detections"], "rb") as img_file:
-            img_data = img_file.read()
-
-        st.markdown('<div class="download-container">', unsafe_allow_html=True)
-        col1, col2 = st.columns([9, 2])
-        with col2:
-            st.download_button(
-                "Download",
-                data=img_data,
-                file_name=f"SAR_detections_{year}_{month:02d}.jpg",
-                mime="image/jpeg",
-                key="download_detections"
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.error("No detection image found in the result.")
-
-    st.markdown("---")
-
-    # Metadata
+    # Load and show metadata table
     metadata_path = out.get("metadata") if isinstance(out, dict) else None
     if metadata_path and os.path.exists(metadata_path):
         try:
-            if metadata_path.endswith(".json"):
-                with open(metadata_path, "r") as mf:
-                    metadata_list = json.load(mf)
-                df = pd.DataFrame(metadata_list)
-            else:
-                df = pd.read_csv(metadata_path)
-        except Exception:
             with open(metadata_path, "r") as mf:
                 metadata_list = json.load(mf)
             df = pd.DataFrame(metadata_list)
 
-        meta_title_col, meta_ctrl_col = st.columns([7, 1])
-        with meta_title_col:
-            st.markdown("### 🧾 Ship Detection Metadata")
-        with meta_ctrl_col:
-            show_full = st.checkbox("Show full table", value=False, key="show_full_table")
+            meta_title_col, meta_ctrl_col = st.columns([7, 1])
+            with meta_title_col:
+                st.markdown("### 🧾 Ship Detection Metadata")
+            with meta_ctrl_col:
+                show_full = st.checkbox("Show full table", value=False, key="show_full_table")
 
-        if show_full:
-            st.dataframe(df, use_container_width=True)
-        else:
-            st.dataframe(df.head(5), use_container_width=True)
+            if show_full:
+                st.dataframe(df, use_container_width=True)
+            else:
+                st.dataframe(df.head(5), use_container_width=True)
+        except Exception as e:
+            st.error(f"Error loading metadata: {str(e)}")
     else:
         st.info("No metadata file available to display.")
 
-    crops_dir = out.get("crops_dir") if isinstance(out, dict) else None
-    if crops_dir and os.path.exists(crops_dir):
-        try:
-            ship_files = [f for f in os.listdir(crops_dir) if f.endswith(('.jpg', '.jpeg', '.png'))]
-        except Exception as e:
-            st.error(f"Error accessing crops directory: {e}")
-    else:
-        st.info("Ship crops directory not available. Individual ship downloads not possible.")
+    # Moved show_full checkbox next to the title above
+    st.markdown("---")
+
 else:
+    # No result yet -> show the map and drawing tools
+    # Styled header banner for the drawing section
     st.markdown(
         """
         <div style="
@@ -222,9 +306,15 @@ else:
         unsafe_allow_html=True,
     )
 
-    center = [31.2, 32.3]
+    # Create containers for loading UI - MOVED ABOVE THE MAP
+    loading_container = st.empty()
+    progress_container = st.empty()
+
+    # Create Folium map with basic tile layer
+    center = [40.5, -73]  # Mediterranean Sea area
     m = folium.Map(location=center, zoom_start=6)
 
+    # Add satellite imagery option if available
     try:
         folium.TileLayer(
             tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -234,8 +324,9 @@ else:
             control=True
         ).add_to(m)
     except:
-        pass
+        pass  # Skip if there are issues with custom tiles
 
+    # Add drawing tools
     draw = Draw(
         export=False,
         draw_options={
@@ -253,28 +344,25 @@ else:
     )
     draw.add_to(m)
 
+    # Add layer control
     folium.LayerControl().add_to(m)
 
     map_data = st_folium(m, width=1200, height=500, returned_objects=["last_object_clicked_popup", "all_drawings"])
 
+    # Extract polygon GeoJSON from map_data
     geo = None
-    if map_data.get("all_drawings"):
-        geo = map_data["all_drawings"][-1]
-    else:
-        for key in ("last_drawn_geojson", "last_active_drawing", "features"):
-            if isinstance(map_data, dict) and key in map_data and map_data.get(key):
-                geo = map_data.get(key)
-                break
+    if map_data["all_drawings"]:
+        geo = map_data["all_drawings"][-1]  # Get the last drawn shape
 
     if geo:
         st.success("✅ Area selected! Use the sidebar to configure detection parameters and start processing.")
-        with st.expander("View Selected Area GeoJSON"):
-            st.json(geo)
 
+    # If Predict button clicked in the sidebar, process now
     if predict_clicked:
         if not geo:
             st.sidebar.error("❌ No polygon drawn. Please draw a polygon on the map before predicting.")
         else:
+            # Wrap polygon into FeatureCollection
             if isinstance(geo, dict) and geo.get("type") == "FeatureCollection":
                 wrapped = geo
             elif isinstance(geo, dict) and geo.get("type") == "Feature":
@@ -283,44 +371,73 @@ else:
                 wrapped = {"type": "FeatureCollection",
                            "features": [{"type": "Feature", "properties": {}, "geometry": geo}]}
 
+            # Save temp geojson file
             tmp_geo = tempfile.NamedTemporaryFile(delete=False, suffix=".geojson", mode="w")
             json.dump(wrapped, tmp_geo)
             tmp_geo.close()
             tmp_geo_path = tmp_geo.name
             st.session_state["tmp_geojson_path"] = tmp_geo_path
 
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-
-            status_text.text("🛰️ Fetching Sentinel-1 SAR imagery...")
-            progress_bar.progress(25)
-            time.sleep(0.5)
-
-            status_text.text("🔄 Preprocessing SAR data...")
-            progress_bar.progress(50)
-            time.sleep(0.5)
-
-            status_text.text("🤖 Running ship detection model...")
-            progress_bar.progress(75)
-            time.sleep(0.5)
-
-            status_text.text("📊 Generating results...")
-            progress_bar.progress(100)
-
             try:
+                # Show initial loading state with spinner
+                with loading_container.container():
+                    st.markdown("""
+                    <div class="loading-container">
+                        <div class="custom-spinner"></div>
+                        <div class="loading-text">🛰️ Initializing SAR processing...</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                # Initialize progress bar in the progress container
+                with progress_container.container():
+                    progress_bar = st.progress(0, text="Starting processing...")
+
+                # Step 1: Fetching imagery
+                time.sleep(0.03)
+                progress_bar.progress(10, text="🛰️ Fetching Sentinel-1 SAR imagery... 10%")
+                time.sleep(0.5)
+
+                # Simulate progress while processing
+                for percent_complete in range(15, 60, 5):
+                    time.sleep(0.03)
+                    progress_bar.progress(percent_complete, text=f"🔄 Preprocessing SAR data... {percent_complete}%")
+
+                # Step 2: Model processing
+                progress_bar.progress(70, text="🤖 Running ship detection model... 70%")
+                time.sleep(0.5)
+
+                # Actual processing
                 out = get_sentinel1_jpg_from_geojson(
                     geojson_path=tmp_geo_path,
                     year=year,
                     month=month
                 )
+
+                # Final steps
+                progress_bar.progress(90, text="📊 Generating results... 90%")
+                time.sleep(0.2)
+
+                # Store output in session
                 st.session_state["result_out"] = out
-                progress_bar.empty()
-                status_text.empty()
+
+                progress_bar.progress(100, text="✅ Processing complete! 100%")
+                time.sleep(0.3)
+
+                # Clear loading UI
+                loading_container.empty()
+                progress_container.empty()
+
+                # Rerun so UI switches to result display
                 st.rerun()
+
             except Exception as e:
+                # Clear loading UI on error
+                loading_container.empty()
+                progress_container.empty()
+                
                 st.sidebar.error(f"❌ Processing failed: {str(e)}")
-                progress_bar.empty()
-                status_text.empty()
+                
+                # cleanup temp file on failure
                 if os.path.exists(tmp_geo_path):
                     try:
                         os.remove(tmp_geo_path)

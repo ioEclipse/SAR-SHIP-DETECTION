@@ -17,6 +17,40 @@ def get_base64_image(image_path):
 logo_data = get_base64_image("assets/logo.png")
 background_data = get_base64_image("assets/home_background.png")
 
+
+# Hide default Streamlit multipage navigation
+
+hide_streamlit_style = """
+<style>
+    [data-testid="stSidebarNav"] {
+        display: none;
+    }
+    [data-testid="stHeader"] {
+        display: none;
+    }
+    [data-testid="stToolbar"] {
+        display: none;
+    }
+    .stApp > header {
+        display: none;
+    }
+    .stDeployButton {
+        display: none;
+    }
+    footer {
+        display: none;
+    }
+    #MainMenu {
+        display: none;
+    }
+    /* Hide sidebar button */
+        [data-testid="collapsedControl"] {
+            display: none;
+    }
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 # CSS + fond + overlay + style boutons
 st.markdown(
     f"""
@@ -92,7 +126,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Deux boutons côte à côte
+# Two buttons side by side
 col1, col2 = st.columns([1, 1])
 with col1:
     if st.button("Try Here", key="try_here"):
@@ -102,5 +136,5 @@ with col1:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# Rien d’autre à afficher
+# Nothing else to display
 st.write("")

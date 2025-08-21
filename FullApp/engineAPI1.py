@@ -34,7 +34,7 @@ def run_inference(uploaded_image, resolution_m=20):
     metadata = []
     ship_counter = 0
 
-    # Envoyer l'image directement au modèle
+    # Send image directly to model
     result = CLIENT.infer(uploaded_image, model_id=MODEL_ID)
 
     for pred in result.get("predictions", []):
@@ -72,7 +72,7 @@ def run_inference(uploaded_image, resolution_m=20):
             "bounding_box": {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
         })
 
-    # Sauvegarder les métadonnées
+    # Save metadata
     with open("ship_metadata.json", "w") as f:
         json.dump(metadata, f, indent=4)
 
@@ -96,7 +96,7 @@ def extract_coordinates_from_geojson(geojson_path: str) -> List[Tuple[float, flo
     coordinates = data['features'][0]['geometry']['coordinates'][0]
     
     if not check_zone_size(coordinates):
-        raise ValueError("Zone trop grande. Sélectionnez une zone inférieure à 0.4°×0.4°")
+        raise ValueError("Area too large. Select an area smaller than 0.4°×0.4°")
     
     # Calcul du rectangle englobant
     lons = [coord[0] for coord in coordinates]
@@ -136,8 +136,8 @@ def get_sentinel1_jpg(polygon_coords, year, month, output_dir='images/sar_sentin
     os.makedirs(crops_dir, exist_ok=True)
     
     try:
-        # Récupération de l'image Sentinel-1
-        print(f"🛰 Récupération de l'image Sentinel-1 pour {year}-{month:02d}...")
+        # Retrieve Sentinel-1 image
+        print(f"🛰 Retrieving Sentinel-1 image for {year}-{month:02d}...")
         sar = ee.ImageCollection("COPERNICUS/S1_GRD") \
             .filterDate(start_date, end_date) \
             .filterBounds(region) \
@@ -183,7 +183,7 @@ def get_sentinel1_jpg(polygon_coords, year, month, output_dir='images/sar_sentin
                 print(f"✅ Corrigé sauvegardé: {jpg_corrected_path}")
                 
                 # Détection des navires avec la nouvelle fonction
-                print("🚢 Lancement de la détection avancée des navires...")
+                print("🚢 Launching advanced ship detection...")
                 try:
                     # Conversion en RGB pour l'inférence
                     img_corrected_rgb = img_corrected.convert('RGB')

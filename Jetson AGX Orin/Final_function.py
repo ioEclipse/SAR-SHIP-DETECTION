@@ -1,0 +1,501 @@
+from ultralytics import YOLO
+import json
+from PIL import Image, ImageDraw, ImageFont
+from tempfile import NamedTemporaryFile
+import cv2
+import numpy as np
+import rasterio
+import os
+from scipy.ndimage import uniform_filter
+import re 
+import glob
+
+# === Loading local model ===
+LOCAL_MODEL = YOLO("best1.onnx", task="detect")
+
+
+def gamma_correction(image, gamma=1.0):
+    # Build lookup table
+    invGamma = 1.0 / gamma
+    table = np.array([(i / 255.0) ** invGamma * 255
+                      for i in np.arange(256)]).astype("uint8")
+    # Apply gamma correction using LUT
+    return cv2.LUT(image, table)
+
+def apply_correction(image,times=1,return_allsteps=False):
+    
+    
+    if image is None:
+        return
+    
+    # Apply gamma correction (adjust gamma value as needed)
+    enhanced = image
+    for i in range(times):
+        enhanced = gamma_correction(enhanced, gamma=0.9)  # More moderate gamma
+        if i == 0 : darkened = enhanced.copy() 
+        # Apply contrast adjustment (more moderate parameters)
+        enhanced = cv2.convertScaleAbs(enhanced, alpha=10/7, beta=0)
+        if i == 0 : enlightened = enhanced.copy() 
+        
+    if return_allsteps:
+        return enhanced, darkened, enlightened
+    return enhanced
+
+def refined_lee_filter(image, window_size=5, k=1.0):
+
+    # Convert to float for calculations
+    img = image.astype(np.float32)
+
+    # Step 1: Compute local mean
+    mean = uniform_filter(img, size=window_size)
+
+    # Step 2: Compute local variance
+    mean_square = uniform_filter(img**2, size=window_size)
+    variance = mean_square - mean**2
+
+    # Avoid division by zero
+    variance[variance <= 0] = 1e-10
+
+    # Step 3: Compute coefficient of variation
+    cv = np.sqrt(variance) / mean
+
+    # Step 4: Compute weighting factor
+    weight = 1.0 / (1.0 + k * cv**2)
+
+    # Step 5: Apply filter
+    filtered = mean + weight * (img - mean)
+
+    # Clip values to valid range
+    filtered = np.clip(filtered, 0, 255).astype(np.uint8)
+
+    return filtered
+
+def compute_mask(image,combined_masks=0, invert_mask=False,bull=False,return_steps=False):
+    # 1. Load and preprocess
+    img = image.copy()
+    img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75) 
+    img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75) 
+    img = cv2.bilateralFilter( img, d=10, sigmaColor=256, sigmaSpace=75)
+    if bull: step_1=img.copy()
+    # 2. Multi-stage denoising
+    blurred = cv2.GaussianBlur(img, (7, 7), 0)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(blurred)
+    if bull: step_2=enhanced
+
+    # 3. Combined thresholding
+    
+    _, otsu_thresh = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    adaptive_thresh = cv2.adaptiveThreshold(enhanced, 255,
+                                          cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                          cv2.THRESH_BINARY_INV, 21, 5)
+    
+    # 4. Fusion of thresholding methods
+    combined = cv2.bitwise_or(otsu_thresh, adaptive_thresh)
+    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75) 
+    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75)
+    combined = cv2.bilateralFilter( combined, d=9, sigmaColor=256, sigmaSpace=75)
+    _, combined = cv2.threshold(combined, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    if bull: step_3=combined
+    # 5. Advanced morphological processing
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    morphed = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, kernel, iterations=3)
+    morphed = cv2.morphologyEx(morphed, cv2.MORPH_OPEN, kernel, iterations=2)
+    if bull: step_4=morphed
+    # 6. Edge-aware flood filling
+    h, w = img.shape[:2]
+    morphed = cv2.bitwise_or(morphed, combined_masks)
+    morphed = cv2.bitwise_not(morphed)
+    # 7. Contour filtering (remove small islands)
+    contours, _ = cv2.findContours(morphed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    min_contour_area = 2000  # 1% of image area
+    land_mask = np.zeros_like(img)
+    for cnt in contours:
+        if cv2.contourArea(cnt) > min_contour_area:
+            cv2.drawContours(land_mask, [cnt], -1, 255, -1)
+
+    # 8. Final refinement
+   # land_mask = cv2.morphologyEx(land_mask, cv2.MORPH_CLOSE, kernel, iterations=1)
+
+    if invert_mask:
+        land_mask = cv2.bitwise_not(land_mask)
+    if bull: step_5=land_mask
+    
+    
+    if return_steps:
+        return step_1, step_2, step_3, step_4,step_5, land_mask
+    
+    return land_mask
+
+def calculate_land_percentage(mask):
+    """Calculate the percentage of land in the mask"""
+    total_pixels = mask.size
+    land_pixels = cv2.countNonZero(mask)
+    return (land_pixels / total_pixels) * 100
+
+def remove_land_areas(image, mask):
+    """Remove land areas using the provided mask"""
+    inverted_mask = cv2.bitwise_not(mask)
+    return cv2.bitwise_and(image, image, mask=inverted_mask)
+
+def create_black_image_like(original_image):
+    """Create a black image with the same shape and type as the original."""
+    return np.zeros_like(original_image)
+
+def process_image(image, visualize=True,return_steps=False):
+    original_image=image.copy()
+    # Load image
+    #print(f"Loading image from: {image_path}")
+    #original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    #if original_image is None:
+    #    raise FileNotFoundError(f"Could not load image at {image_path}")
+
+    # Step 1: Apply Lee filter for noise reduction
+    print("Applying Lee filter...")
+    filtered_image = refined_lee_filter(original_image, window_size=35, k=15)
+
+    # Step 2: Process iteratively to remove land
+    current_image = filtered_image.copy()
+    masked_image = original_image.copy()
+    iteration = 0
+    max_iterations = 3
+
+    #create void mask
+    mask_fin = np.zeros_like(original_image, dtype=np.uint8)
+
+    while iteration < max_iterations:
+        iteration += 1
+        print(f"\nIteration {iteration}:")
+        
+        if iteration == 1: bull=True
+        else: bull=False
+
+        # Create land mask
+        if return_steps and bull:
+            step_1, step_2, step_3, step_4,step_5,land_mask = compute_mask(current_image, mask_fin, invert_mask=True, bull=bull,return_steps=True)
+        else:
+            land_mask = compute_mask(current_image, mask_fin, invert_mask=True, bull=bull,return_steps=False)
+        land_percentage = calculate_land_percentage(land_mask)
+
+        print(f"Land percentage detected: {land_percentage:.2f}%")
+
+        # Check if image is mostly land
+        if land_percentage > 85:
+            print("⚠️  WARNING: Image is almost completely land (>90%)!")
+            print("   This image is not suitable for water body analysis.")
+            print("   Consider using a different image.")
+
+            black_img = create_black_image_like(original_image)
+            return black_img
+
+        # Remove land areas
+        
+        masked_image = remove_land_areas(masked_image, land_mask)
+        current_image = remove_land_areas(current_image, land_mask)
+        current_image = refined_lee_filter(current_image, window_size=35, k=15)
+        current_image = gamma_correction(current_image, gamma=0.9)
+        current_image = cv2.convertScaleAbs(current_image, alpha=10/9, beta=0)
+        mask_fin = cv2.bitwise_or(mask_fin, land_mask)
+
+
+        # After first iteration, check if we need to continue
+        if land_percentage > 10:
+            print(f"Land percentage > 15% ({land_percentage:.2f}%), continuing cleanup...")
+            #print("Performing second iteration (minimum requirement)...")
+            continue
+        elif iteration <= max_iterations and land_percentage > 15:
+            print(f"Land percentage still > 15% ({land_percentage:.2f}%), continuing cleanup...")
+            continue
+        else:
+            print(f"Land percentage acceptable ({land_percentage:.2f}%), stopping cleanup.")
+            break
+    buffer_radius = 16  # pixels
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (buffer_radius, buffer_radius))
+    mask_fin = cv2.dilate(mask_fin, kernel, iterations=1)
+    masked_image=remove_land_areas(masked_image, mask_fin)
+    if return_steps:
+        return step_1, step_2, step_3, step_4,step_5, masked_image, mask_fin
+    
+    return masked_image, mask_fin
+
+
+
+def pixel_to_lonlat(tif_path, x_pixel, y_pixel):
+    """Fallback si pixel_to_lonlat non fourni"""
+    with rasterio.open(tif_path) as src:
+        lon, lat = rasterio.transform.xy(src.transform, y_pixel, x_pixel)
+    return lon, lat   
+
+def convert_radar_tif_to_jpg(tif_path, jpg_path):
+    """Converts radar TIFF image to JPEG with adapted normalization"""
+    with rasterio.open(tif_path) as src:
+        img_array = src.read(1)
+    
+    # Normalisation des valeurs radar
+    p2, p98 = np.percentile(img_array, (2, 98))
+    img_normalized = np.clip((img_array - p2) / (p98 - p2) * 255, 0, 255).astype(np.uint8)
+    
+    # Convert to JPEG with maximum quality
+    Image.fromarray(img_normalized, mode='L').convert("RGB").save(jpg_path, 'JPEG', quality=100)
+    return jpg_path
+
+def is_on_land(mask, x1, y1, x2, y2, threshold=0.5):
+    """Checks if a bounding box is mainly on land"""
+    # Ensure coordinates are within image bounds
+    x1, y1, x2, y2 = int(max(0, x1)), int(max(0, y1)), int(min(mask.shape[1], x2)), int(min(mask.shape[0], y2))
+    
+    if x2 <= x1 or y2 <= y1:
+        return False
+    
+    # Extract region corresponding to bounding box
+    region = mask[y1:y2, x1:x2]
+    
+    if region.size == 0:
+        return False
+    
+    # Calculate ratio of land pixels in region
+    land_pixels = np.sum(region)
+    total_pixels = region.size
+    land_ratio = land_pixels / total_pixels
+    
+    return land_ratio > threshold
+
+
+def run_inference_with_crops(uploaded_image, tile_size=640, resolution_m=10, filter_abnormal=True):
+   
+    # Keep path to original tif if provided (used later for geolocation)
+    original_tif_path = None
+
+    # Conversion et sauvegarde si l'image est un TIFF
+    if isinstance(uploaded_image, str) and uploaded_image.lower().endswith('.tif'):
+        original_tif_path = uploaded_image
+        converted_path = "converted_from_tif.jpg"
+        convert_radar_tif_to_jpg(uploaded_image, converted_path)
+        image = Image.open(converted_path).convert("RGB")
+    else:
+        image = Image.open(uploaded_image).convert("RGB")
+    
+    # === Pre-process image before inference ===
+    # Convertir l'image PIL en array OpenCV
+    cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    gray_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+    
+    # Apply only denoising for inference and final image
+    denoised_image = apply_correction(gray_image, times=3)
+    
+    # Get land mask separately for filtering
+    water_image, land_mask = process_image(gray_image, visualize=False)
+    
+    # Convert denoised image to RGB for model and final annotation
+    denoised_rgb = cv2.cvtColor(denoised_image, cv2.COLOR_GRAY2RGB)
+    denoised_image_pil = Image.fromarray(denoised_rgb)
+    
+    w, h = image.size
+    
+    # Utiliser l'image DÉBRUITÉE pour l'annotation finale
+    annotated = denoised_image_pil.copy()
+    draw = ImageDraw.Draw(annotated)
+
+    try:
+        font = ImageFont.truetype("arial.ttf", 20)
+    except:
+        font = ImageFont.load_default()
+
+    crops = []
+    metadata = []
+    ship_counter = 0
+    filtered_land = 0
+    filtered_abnormal = 0
+
+    # Slice into tiles and process
+    for y in range(0, h, tile_size):
+        for x in range(0, w, tile_size):
+            # Use DENOISED image for inference
+            tile = denoised_image_pil.crop((x, y, min(x+tile_size, w), min(y+tile_size, h)))
+            with NamedTemporaryFile(suffix=".jpg", delete=False) as temp_file:
+                tile.save(temp_file.name, quality=95)
+                temp_path = temp_file.name
+
+            try:
+                # === INFÉRENCE AVEC MODÈLE LOCAL ===
+                results = LOCAL_MODEL.predict(
+                    temp_path,
+                    conf=0.25,
+                    imgsz=tile_size,
+                    device="cuda",
+                    verbose=False
+                )
+                
+                # Process results
+                predictions = []
+                for result in results:
+                    for box in result.boxes:
+                        x_center, y_center, width, height = box.xywh[0].tolist()
+                        predictions.append({
+                            "x": x_center,
+                            "y": y_center,
+                            "width": width,
+                            "height": height,
+                            "confidence": box.conf.item()
+                        })
+                
+                for pred in predictions:
+                    x_center_tile, y_center_tile = pred["x"], pred["y"]
+                    w_box, h_box = pred["width"], pred["height"]
+
+                    # Convert relative coordinates to absolute
+                    x_center_abs = int(x + x_center_tile)
+                    y_center_abs = int(y + y_center_tile)
+
+                    x1 = int(x + x_center_tile - w_box / 2)
+                    y1 = int(y + y_center_tile - h_box / 2)
+                    x2 = int(x + x_center_tile + w_box / 2)
+                    y2 = int(y + y_center_tile + h_box / 2)
+                    
+                    # Calcul de la surface en pixels
+                    pixel_area = (x2 - x1) * (y2 - y1)
+
+                    # Check if bounding box is on land
+                    if is_on_land(land_mask, x1, y1, x2, y2):
+                        filtered_land += 1
+                        continue  # Ignore this detection
+                    
+                    # Filter outlier values if enabled
+                    if filter_abnormal:
+                        if pixel_area <= 110 or pixel_area > 2000:
+                            filtered_abnormal += 1
+                            continue  # Ignore this detection
+
+                    ship_counter += 1
+
+                    # Annotation sur l'image DÉBRUITÉE
+                    draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
+                    draw.text((x1 + 5, y1 + 5), f"#{ship_counter}", fill="yellow", font=font)
+
+                    # Extract detected area from DENOISED image
+                    margin = int(max(w_box, h_box) * 0.3)
+                    crop_x1 = max(x1 - margin, 0)
+                    crop_y1 = max(y1 - margin, 0)
+                    crop_x2 = min(x2 + margin, w)
+                    crop_y2 = min(y2 + margin, h)
+                    crop_img = denoised_image_pil.crop((crop_x1, crop_y1, crop_x2, crop_y2))
+                    crops.append((f"#{ship_counter}", crop_img))
+
+                    # Calcul de la surface en m²
+                    area_m2 = pixel_area * (resolution_m ** 2)
+
+                    # Geolocation
+                    pixel_coord = {"pixel_x": x_center_abs, "pixel_y": y_center_abs}
+                    geoloc = None
+                    
+                    if original_tif_path:
+                        try:
+                            lon, lat = pixel_to_lonlat(original_tif_path, x_center_abs, y_center_abs)
+                            geoloc = {"lon": float(lon), "lat": float(lat)}
+                        except Exception as e:
+                            geoloc = None
+                            print(f"[WARN] pixel_to_lonlat failed for ship {ship_counter}: {e}")
+
+                    # Metadata
+                    metadata.append({
+                        "ship_id": f"Ship #{ship_counter}",
+                        "pixel_area": pixel_area,
+                        "surface_m2": round(area_m2, 2),
+                        "bounding_box": pixel_coord,
+                        "geolocation": geoloc
+                    })
+
+            except Exception as e:
+                print(f"Erreur sur la tuile {x},{y}: {str(e)}")
+                continue
+            finally:
+                try:
+                    os.unlink(temp_path)
+                except Exception:
+                    pass
+
+    # Annotation finale sur l'image DÉBRUITÉE
+    draw.text((10, 10), f"Total Ships Detected: {ship_counter}", fill="cyan", font=font)
+    draw.text((10, 40), f"Filtered (land): {filtered_land}", fill="cyan", font=font)
+    draw.text((10, 70), f"Filtered (abnormal): {filtered_abnormal}", fill="cyan", font=font)
+    draw.text((10, 100), f"Resolution: {resolution_m}m/pixel", fill="cyan", font=font)
+
+    
+    
+
+    return annotated, crops, ship_counter, metadata,water_image
+
+
+if __name__ == "__main__":
+    # Créer le dossier OUTPUTS s'il n'existe pas
+    output_dir = "OUTPUTS"
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Vérifier que le dossier INPUT existe
+    input_dir = "INPUT1"
+    if not os.path.exists(input_dir):
+        raise FileNotFoundError(f"Le dossier {input_dir} n'existe pas")
+    
+    # Lister toutes les images dans INPUT
+    image_extensions = ('*.tif', '*.tiff', '*.jpg', '*.jpeg', '*.png')
+    image_files = []
+    for ext in image_extensions:
+        image_files.extend(glob.glob(os.path.join(input_dir, ext)))
+    
+    if not image_files:
+        print(f"Aucune image trouvée dans {input_dir}")
+        exit()
+    
+    # Traiter chaque image
+    for img_path in image_files:
+        try:
+            print(f"\nTraitement de {os.path.basename(img_path)}...")
+            
+            # Exécuter l'inférence
+            annotated_img, crops, count, metadata, water_img = run_inference_with_crops(
+                img_path,
+                tile_size=640,
+                resolution_m=10
+            )
+            
+            # Créer un sous-dossier pour cette image
+            base_name = os.path.splitext(os.path.basename(img_path))[0]
+            img_output_dir = os.path.join(output_dir, base_name)
+            os.makedirs(img_output_dir, exist_ok=True)
+            
+            # 1. Sauvegarder l'image sans terre (water_img)
+            water_path = os.path.join(img_output_dir, f"{base_name}_water.png")
+            cv2.imwrite(water_path, water_img)
+            
+            # 2. Sauvegarder les métadonnées
+            metadata_path = os.path.join(img_output_dir, f"{base_name}_metadata.json")
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=4)
+            
+            # 3. Sauvegarder l'image annotée
+            annotated_path = os.path.join(img_output_dir, f"{base_name}_annotated.png")
+            annotated_img.save(annotated_path)
+            
+            # 4. Sauvegarder les crops des navires
+            ships_dir = os.path.join(img_output_dir, "ships")
+            os.makedirs(ships_dir, exist_ok=True)
+            
+            for ship_id, crop_img in crops:
+                # Nettoyer l'ID pour le nom de fichier
+                clean_id = re.sub(r'[^\w-]', '', ship_id.replace('#', ''))
+                ship_path = os.path.join(ships_dir, f"{base_name}_ship_{clean_id}.png")
+                crop_img.save(ship_path)
+            
+            print(f"► Résultats sauvegardés dans: {img_output_dir}")
+            print(f"  - Navires détectés: {count}")
+            print(f"  - Fichiers générés:")
+            print(f"    • {os.path.basename(water_path)} (image sans terre)")
+            print(f"    • {os.path.basename(metadata_path)} (métadonnées)")
+            print(f"    • {os.path.basename(annotated_path)} (image annotée)")
+            print(f"    • Dossier 'ships' avec {len(crops)} sous-images")
+            
+        except Exception as e:
+            print(f"⚠️ Erreur lors du traitement de {os.path.basename(img_path)}: {str(e)}")
+            continue
+    
+    print("\nTraitement terminé pour toutes les images valides.")
